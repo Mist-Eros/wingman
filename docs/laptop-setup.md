@@ -17,8 +17,8 @@ Recorded after the H0 setup session. **Do not repeat these installs.**
 
 - CA: `backend/certs/ca.crt` (also bundled in the app as `assets/certs/ca.crt`)
 - CA name: **Wingman Local CA** (that's the profile name on phones)
-- Leaf SAN: `IP 127.0.0.1`, `IP 10.10.28.37`, `DNS wingman.local`, `DNS localhost`
-- Laptop LAN IP right now: **10.10.28.37** (Wi-Fi `HACKATHON-GUEST`)
+- Leaf SAN: `IP 127.0.0.1`, `IP 192.168.0.170`, `DNS wingman.local`, `DNS localhost`
+- Laptop LAN IP right now: **192.168.0.170** (Wi-Fi `HACKATHON-GUEST`)
 - `192.168.56.1` is a VirtualBox host-only adapter — **not reachable from phones**, ignore it
 
 If the IP changes (hotspot, other network), regenerate and reinstall the phone profile:
@@ -42,7 +42,7 @@ python scripts\smoke_test.py --ca backend\certs\ca.crt   # 37 checks, strict TLS
 Flutter app (after `flutter pub get` in `D:\Hackathon\Wingman`):
 
 ```powershell
-flutter run --dart-define=API_BASE=https://10.10.28.37:8443 --dart-define=API_TOKEN=demo-token
+flutter run --dart-define=API_BASE=https://192.168.0.170:8443 --dart-define=API_TOKEN=demo-token
 ```
 
 ## Gates that must stay green
@@ -68,7 +68,7 @@ python scripts\smoke_test.py --ca backend\certs\ca.crt
 
 2. **Guest Wi-Fi often has client isolation** (`HACKATHON-GUEST` looks like a guest SSID):
    the phone and laptop will not see each other even with the firewall open. Test with one
-   phone's browser on `https://10.10.28.37:8443/`; if it fails, enable **Windows Mobile
+   phone's browser on `https://192.168.0.170:8443/`; if it fails, enable **Windows Mobile
    hotspot** and connect all phones to it, then re-run `gen_certs.ps1 -Force` (the hotspot
    subnet `192.168.137.x` will be added to the SAN automatically).
 

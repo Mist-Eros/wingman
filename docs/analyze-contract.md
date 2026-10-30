@@ -128,7 +128,7 @@ Helpers disponibili pe `AnalyzeResult`: `needsMoreInfo`, `asksForLocation`, `ask
 
 ```powershell
 $body = @{ transcript = "Este un miros intepator langa poarta 12"; clarifications_asked = 0 } | ConvertTo-Json
-curl.exe -sS -X POST "https://10.10.28.37:8443/api/analyze" `
+curl.exe -sS -X POST "https://192.168.0.170:8443/api/analyze" `
   -H "Authorization: Bearer demo-token" -H "Content-Type: application/json" `
   --data-binary $body
 ```

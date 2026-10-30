@@ -9,9 +9,9 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Repo created at `D:\Hackathon\Wingman` (git, 2 commits) | `git log --oneline` |
 | Toolchain installed (Git 2.56, Python 3.12.10, OpenSSL 4.1, Flutter 3.47.9 / Dart 3.13.7) | `flutter --version` |
 | Flutter project scaffolded (android/, ios/, lib/, test/) | `flutter analyze` |
-| TLS certs generated: **Wingman Local CA**, SAN `127.0.0.1`, `10.10.28.37`, `wingman.local`, `localhost` | `backend/certs/`, `assets/certs/ca.crt` |
+| TLS certs generated: **Wingman Local CA**, SAN `127.0.0.1`, `192.168.0.170`, `wingman.local`, `localhost` | `backend/certs/`, `assets/certs/ca.crt` |
 | Backend venv + deps installed | `backend\.venv` (33 MB) |
-| Backend running with TLS on 8443 | `https://10.10.28.37:8443/healthz` |
+| Backend running with TLS on 8443 | `https://192.168.0.170:8443/healthz` |
 | **Backend smoke test 37/37 with strict CA validation** | `python scripts\smoke_test.py --ca backend\certs\ca.crt` |
 | Dart compiles: **flutter analyze → No issues found** | `flutter analyze` |
 | Core contract tests **13/13** | `flutter test` |
@@ -54,7 +54,7 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 
 ## Next (H0–H4 remaining)
 
-1. **Phone test (user, 2 min):** Safari/Chrome on one Android → `https://10.10.28.37:8443/`.
+1. **Phone test (user, 2 min):** Safari/Chrome on one Android → `https://192.168.0.170:8443/`.
    - Page loads (after accepting the cert warning) → network path works.
    - Timeout → guest Wi-Fi client isolation → switch phones + laptop to the laptop hotspot and
      re-run `.\scripts\gen_certs.ps1 -Force` (documented in `docs/laptop-setup.md`).

@@ -4,7 +4,9 @@ Two separate things:
 * **A. Network + certificate check** — 2 minutes, no app needed. Do this FIRST.
 * **B. Install and run the Wingman app** — needs the APK or `flutter run`, and USB debugging.
 
-Current state: backend is live at `https://10.10.28.37:8443`. The Android APK build is still
+Current state: backend is live at `https://192.168.0.170:8443` (home Wi-Fi) or `https://192.168.137.1:8443` (laptop hotspot).
+
+> **IP-ul se poate schimba cu rețeaua.** Check ipconfig, then run `.\scripts\gen_certs.ps1 -Force` and rebuild the APK (`.\scripts\build_demo_apks.ps1 -ApiHost <ip>`) if the address is different. The Android APK build is still
 downloading Gradle on the laptop, so start with section A while it finishes.
 
 ---
@@ -12,7 +14,7 @@ downloading Gradle on the laptop, so start with section A while it finishes.
 ## A. Network + TLS check (any phone, browser only)
 
 1. Phone and laptop on the **same Wi-Fi** (`HACKATHON-GUEST` on this laptop).
-2. Open Chrome (Android) / Safari (iPhone) → `https://10.10.28.37:8443/`
+2. Open Chrome (Android) / Safari (iPhone) → `https://192.168.0.170:8443/`
 3. A certificate warning is **expected** (self-signed CA). Tap **Advanced → Proceed** (Chrome)
    or **Show Details → visit this website** (Safari).
 4. You must see:
@@ -22,7 +24,7 @@ Wingman API pornit ✔
 Taxonomia v1 · 14 tipuri de incident · N tichete live.
 ```
 
-5. Also check `https://10.10.28.37:8443/healthz` → JSON `{"status":"ok",...}`.
+5. Also check `https://192.168.0.170:8443/healthz` → JSON `{"status":"ok",...}`.
 
 **If it loads** → network path works, continue to B.
 **If it times out** → the guest Wi-Fi isolates clients; use the laptop hotspot:
@@ -34,12 +36,12 @@ restart the backend. Send me the new IP.
 
 Only needed for the browser/system, **not** for the app (the app pins the bundled CA).
 
-**Android:** download `https://10.10.28.37:8443/ca.crt` (tap through the warning) →
+**Android:** download `https://192.168.0.170:8443/ca.crt` (tap through the warning) →
 Settings → Security & privacy → More security settings → Encryption & credentials →
 Install a certificate → CA certificate → "Install anyway" → pick `ca.crt` → confirm with
-screen lock. Verify: Chrome shows no warning on `https://10.10.28.37:8443/`.
+screen lock. Verify: Chrome shows no warning on `https://192.168.0.170:8443/`.
 
-**iPhone:** open `https://10.10.28.37:8443/ca.crt` → Allow profile → Settings → General →
+**iPhone:** open `https://192.168.0.170:8443/ca.crt` → Allow profile → Settings → General →
 VPN & Device Management → *Wingman Local CA* → Install → then Settings → General → About →
 Certificate Trust Settings → toggle **Full Trust ON** (this second step is mandatory).
 Verify in Safari.
@@ -108,7 +110,7 @@ Add `-NoLogs` to skip the log tail, `-Apk <path>` to install a specific APK.
 ```powershell
 # build (debug is faster; release is what you install for the demo)
 flutter build apk --debug `
-  --dart-define=API_BASE=https://10.10.28.37:8443 `
+  --dart-define=API_BASE=https://192.168.0.170:8443 `
   --dart-define=API_TOKEN=demo-token
 
 adb install -r build\app\outputs\flutter-apk\app-debug.apk
@@ -120,7 +122,7 @@ adb shell am start -n com.wingman.wingman/.MainActivity
 ```powershell
 flutter devices
 flutter run -d <device-id> `
-  --dart-define=API_BASE=https://10.10.28.37:8443 `
+  --dart-define=API_BASE=https://192.168.0.170:8443 `
   --dart-define=API_TOKEN=demo-token
 # r = hot reload, R = hot restart, q = quit
 ```
@@ -176,7 +178,7 @@ python backend\seed_demo.py                                # demo data
 | Symptom | Cause / fix |
 |---|---|
 | Browser: `NET::ERR_CERT_AUTHORITY_INVALID` | Expected (self-signed). Tap Advanced → Proceed, or install the CA (section A). |
-| Browser: page times out | Wrong Wi-Fi / client isolation / laptop asleep / backend stopped. Check `https://10.10.28.37:8443/healthz` from the laptop itself; use hotspot fallback. |
+| Browser: page times out | Wrong Wi-Fi / client isolation / laptop asleep / backend stopped. Check `https://192.168.0.170:8443/healthz` from the laptop itself; use hotspot fallback. |
 | `adb devices` empty | Cable is charge-only, USB debugging off, or driver missing. Re-plug, accept prompt, `adb kill-server`. |
 | `adb devices` = `unauthorized` | Accept the RSA prompt on the phone (check "Always allow"). |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Another build with a different signature: `adb uninstall com.wingman.wingman` then install again. |

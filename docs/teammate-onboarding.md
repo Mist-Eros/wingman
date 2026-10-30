@@ -78,7 +78,7 @@ iOS builds need macOS/Xcode — currently out of the critical path (cloud Mac la
 2. `flutter test` → 16 passed, live tests skipped.
 3. Read `CONTRACTS.md` §1–§7 and `docs/analyze-contract.md` (F1).
 4. Run the app with the demo backend:
-   `flutter run --dart-define=API_BASE=https://10.10.28.37:8443 --dart-define=API_TOKEN=demo-token`
+   `flutter run --dart-define=API_BASE=https://192.168.0.170:8443 --dart-define=API_TOKEN=demo-token`
 5. Confirm in chat: "app boots to the role picker; board shows N tickets".
 
 ## 6. What each owner builds
@@ -97,6 +97,6 @@ iOS builds need macOS/Xcode — currently out of the critical path (cloud Mac la
 > • lucrezi doar în `lib/features/<rolul tău>/`; nu atingi `lib/core/`, `lib/main.dart`, `backend/`;
 > • branch propriu (`feat/reporter` / `feat/dispatcher` / `feat/crew`), PR doar în ferestrele de integrare;
 > • înainte de PR: `flutter analyze` curat + `flutter test` verde;
-> • backend-ul e live pe `https://10.10.28.37:8443` (token `demo-token`) — app-ul se rulează cu
->   `--dart-define=API_BASE=https://10.10.28.37:8443 --dart-define=API_TOKEN=demo-token`;
+> • backend-ul e live pe `https://192.168.0.170:8443` (token `demo-token`) — app-ul se rulează cu
+>   `--dart-define=API_BASE=https://192.168.0.170:8443 --dart-define=API_TOKEN=demo-token`;
 > • dacă ai nevoie de schimbare de contract, cere-i Lead-ului, nu o face local.
