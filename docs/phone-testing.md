@@ -48,6 +48,25 @@ Verify in Safari.
 
 ## B. Install the app on an Android phone (USB)
 
+### Android gotchas we already hit (all fixed in the repo)
+
+1. **`SocketException ... EPERM, errno = 1` on every request** — Flutter only adds
+   `android.permission.INTERNET` to the *debug* manifest, so the release APK had no network.
+   Now declared in `android/app/src/main/AndroidManifest.xml`.
+2. **Android 16 (S24 Ultra, API 36) blocks LAN sockets** via the new local-network
+   permission. The demo build targets **35** (`android/app/build.gradle.kts`) and declares
+   `ACCESS_LOCAL_NETWORK`; only move to 36 after adding a runtime permission request.
+3. **`Invalid port (at character 23)` / `API=... --dart-define=...`** — PowerShell precedence
+   merged both defines into `API_BASE`. Fixed in `scripts/build_demo_apks.ps1`; `main.dart`
+   now sanitizes `API_BASE` and falls back to the default instead of crashing.
+4. **Hotspot auto-off** — Windows disables Mobile Hotspot when idle. Run
+   `.\scripts\hotspot_on.ps1`; phone must join `DESKTOP-ET39230 5531` / `E032{07h`
+   (`192.168.137.x`).
+
+Verified on Samsung S24 Ultra (SM-S928B, Android 16): release APK shows
+**"Server conectat · N tichete"**, and tickets created server-side appear on the phone
+**instantly** over WSS (dispatcher stub list, „WSS: conectat").
+
 ### B1. Enable USB debugging (once)
 
 1. Settings → About phone → tap **Build number** 7 times → "You are now a developer".

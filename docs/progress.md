@@ -31,6 +31,8 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **AI classification matrix 5/5** (smoke→SF-FIRE, bandă→MT-BELT, bagaj→SC-BAG, suspect→SC-BEHAV, coadă→OP-QUEUE) | `backend/app/ai.py` prompt triggers + deterministic keyword guards |
 | **Voice → text verified with real speech** (Windows TTS → `/api/transcribe` → exact sentence) | `scripts/check_stt.ps1` (200, ~4.8 s for 4.2 s audio, CPU int8) |
 | **All gates green with live AI**: smoke 56/56, live Dart 7/7, `flutter analyze` clean, 18 offline tests | `scripts/smoke_test.py`, `flutter test` |
+| **First real phone end-to-end**: Samsung S24 Ultra (Android 16) — release APK, pinned TLS, WSS connected, live ticket appeared instantly | screenshot/bring-up on 2026-10-30; `adb -s RFCX60EYMEY` |
+| Android bring-up fixes: release INTERNET permission, targetSdk 35 for Android 16 LAN policy, build-script dart-define bug, `kApiBase` sanitizer | `android/app/src/main/AndroidManifest.xml`, `build.gradle.kts`, `lib/main.dart` |
 
 ## In progress ⏳
 
