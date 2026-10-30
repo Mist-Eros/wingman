@@ -183,6 +183,67 @@ Other bodies (all optional fields are nullable):
 `POST /api/analyze` (debug/prompt tuning) takes `{transcript, location, hint_code}` and returns
 `{"classification": {...}}` — it does not create a ticket.
 
+### POST `/api/analyze` — conversational reporter flow (F1)
+
+**This is the contract the voice/conversational flow depends on.** One turn = one request.
+The app shows **and speaks** `question`, appends the answer to the transcript, then calls again
+with `clarifications_asked + 1`. **The server owns the slot logic — do not duplicate it in UI.**
+
+Request (mirrors Dart `AnalyzeRequest.toJson()`):
+
+```json
+{
+  "transcript": "everything said so far, all turns concatenated",
+  "location": {"terminal": "T1", "zone": "", "lat": null, "lng": null, "note": null},
+  "hint_code": null,
+  "clarifications_asked": 0,
+  "known_incident_code": null
+}
+```
+
+Response:
+
+```json
+{
+  "fields": {
+    "incident_code": "SF-FIRE",
+    "label_ro": "Foc sau fum în terminal",
+    "location": "Terminal 1",
+    "people_at_risk": null,
+    "urgency": "critical",
+    "confidence": 0.82,
+    "ai_source": "ollama",
+    "rationale": "fum în terminal"
+  },
+  "missing": ["location"],
+  "question": "Unde se întâmplă exact? (terminal, poartă sau zonă)",
+  "clarifications_asked": 0,
+  "max_clarifications": 3,
+  "ready": false,
+  "classification": {"incident_code": "SF-FIRE", "urgency": "critical", "confidence": 0.82,
+                      "rationale": "fum în terminal", "ai_source": "ollama", "latency_ms": 1200},
+  "taxonomy_version": 1
+}
+```
+
+Rules (server-enforced, tested):
+
+* **Max 3 questions.** At `clarifications_asked >= 3` → `question: null`.
+* **Incomplete or unsure ⇒ dispatcher.** When it stops with `missing` slots or confidence
+  below `0.65`, `fields.confidence` is capped at **0.40**, so the resulting ticket lands in the
+  dispatcher 5-second override window automatically.
+* `missing` contains only required slots that are absent: currently `incident_code`, `location`.
+  `people_at_risk` is optional and is only asked (`Esté cineva în pericol?`) for high/critical.
+* `ready: true` ⇔ `question: null` — the app may then call `POST /api/reports` with the full
+  transcript (and `hint_code` if the user picked from the menu).
+* The **button menu is always a valid escape hatch**: it needs no questions and no AI wait;
+  send `hint_code` with `use_ai: false` to `/api/reports` directly.
+* Dart helpers: `AnalyzeResult.needsMoreInfo`, `asksForLocation`, `asksForType`, `ready`,
+  `fields.incidentType`, `fields.confidenceLabel`, `summary`.
+
+Implementation: `backend/app/ai.py::analyze_conversation` (deterministic slot questions; the
+model only classifies). Tests: smoke test section 10 + `test/live_backend_test.dart`.
+
 ---
 
 ## 7. WSS contract

@@ -176,7 +176,7 @@ After `gen_certs.ps1` runs, **commit `assets/certs/ca.crt`** (public cert) but *
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | POST | `/api/reports` | Bearer | Create ticket (voice transcript or menu `hint_code`) |
-| POST | `/api/analyze` | Bearer | Classification only (prompt tuning) |
+| POST | `/api/analyze` | Bearer | Conversational turn: `fields` + `missing` + `question` (reporter flow) |
 | GET | `/api/tickets[?status=]` | Bearer | List (newest first) |
 | GET | `/api/tickets/{id}` | Bearer | One ticket |
 | POST | `/api/tickets/{id}/confirm` | Bearer | Dispatcher confirms (ends the 5 s window) |

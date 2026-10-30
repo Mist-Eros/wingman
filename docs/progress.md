@@ -20,6 +20,8 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Wi-Fi network profile set to **Private** | `Get-NetConnectionProfile` |
 | Taxonomy authored (14 types / 4 categories, OP-OTHER catch-all) + backend JSON generated | `lib/core/incidents/taxonomy.dart`, `backend/taxonomy.json` |
 | Contracts + docs + demo runbook written | `CONTRACTS.md`, `docs/` |
+| **Conversational `/analyze` contract** (`fields` + `missing` + `question`, max 3 questions, dispatcher cap) | smoke 50/50 · live Dart 7/7 |
+| `compileSdk = 37` pinned in `android/app/build.gradle.kts` (permission_handler fix) | F1 request applied |
 | Teammate distribution zip | `D:\Hackathon\Wingman-repo.zip` |
 
 ## In progress ⏳

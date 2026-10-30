@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 
 from . import schemas
-from .ai import KEYWORD_RULES, OllamaClient, analyze_report
+from .ai import KEYWORD_RULES, OllamaClient, analyze_conversation, analyze_report
 from .config import BASE_DIR, settings
 from .store import Conflict, Hub, NotFound, TicketStore, utc_now
 from .taxonomy import get_taxonomy
@@ -236,23 +236,31 @@ async def taxonomy_endpoint() -> dict:
 
 @api.post("/analyze")
 async def analyze(body: schemas.AnalyzeIn) -> dict:
-    """Classification only (no ticket). Use it to tune the prompt fast."""
+    """Conversational turn for the reporter flow (no ticket created).
+
+    Returns exactly what the app needs to keep the conversation going:
+    `fields` (extracted so far), `missing` (slots still needed), `question`
+    (next thing to display + speak, or null when ready to submit),
+    `clarifications_asked`, `max_clarifications`, `ready` and the current
+    `classification` snapshot. After MAX_CLARIFICATIONS the server stops
+    asking and caps confidence at 0.40 so the ticket goes to the dispatcher.
+    """
     location = body.location.model_dump()
     try:
-        classification = await analyze_report(
+        state = await analyze_conversation(
             ollama,
             taxonomy,
             body.transcript,
             _location_label(location),
             body.hint_code,
-            True,
+            body.known_incident_code,
+            body.clarifications_asked,
         )
     except (ValueError, KeyError) as exc:
         raise _to_http(exc) from exc
-    return {
-        "classification": classification.to_wire(),
-        "taxonomy_version": taxonomy.version,
-    }
+    payload = state.to_wire()
+    payload["taxonomy_version"] = taxonomy.version
+    return payload
 
 
 @api.post("/reports", status_code=201)

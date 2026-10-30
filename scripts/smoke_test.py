@@ -366,8 +366,80 @@ async def run(args: argparse.Namespace) -> int:
         listener.cancel()
         await asyncio.gather(listener, return_exceptions=True)
 
-    # 10 ── reset (leave a clean store for the next run) ────────────────────
-    print("[10] dev reset")
+    # 10 ── conversational /analyze contract (reporter flow) ────────────────
+    print("[10] conversational /analyze (fields + missing + question)")
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "Este un miros înțepător, cred că e ceva periculos.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    check("/api/analyze returns 200", status == 200, f"status={status}")
+    check(
+        "analyze returns the documented keys",
+        all(
+            key in body
+            for key in (
+                "fields",
+                "missing",
+                "question",
+                "ready",
+                "clarifications_asked",
+                "max_clarifications",
+                "classification",
+                "taxonomy_version",
+            )
+        ),
+        str(sorted(body.keys())),
+    )
+    fields = body.get("fields") or {}
+    check("fields carry an incident code", isinstance(fields.get("incident_code"), str), str(fields))
+    check("location is reported missing without a location", "location" in (body.get("missing") or []))
+    check(
+        "server asks a location question",
+        isinstance(body.get("question"), str) and len(body["question"]) > 5,
+        str(body.get("question")),
+    )
+    check("not ready while a question is pending", body.get("ready") is False)
+    check("max_clarifications is 3", body.get("max_clarifications") == 3)
+
+    status, body2 = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": (
+                "Este un miros înțepător lângă poarta 12, terminal 1. "
+                "Nimeni nu este rănit."
+            ),
+            "clarifications_asked": 1,
+            "known_incident_code": fields.get("incident_code"),
+        },
+        insecure=insecure,
+    )
+    fields2 = body2.get("fields") or {}
+    check("location extracted from the answer", bool(fields2.get("location")), str(fields2.get("location")))
+    check("people_at_risk honours the negation", fields2.get("people_at_risk") is False, str(fields2.get("people_at_risk")))
+    check("slot questions disappear once slots are filled", (body2.get("missing") or []) == [], str(body2.get("missing")))
+
+    status, body3 = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={"transcript": "Ceva nu este în regulă.", "clarifications_asked": 3},
+        insecure=insecure,
+    )
+    check("no question after max clarifications", body3.get("question") is None, str(body3.get("question")))
+    check(
+        "confidence capped for the dispatcher after 3 questions",
+        float((body3.get("fields") or {}).get("confidence", 1)) <= 0.40,
+        str((body3.get("fields") or {}).get("confidence")),
+    )
+    check("ready is true when the server stops asking", body3.get("ready") is True)
+
+    # 11 ── reset (leave a clean store for the next run) ────────────────────
+    print("[11] dev reset")
     status, body = http_call(base, token, "/api/dev/reset", method="POST", insecure=insecure)
     if status == 200:
         check("store cleared", body.get("tickets_cleared", 0) >= 0)

@@ -21,6 +21,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wingman/core/api/api_client.dart';
 import 'package:wingman/core/incidents/taxonomy.dart';
+import 'package:wingman/core/models/analyze_result.dart';
 import 'package:wingman/core/models/ticket.dart';
 
 final bool _live = Platform.environment['WINGMAN_LIVE'] == '1';
@@ -202,6 +203,40 @@ void main() {
     expect(updatedEvent.ticket!.status.isActive, isTrue);
 
     await subscription.cancel();
+  }, skip: _live ? false : _skipReason);
+
+  test('conversational /analyze: question -> slots -> dispatcher cap', () async {
+    var result = await api.analyze(
+      const AnalyzeRequest(
+        transcript: 'Este un miros înțepător, cred că e ceva periculos.',
+      ),
+    );
+    expect(result.question, isNotNull);
+    expect(result.ready, isFalse);
+    expect(result.fields.incidentCode, isNotNull);
+    expect(result.missing, contains('location'));
+    expect(result.maxClarifications, 3);
+
+    result = await api.analyze(
+      AnalyzeRequest(
+        transcript:
+            'Este un miros înțepător lângă poarta 12, terminal 1. Nimeni nu este rănit.',
+        clarificationsAsked: 1,
+        knownIncidentCode: result.fields.incidentCode,
+      ),
+    );
+    expect(result.fields.location, isNotEmpty);
+    expect(result.fields.peopleAtRisk, isFalse);
+    expect(result.missing, isEmpty);
+
+    final afterMax = await api.analyze(
+      const AnalyzeRequest(
+        transcript: 'Ceva nu este în regulă.',
+        clarificationsAsked: 3,
+      ),
+    );
+    expect(afterMax.question, isNull);
+    expect(afterMax.fields.confidence, lessThanOrEqualTo(0.40));
   }, skip: _live ? false : _skipReason);
 
   test('dev reset leaves a clean store', () async {

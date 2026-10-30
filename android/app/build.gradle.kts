@@ -6,7 +6,10 @@ plugins {
 
 android {
     namespace = "com.wingman.wingman"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 37 (not flutter.compileSdkVersion) because plugins such as
+    // permission_handler / speech_to_text require compileSdk 37. Keeping it
+    // explicit avoids the "compileSdk 36 vs 37" Gradle failure on every build.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

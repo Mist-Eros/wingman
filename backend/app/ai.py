@@ -28,11 +28,12 @@ import json
 import logging
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 import httpx
 
+from .config import settings
 from .taxonomy import URGENCY_LEVELS, Taxonomy, get_taxonomy
 
 logger = logging.getLogger("airport.ai")
@@ -492,3 +493,249 @@ async def analyze_report(
     except (ValueError, KeyError) as exc:
         logger.warning("Ollama returned unusable classification: %s", exc)
         return fallback_classify(taxonomy, transcript, hint_code)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONVERSATIONAL /analyze — contract used by the reporter flow (lib/core/)
+#
+# The app asks one question per turn, speaks it, appends the answer to the
+# transcript and posts again with `clarifications_asked + 1`. The server keeps
+# the slot-filling logic, so the client never decides what is missing.
+#
+# Hard rules (agreed with F1):
+#   • at most MAX_CLARIFICATIONS questions, then classify anyway;
+#   • when it stops while still incomplete/low-confidence, confidence is capped
+#     at 0.40 so the ticket always lands in the dispatcher 5-second window;
+#   • the button menu is always a valid fallback (hint_code path, no questions).
+# ─────────────────────────────────────────────────────────────────────────────
+MAX_CLARIFICATIONS = 3
+REQUIRED_SLOTS: tuple[str, ...] = ("incident_code", "location")
+
+QUESTION_TYPE = (
+    "Ce fel de problemă este: siguranță/incendiu, securitate, mentenanță sau operațional?"
+)
+QUESTION_LOCATION = "Unde se întâmplă exact? (terminal, poartă sau zonă)"
+QUESTION_DETAIL = "Poți descrie pe scurt ce vezi sau ce s-a întâmplat?"
+QUESTION_PEOPLE = "Este cineva în pericol în acest moment?"
+
+_LOCATION_PATTERNS: tuple[tuple[str, str], ...] = (
+    (r"\bterminal(?:ul)?\s*([a-z0-9]+)", "Terminal {0}"),
+    (r"\b(t\d)\b", "{0}"),
+    (r"\bpoart[aă]?\s*(?:nr\.?\s*)?([a-z0-9]+)", "Poarta {0}"),
+    (r"\bgate\s*([a-z0-9]+)", "Gate {0}"),
+    (r"\bband[aă]?\s*(?:de\s*bagaje\s*)?(?:nr\.?\s*)?([a-z0-9]+)", "Banda {0}"),
+    (
+        r"\bzona?\s+([a-zăâîșț0-9]+(?:\s+[a-zăâîșț0-9]+){0,2})",
+        "Zona {0}",
+    ),
+)
+
+_LOCATION_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("control securitate", "Control securitate"),
+    ("security", "Control securitate"),
+    ("check-in", "Check-in"),
+    ("check in", "Check-in"),
+    ("îmbarcare", "Zona de îmbarcare"),
+    ("imbarcare", "Zona de îmbarcare"),
+    ("parcare", "Parcare"),
+    ("pistă", "Pistă"),
+    ("pista", "Pistă"),
+    ("platformă", "Platformă"),
+    ("platforma", "Platformă"),
+    ("pasarelă", "Pasarelă"),
+    ("pasarela", "Pasarelă"),
+    ("bagaje", "Zona bagaje"),
+)
+
+_PEOPLE_AT_RISK_TRUE: tuple[str, ...] = (
+    "rănit",
+    "ranit",
+    "în pericol",
+    "in pericol",
+    "victim",
+    "căzut",
+    "cazut",
+    "leșin",
+    "lesin",
+    "sânge",
+    "sange",
+    "panică",
+    "panica",
+    "evacu",
+    "blocat în lift",
+    "blocat in lift",
+)
+_PEOPLE_AT_RISK_FALSE: tuple[str, ...] = (
+    "nimeni",
+    "nicio persoană",
+    "nicio persoana",
+    "nici o persoană",
+    "nici o persoana",
+    "fără persoane",
+    "fara persoane",
+    "gol",
+)
+
+
+def extract_location(transcript: str) -> str:
+    """Best-effort location label from free text (Romanian + a few English)."""
+    if not transcript:
+        return ""
+    text = transcript.lower()
+    for pattern, template in _LOCATION_PATTERNS:
+        match = re.search(pattern, text)
+        if match:
+            value = match.group(1).strip()
+            if value:
+                label = template.format(value)
+                return label[:1].upper() + label[1:]
+    for keyword, label in _LOCATION_KEYWORDS:
+        if keyword in text:
+            return label
+    return ""
+
+
+def detect_people_at_risk(transcript: str) -> bool | None:
+    """True/False when the transcript states it, None when unknown.
+
+    Negations are checked first ("nimeni nu este rănit" must be False).
+    """
+    text = (transcript or "").lower()
+    if any(word in text for word in _PEOPLE_AT_RISK_FALSE):
+        return False
+    if any(word in text for word in _PEOPLE_AT_RISK_TRUE):
+        return True
+    return None
+
+
+def next_question(
+    missing: tuple[str, ...],
+    confidence: float,
+    urgency: str,
+    people_at_risk: bool | None,
+    asked: int,
+) -> str | None:
+    if asked >= MAX_CLARIFICATIONS:
+        return None
+    if "incident_code" in missing:
+        return QUESTION_TYPE
+    if "location" in missing:
+        return QUESTION_LOCATION
+    if confidence < settings.confidence_threshold:
+        return QUESTION_DETAIL
+    if people_at_risk is None and urgency in ("high", "critical"):
+        return QUESTION_PEOPLE
+    return None
+
+
+@dataclass(frozen=True)
+class ConversationState:
+    fields: dict[str, Any]
+    missing: tuple[str, ...]
+    question: str | None
+    clarifications_asked: int
+    classification: Classification
+
+    def to_wire(self) -> dict[str, Any]:
+        return {
+            "fields": self.fields,
+            "missing": list(self.missing),
+            "question": self.question,
+            "clarifications_asked": self.clarifications_asked,
+            "max_clarifications": MAX_CLARIFICATIONS,
+            "ready": self.question is None,
+            "classification": self.classification.to_wire(),
+        }
+
+
+async def analyze_conversation(
+    ollama: OllamaClient,
+    taxonomy: Taxonomy,
+    transcript: str,
+    location_label: str,
+    hint_code: str | None = None,
+    known_incident_code: str | None = None,
+    clarifications_asked: int = 0,
+) -> ConversationState:
+    """One conversational turn: classify + report missing slots + next question."""
+    asked = max(0, min(int(clarifications_asked or 0), 10))
+
+    known = taxonomy.by_code(known_incident_code)
+    if known is not None:
+        classification = Classification(
+            incident_code=known.code,
+            urgency=known.urgency,
+            confidence=1.0,
+            rationale="cod confirmat într-un pas anterior",
+            ai_source="manual",
+        )
+    else:
+        classification = await analyze_report(
+            ollama, taxonomy, transcript, location_label, hint_code, use_ai=True
+        )
+
+    incident_type = taxonomy.by_code(classification.incident_code)
+
+    # Slot 1: location — prefer the structured location from the app, then the text.
+    location = (location_label or "").strip()
+    if not location or location.lower() in {
+        "locație nespecificată",
+        "locatie nespecificata",
+        "locație nespecificata",
+    }:
+        location = extract_location(transcript)
+
+    # Slot 2: is anyone in danger? (optional, only asked on high/critical)
+    people_at_risk = detect_people_at_risk(transcript)
+
+    fields: dict[str, Any] = {
+        "incident_code": classification.incident_code,
+        "label_ro": incident_type.label_ro if incident_type else None,
+        "location": location,
+        "people_at_risk": people_at_risk,
+        "urgency": classification.urgency,
+        "confidence": classification.confidence,
+        "ai_source": classification.ai_source,
+        "rationale": classification.rationale,
+    }
+    missing = tuple(slot for slot in REQUIRED_SLOTS if not fields.get(slot))
+
+    question = next_question(
+        missing,
+        classification.confidence,
+        classification.urgency,
+        people_at_risk,
+        asked,
+    )
+
+    # If we stop while still incomplete / unsure, force the dispatcher path.
+    if question is None and (
+        missing or classification.confidence < settings.confidence_threshold
+    ):
+        capped = min(classification.confidence, 0.40)
+        classification = replace(
+            classification,
+            confidence=capped,
+            rationale=(
+                classification.rationale
+                + " [informații insuficiente: trimis la dispecer]"
+            ).strip()[:200],
+        )
+        fields["confidence"] = capped
+        fields["rationale"] = classification.rationale
+
+    logger.info(
+        "analyze turn: code=%s conf=%.2f missing=%s asked=%d question=%s",
+        classification.incident_code,
+        classification.confidence,
+        ",".join(missing) or "-",
+        asked,
+        question or "-",
+    )
+    return ConversationState(
+        fields=fields,
+        missing=missing,
+        question=question,
+        clarifications_asked=asked,
+        classification=classification,
+    )

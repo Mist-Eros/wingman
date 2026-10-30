@@ -46,13 +46,21 @@ class ReportIn(BaseModel):
 
 
 class AnalyzeIn(BaseModel):
-    """POST /api/analyze — classification only, no ticket (prompt tuning)."""
+    """POST /api/analyze — one conversational turn (no ticket is created).
+
+    The reporter app sends the accumulated transcript, how many questions it
+    already asked and (optionally) the incident code confirmed in a previous
+    turn. It receives the extracted fields, the missing slots and the next
+    question to display/speak — or `question: null` when it may submit.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     transcript: str = Field(min_length=1, max_length=4000)
     location: LocationIn = Field(default_factory=LocationIn)
     hint_code: str | None = Field(default=None, max_length=40)
+    clarifications_asked: int = Field(default=0, ge=0, le=10)
+    known_incident_code: str | None = Field(default=None, max_length=40)
 
 
 class DispatcherActionIn(BaseModel):

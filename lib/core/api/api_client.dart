@@ -23,6 +23,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../incidents/taxonomy.dart';
+import '../models/analyze_result.dart';
 import '../models/ticket.dart';
 
 /// Server-enforced override window for low-confidence classifications.
@@ -258,6 +259,21 @@ class ApiClient {
       });
 
   Future<Map<String, dynamic>> health() => _send('GET', '/api/health');
+
+  /// One conversational turn of the reporter flow (no ticket is created).
+  ///
+  /// Show + speak [AnalyzeResult.question], append the user's answer to the
+  /// transcript and call again with `clarificationsAsked + 1`. When
+  /// [AnalyzeResult.ready] is true, submit with [report].
+  Future<AnalyzeResult> analyze(AnalyzeRequest request) async {
+    final json = await _send(
+      'POST',
+      '/api/analyze',
+      body: request.toJson(),
+      timeout: const Duration(seconds: 45),
+    );
+    return AnalyzeResult.fromJson(json);
+  }
 
   /// Clears the in-memory store (demo rehearsals). Server may 404 if disabled.
   Future<void> devReset() async {

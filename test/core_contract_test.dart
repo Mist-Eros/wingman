@@ -6,6 +6,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wingman/core/incidents/taxonomy.dart';
+import 'package:wingman/core/models/analyze_result.dart';
 import 'package:wingman/core/models/session.dart';
 import 'package:wingman/core/models/ticket.dart';
 
@@ -191,6 +192,84 @@ void main() {
         'hint_code',
         'use_ai',
       });
+    });
+  });
+
+  group('AnalyzeResult wire contract (conversational reporter flow)', () {
+    Map<String, dynamic> sampleTurn() => <String, dynamic>{
+          'fields': <String, dynamic>{
+            'incident_code': 'SF-FIRE',
+            'label_ro': 'Foc sau fum în terminal',
+            'location': 'Terminal 1',
+            'people_at_risk': null,
+            'urgency': 'critical',
+            'confidence': 0.82,
+            'ai_source': 'ollama',
+            'rationale': 'fum în terminal',
+          },
+          'missing': <String>['location'],
+          'question': 'Unde se întâmplă exact? (terminal, poartă sau zonă)',
+          'clarifications_asked': 1,
+          'max_clarifications': 3,
+          'ready': false,
+          'classification': <String, dynamic>{
+            'incident_code': 'SF-FIRE',
+            'urgency': 'critical',
+            'confidence': 0.82,
+            'rationale': 'fum în terminal',
+            'ai_source': 'ollama',
+            'latency_ms': 1200,
+          },
+          'taxonomy_version': 1,
+        };
+
+    test('parses one conversational turn', () {
+      final result = AnalyzeResult.fromJson(sampleTurn());
+      expect(result.fields.incidentCode, 'SF-FIRE');
+      expect(result.fields.incidentType?.labelRo, 'Foc sau fum în terminal');
+      expect(result.fields.location, 'Terminal 1');
+      expect(result.fields.peopleAtRisk, isNull);
+      expect(result.fields.urgency, Urgency.critical);
+      expect(result.fields.aiSource, AiSource.ollama);
+      expect(result.fields.confidenceLabel, '82%');
+      expect(result.missing, <String>['location']);
+      expect(result.question, isNotNull);
+      expect(result.needsMoreInfo, isTrue);
+      expect(result.asksForLocation, isTrue);
+      expect(result.ready, isFalse);
+      expect(result.clarificationsAsked, 1);
+      expect(result.maxClarifications, 3);
+      expect(result.taxonomyVersion, 1);
+      expect(result.summary, contains('Foc sau fum în terminal'));
+    });
+
+    test('is ready when the server returns no question', () {
+      final json = sampleTurn()
+        ..['question'] = null
+        ..['ready'] = true
+        ..['missing'] = <String>[];
+      final result = AnalyzeResult.fromJson(json);
+      expect(result.ready, isTrue);
+      expect(result.question, isNull);
+      expect(result.needsMoreInfo, isFalse);
+    });
+
+    test('request body mirrors backend AnalyzeIn exactly', () {
+      const request = AnalyzeRequest(
+        transcript: 'Este fum lângă poarta 12.',
+        location: IncidentLocation(terminal: 'T1'),
+        hintCode: null,
+        clarificationsAsked: 2,
+        knownIncidentCode: 'SF-FIRE',
+      );
+      expect(request.toJson().keys.toSet(), <String>{
+        'transcript',
+        'location',
+        'hint_code',
+        'clarifications_asked',
+        'known_incident_code',
+      });
+      expect(request.toJson()['clarifications_asked'], 2);
     });
   });
 
