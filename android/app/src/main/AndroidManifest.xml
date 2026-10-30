@@ -6,6 +6,10 @@
     <!-- Android 16 (API 36+) restricts access to the local network; declared
          here for when the app target moves to 36. The demo build targets 35. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+    <!-- Reporter: voice capture (Whisper upload) + one coarse GPS fix per report. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
         android:label="Wingman"
         android:name="${applicationName}"
