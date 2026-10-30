@@ -28,8 +28,22 @@ class _CrewPreviewApp extends StatelessWidget {
       debugShowCheckedModeBanner: true,
       title: 'Crew Preview',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0F766E),
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF4F7FB),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFF4F7FB),
+          foregroundColor: Color(0xFF0F172A),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
+        textTheme: ThemeData.light().textTheme.apply(
+              bodyColor: const Color(0xFF0F172A),
+              displayColor: const Color(0xFF0F172A),
+            ),
       ),
       home: const _CrewPreviewScreen(),
     );
@@ -65,6 +79,7 @@ class _PreviewBoard extends ChangeNotifier {
   }
 
   static const String crewId = 'crew-1';
+  static const String crewName = 'Echipaj Preview';
 
   late List<Ticket> _tickets;
   String? lastActionError;
@@ -176,7 +191,13 @@ class _CrewPreviewScreenState extends State<_CrewPreviewScreen> {
           t.status == TicketStatus.resolved &&
           mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Intervenție rezolvată · ${t.incidentCode}')),
+          SnackBar(
+            content: Text('Intervenție rezolvată · ${t.incidentCode}'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         );
       }
     }
@@ -187,47 +208,107 @@ class _CrewPreviewScreenState extends State<_CrewPreviewScreen> {
   Widget build(BuildContext context) {
     final queue = _board.queue;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Echipaj'),
-            Text('Echipaj Preview', style: TextStyle(fontSize: 12)),
+            const Text(
+              'Echipaj',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            Text(
+              _PreviewBoard.crewName,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
-      body: Column(
-        children: <Widget>[
-          WssBanner(connected: _board.connected),
-          Material(
-            color: const Color(0xFFE3F2FD),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Text(
-                'PREVIEW local — date fake, fără backend',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Color(0xFFF4F7FB),
+              Color(0xFFE8EEF5),
+              Color(0xFFE2EAF3),
+            ],
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            WssBanner(connected: _board.connected),
+            Material(
+              color: const Color(0xFFD7F0EB),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.visibility_outlined,
+                      size: 16,
+                      color: Color(0xFF0F766E),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'PREVIEW local — date fake, fără backend',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F766E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              itemCount: queue.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final ticket = queue[index];
-                return CrewTicketCard(
-                  key: ValueKey<String>('${ticket.id}-${ticket.version}'),
-                  ticket: ticket,
-                  crewId: _PreviewBoard.crewId,
-                  onJoin: () => _board.join(ticket.id),
-                  onVote: () => _board.vote(ticket.id),
-                  lastActionError: () => _board.lastActionError,
-                );
-              },
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+                itemCount: queue.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final ticket = queue[index];
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: Duration(
+                      milliseconds: 280 + (index * 40).clamp(0, 160),
+                    ),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, 10 * (1 - value)),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: CrewTicketCard(
+                      key: ValueKey<String>('${ticket.id}-${ticket.version}'),
+                      ticket: ticket,
+                      crewId: _PreviewBoard.crewId,
+                      onJoin: () => _board.join(ticket.id),
+                      onVote: () => _board.vote(ticket.id),
+                      lastActionError: () => _board.lastActionError,
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
