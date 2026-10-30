@@ -176,16 +176,17 @@ class _SkyPainter extends CustomPainter {
     _cloud(canvas, size, x: _wrap(0.82 - progress * 0.5), y: 0.50, scale: 1.3);
     _cloud(canvas, size, x: _wrap(0.32 - progress * 0.35), y: 0.64, scale: 0.58);
 
-    // Faint airliner crossing the sky.
+    // Faint airliner crossing the sky (top-down silhouette, so it reads as a
+    // plane instead of a blob).
     _plane(
       canvas,
       size,
       center: Offset(
         _wrap(0.15 + progress * 1.15) * size.width,
-        size.height * 0.36,
+        size.height * 0.33,
       ),
-      scale: size.width / 420,
-      alpha: period.isNight ? 0.32 : 0.55,
+      unit: size.width * 0.045,
+      alpha: period.isNight ? 0.34 : 0.60,
     );
 
     if (showGround) _ground(canvas, size);
@@ -313,34 +314,68 @@ class _SkyPainter extends CustomPainter {
   }
 
   // ── plane ──────────────────────────────────────────────────────────────────
+  /// Top-down airliner: pointed fuselage, swept-back wings, tailplane and two
+  /// engine nacelles. [unit] is roughly half the fuselage length in pixels.
   void _plane(
     Canvas canvas,
     Size size, {
     required Offset center,
-    required double scale,
+    required double unit,
     required double alpha,
   }) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: alpha);
-    final s = math.max(0.6, scale);
-    final path = Path()
-      ..moveTo(center.dx + 26 * s, center.dy)
-      ..quadraticBezierTo(
-        center.dx + 4 * s,
-        center.dy - 5 * s,
-        center.dx - 22 * s,
-        center.dy - 2 * s,
-      )
-      ..lineTo(center.dx - 6 * s, center.dy - 16 * s)
-      ..lineTo(center.dx - 1 * s, center.dy - 16 * s)
-      ..lineTo(center.dx - 8 * s, center.dy - 1 * s)
-      ..lineTo(center.dx - 22 * s, center.dy - 9 * s)
-      ..lineTo(center.dx - 27 * s, center.dy - 9 * s)
-      ..lineTo(center.dx - 24 * s, center.dy + 1 * s)
-      ..lineTo(center.dx - 8 * s, center.dy + 9 * s)
-      ..lineTo(center.dx - 2 * s, center.dy + 9 * s)
-      ..lineTo(center.dx - 9 * s, center.dy + 1 * s)
+    final u = math.max(6.0, unit);
+    final body = Path()
+      ..moveTo(0, -1.05 * u) // nose
+      ..cubicTo(0.16 * u, -0.72 * u, 0.17 * u, 0.45 * u, 0.11 * u, 0.86 * u)
+      ..lineTo(0.06 * u, 1.02 * u)
+      ..lineTo(-0.06 * u, 1.02 * u)
+      ..lineTo(-0.11 * u, 0.86 * u)
+      ..cubicTo(-0.17 * u, 0.45 * u, -0.16 * u, -0.72 * u, 0, -1.05 * u)
       ..close();
-    canvas.drawPath(path, paint);
+
+    final wing = Path()
+      ..moveTo(0.11 * u, -0.05 * u)
+      ..lineTo(0.95 * u, 0.52 * u)
+      ..lineTo(0.95 * u, 0.66 * u)
+      ..lineTo(0.11 * u, 0.30 * u)
+      ..close();
+
+    final tail = Path()
+      ..moveTo(0.10 * u, 0.62 * u)
+      ..lineTo(0.44 * u, 0.82 * u)
+      ..lineTo(0.44 * u, 0.91 * u)
+      ..lineTo(0.10 * u, 0.78 * u)
+      ..close();
+
+    final engine = Rect.fromCenter(
+      center: Offset(0.40 * u, 0.28 * u),
+      width: 0.12 * u,
+      height: 0.28 * u,
+    );
+
+    void draw(Offset offset, Paint paint) {
+      canvas.save();
+      canvas.translate(center.dx + offset.dx, center.dy + offset.dy);
+      canvas.drawPath(body, paint);
+      canvas.drawPath(wing, paint);
+      canvas.drawOval(engine, paint);
+      canvas.save();
+      canvas.scale(-1, 1);
+      canvas.drawPath(wing, paint);
+      canvas.drawOval(engine, paint);
+      canvas.restore();
+      canvas.drawPath(tail, paint);
+      canvas.save();
+      canvas.scale(-1, 1);
+      canvas.drawPath(tail, paint);
+      canvas.restore();
+      canvas.restore();
+    }
+
+    // Soft drop shadow so the white silhouette reads on light skies too.
+    draw(Offset(2, 5),
+        Paint()..color = Colors.black.withValues(alpha: alpha * 0.14));
+    draw(Offset.zero, Paint()..color = Colors.white.withValues(alpha: alpha));
   }
 
   // ── ground ─────────────────────────────────────────────────────────────────

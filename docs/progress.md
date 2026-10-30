@@ -55,6 +55,10 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **DevTools screen**: wrench icon on login → preview all six looks, live server health (Ollama/STT/WSS/tickets), force a 5-second override ticket, reset store, account-scope matrix | `lib/features/dev/dev_tools_screen.dart` |
 | **Desktop control room in Waterfox**: zero-dependency HTML dashboard (no CanvasKit/WebGL), trusted via private CA + dedicated Waterfox profile, opened from disk; `-Flutter` variant for Chromium | `scripts/serve_dashboard.ps1`, `scripts/dashboard/` |
 | **Progress gallery**: 49 screenshots organised into `Hackathon\ProgressPics\Steep_01…09` (per-milestone folders + README) | `D:\Hackathon\ProgressPics\` |
+| **Department-scoped notifications**: high-importance local notifications on the phone; a ticket alerts only accounts whose scope intersects its primary departments. Verified on-device: fuel/spill (maintenance+terminal) alerted the janitor, security-only bag did not | `lib/core/notifications/ticket_notifier.dart`, `test/notifications_test.dart` (4 tests) |
+| **Reporting from anywhere**: crew + dispatcher app bars get a Raportează action; the PC Waterfox dashboard gets a report form (N / Ctrl+Enter) with location fields; verified admin report on PC → live dashboard ticket → phone notification | `scripts/dashboard/index.html`, dispatcher/crew screens |
+| **S24 Ultra fit**: compact login (all 4 accounts + resume card fit), shortened reporter title, notification test on 1080×2340 | screenshots `D:\Hackathon\ProgressPics\Steep_10_Reporting_Notifications` |
+| **Plane silhouette** redrawn as a real top-down airliner (fuselage, swept wings, tailplane, engines); crescent moon via transparent cutout | `lib/core/widgets/sky_background.dart` |
 
 ## In progress ⏳
 

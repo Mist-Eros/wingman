@@ -47,13 +47,13 @@ class LoginScreen extends StatelessWidget {
               return ListView(
                 padding: const EdgeInsets.fromLTRB(
                   WingmanSpacing.page,
-                  WingmanSpacing.xl,
+                  WingmanSpacing.md,
                   WingmanSpacing.page,
-                  WingmanSpacing.xxl,
+                  WingmanSpacing.lg,
                 ),
                 children: <Widget>[
                   _Header(connected: board.connected),
-                  const SizedBox(height: WingmanSpacing.xl),
+                  const SizedBox(height: WingmanSpacing.lg),
                   if (restored != null) ...<Widget>[
                     _ResumeCard(
                       session: restored,
@@ -79,9 +79,9 @@ class LoginScreen extends StatelessWidget {
                       account: account,
                       onTap: () => _openLoginSheet(context, account),
                     ),
-                    const SizedBox(height: WingmanSpacing.md),
+                    const SizedBox(height: WingmanSpacing.sm),
                   ],
-                  const SizedBox(height: WingmanSpacing.lg),
+                  const SizedBox(height: WingmanSpacing.md),
                   const _Footer(),
                 ],
               );
@@ -118,8 +118,8 @@ class _Header extends StatelessWidget {
         Row(
           children: <Widget>[
             Container(
-              width: 58,
-              height: 58,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(WingmanRadius.lg),
@@ -128,7 +128,7 @@ class _Header extends StatelessWidget {
               child: const Icon(
                 Icons.flight_takeoff_rounded,
                 color: Colors.white,
-                size: 32,
+                size: 26,
               ),
             ),
             const SizedBox(width: WingmanSpacing.md),
@@ -140,7 +140,7 @@ class _Header extends StatelessWidget {
                     'Wingman',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 34,
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
                       shadows: <Shadow>[
@@ -317,17 +317,17 @@ class _AccountCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: WingmanRadius.card,
         child: Padding(
-          padding: const EdgeInsets.all(WingmanSpacing.lg),
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: <Widget>[
               Container(
-                width: 48,
-                height: 48,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: tint.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(WingmanRadius.sm),
                 ),
-                child: Icon(_iconFor(account), color: tint),
+                child: Icon(_iconFor(account), color: tint, size: 22),
               ),
               const SizedBox(width: WingmanSpacing.md),
               Expanded(

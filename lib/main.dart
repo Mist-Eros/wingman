@@ -33,6 +33,7 @@ import 'core/auth/token_store.dart';
 import 'core/core_scope.dart';
 import 'core/incidents/taxonomy.dart';
 import 'core/models/session.dart';
+import 'core/notifications/ticket_notifier.dart';
 import 'core/state/ticket_board.dart';
 import 'core/theme/wingman_theme.dart';
 import 'features/auth/login_screen.dart';
@@ -171,7 +172,11 @@ class AirportApp extends StatefulWidget {
 
 class _AirportAppState extends State<AirportApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final TicketNotifier _notifier = TicketNotifier();
+  final TicketAlertPolicy _alertPolicy = TicketAlertPolicy();
   Session? _session;
+  bool _notifierReady = false;
+  bool _initialSnapshotHandled = false;
 
   @override
   void initState() {
@@ -180,10 +185,43 @@ class _AirportAppState extends State<AirportApp> {
     // One WSS connection for the whole app lifetime; the board fans events out
     // to every screen through ListenableBuilder.
     unawaited(widget.board.start());
+    widget.board.addListener(_onBoardChanged);
+    unawaited(_initNotifications());
+  }
+
+  Future<void> _initNotifications() async {
+    try {
+      await _notifier.init();
+      if (!mounted) return;
+      setState(() => _notifierReady = true);
+    } on Object catch (error) {
+      debugPrint('[notify] init failed: $error');
+    }
+  }
+
+  /// Fires a local notification for every NEW active ticket that matches the
+  /// signed-in account's departments. Reporters get none; crew get exactly the
+  /// departments they are responsible for.
+  void _onBoardChanged() {
+    final session = _session;
+    if (session == null) return;
+    if (!_initialSnapshotHandled) {
+      // Don't buzz the phone for history that already existed on launch.
+      _alertPolicy.seed(widget.board.tickets);
+      _initialSnapshotHandled = true;
+      return;
+    }
+    if (!_notifierReady) return;
+    final alerts =
+        _alertPolicy.alertsFor(tickets: widget.board.tickets, session: session);
+    for (final ticket in alerts) {
+      unawaited(_notifier.showTicket(ticket));
+    }
   }
 
   @override
   void dispose() {
+    widget.board.removeListener(_onBoardChanged);
     widget.board.dispose();
     unawaited(widget.api.close());
     super.dispose();
@@ -191,7 +229,13 @@ class _AirportAppState extends State<AirportApp> {
 
   void _signIn(Session session) {
     setState(() => _session = session);
+    _alertPolicy.clear();
+    _alertPolicy.seed(widget.board.tickets);
+    _initialSnapshotHandled = true;
     unawaited(widget.sessionStore.write(session));
+    if (TicketAlertPolicy.wantsAlerts(session)) {
+      unawaited(_notifier.requestPermissions());
+    }
     // PUSH over the login screen (not replace): Android back returns to the
     // account chooser instead of closing the app.
     _navigatorKey.currentState?.pushNamed(session.role.route);
@@ -199,6 +243,8 @@ class _AirportAppState extends State<AirportApp> {
 
   void _signOut() {
     setState(() => _session = null);
+    _alertPolicy.clear();
+    _initialSnapshotHandled = false;
     unawaited(widget.sessionStore.clear());
     _navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }

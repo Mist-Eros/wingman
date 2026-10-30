@@ -15,6 +15,7 @@ import '../../core/incidents/taxonomy.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
 import 'department_queue_strip.dart';
@@ -224,6 +225,14 @@ class _DispatcherScreenState extends State<DispatcherScreen>
         _offerSwitchToLive(board);
       });
     }
+  }
+
+  /// Anyone can report — the dispatcher/admin account included. The reporter
+  /// flow works standalone (deps come from CoreScope), so we just push it.
+  Future<void> _openReporter() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ReporterScreen()),
+    );
   }
 
   Future<void> _offerSwitchToLive(TicketBoard board) async {
@@ -580,6 +589,11 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             if (!compact) ...<Widget>[
               IconButton(
+                tooltip: 'Raportează incident',
+                icon: const Icon(Icons.campaign_outlined),
+                onPressed: _openReporter,
+              ),
+              IconButton(
                 tooltip: 'Încarcă scenă demo',
                 icon: const Icon(Icons.movie_filter_outlined),
                 onPressed: _reloadDemo,
@@ -610,6 +624,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                     board.refresh();
                   } else if (value == 'demo') {
                     _reloadDemo();
+                  } else if (value == 'report') {
+                    _openReporter();
                   } else {
                     setState(() {
                       final values = DispatcherDensity.values;
@@ -619,6 +635,10 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   }
                 },
                 itemBuilder: (context) => const <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: 'report',
+                    child: Text('Raportează incident'),
+                  ),
                   PopupMenuItem<String>(
                     value: 'refresh',
                     child: Text('Reîmprospătează live'),

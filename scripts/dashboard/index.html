@@ -156,6 +156,7 @@
       <h2>Coadă incidente</h2>
       <span class="count" id="queueCount">0</span>
       <span style="flex:1"></span>
+      <button class="chip" onclick="openReport()">＋ Raportează</button>
       <button id="filterBtn" class="chip on" onclick="toggleFilter()">Doar active</button>
     </div>
     <div class="list" id="list"></div>
@@ -178,6 +179,29 @@
     <div class="tiny" id="modalSub"></div>
     <div class="tax" id="taxList"></div>
     <button class="btn" style="margin-top:8px" onclick="closeModal()">Anulează</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="reportBg">
+  <div class="modal">
+    <h3>Raportează incident (PC · Andy Admin)</h3>
+    <div class="tiny">Scrie ce s-a întâmplat. AI-ul local îl clasifică și alertele pleacă doar către departamentele necesare (ex. inginer + femeie de serviciu pentru o scurgere).</div>
+    <textarea id="reportText" rows="3"
+      placeholder="ex. Scurgere de carburant lângă poarta 5, terminal 1"
+      style="width:100%;margin-top:8px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:10px;font:inherit;resize:vertical"></textarea>
+    <div class="row" style="margin-top:8px">
+      <select id="reportTerminal" style="flex:0 0 150px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px">
+        <option value="T1">Terminal 1</option>
+        <option value="T2">Terminal 2</option>
+        <option value="PLATFORMA">Platformă</option>
+      </select>
+      <input id="reportZone" placeholder="Zonă / poartă (ex. Poarta 5)"
+        style="flex:1;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button class="btn" onclick="closeReport()">Anulează</button>
+      <button class="btn primary" onclick="submitReport()">Trimite raportul</button>
+    </div>
   </div>
 </div>
 
@@ -381,6 +405,36 @@ function openModal(id) {
 function closeModal() { $('modalBg').style.display = 'none'; }
 async function reclassify(code) { closeModal(); await act(code, selected); }
 
+// ── report from the PC (admin account) ───────────────────────────────────────
+function openReport() {
+  $('modalBg').style.display = 'none';
+  $('reportBg').style.display = 'grid';
+  $('reportText').value = '';
+  setTimeout(() => $('reportText').focus(), 50);
+}
+function closeReport() { $('reportBg').style.display = 'none'; }
+async function submitReport() {
+  const text = $('reportText').value.trim();
+  if (!text) { toast('Scrie descrierea incidentului.'); return; }
+  try {
+    const data = await request('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify({
+        source: 'voice', transcript: text,
+        reporter_id: 'admin-pc', reporter_name: 'Andy Admin', use_ai: true,
+        location: {
+          terminal: $('reportTerminal').value,
+          zone: $('reportZone').value.trim(),
+        },
+      }),
+    });
+    const ticket = data.ticket || data;
+    closeReport();
+    if (ticket && ticket.id) { tickets.set(ticket.id, ticket); render(); }
+    toast('Raport trimis · ' + (ticket ? ticket.incident_code + ' → ' + ticket.status : 'ok'));
+  } catch (err) { toast('Raportarea a eșuat: ' + err.message); }
+}
+
 function toggleFilter() {
   onlyActive = !onlyActive;
   const btn = $('filterBtn');
@@ -389,10 +443,17 @@ function toggleFilter() {
   render();
 }
 
-// keyboard: R = reload, Esc = close modal
+// keyboard: R = reload, N = new report, Ctrl+Enter = submit report, Esc = close
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
+  const tag = (e.target && e.target.tagName ? e.target.tagName : '').toLowerCase();
+  const typing = tag === 'textarea' || tag === 'input' || tag === 'select';
+  if (e.key === 'Escape') { closeModal(); closeReport(); return; }
+  if (typing) {
+    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); submitReport(); }
+    return;
+  }
   if (e.key.toLowerCase() === 'r' && !e.ctrlKey) loadTickets(true);
+  if (e.key.toLowerCase() === 'n' && !e.ctrlKey) openReport();
 });
 
 $('apiLabel').textContent = CFG.api;

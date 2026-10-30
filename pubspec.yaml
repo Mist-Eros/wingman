@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   # Hardcoded demo-account passwords are stored as salted SHA-256 hashes.
   crypto: ^3.0.3
+  # Local notifications: every crew account only gets alerts for its departments.
+  flutter_local_notifications: ^19.0.0
   # Web dashboard (desktop control room in Edge; no Visual Studio needed).
   http: ^1.2.2
   web_socket_channel: ^3.0.1

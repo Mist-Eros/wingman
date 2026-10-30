@@ -127,7 +127,9 @@ class _ReporterScreenState extends State<ReporterScreen> {
         final tr = Tr(c.language);
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('Raportare incident', 'Report an incident')),
+            // Short title: the S24 Ultra header also holds the language toggle
+            // and sign-out, so the long "Raportare incident" gets truncated.
+            title: Text(tr('Raportare', 'Report')),
             actions: <Widget>[
               _LanguageToggle(controller: c),
               IconButton(

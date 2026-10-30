@@ -13,6 +13,7 @@ import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import '../reporter/reporter_screen.dart';
 import 'crew_ticket_card.dart';
 import 'wss_banner.dart';
 
@@ -62,6 +63,14 @@ class _CrewScreenState extends State<CrewScreen> {
   void dispose() {
     _board?.removeListener(_onBoardChanged);
     super.dispose();
+  }
+
+  /// ANYONE can report, including crew members. Opening the standalone reporter
+  /// flow creates a ticket under this account's name; the board updates live.
+  Future<void> _openReporter() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ReporterScreen()),
+    );
   }
 
   void _seedStatuses(List<Ticket> tickets) {
@@ -131,6 +140,12 @@ class _CrewScreenState extends State<CrewScreen> {
           ],
         ),
         actions: <Widget>[
+          _AppBarIconButton(
+            tooltip: 'Raportează incident',
+            icon: Icons.campaign_rounded,
+            onPressed: _openReporter,
+          ),
+          const SizedBox(width: 4),
           _AppBarIconButton(
             tooltip: 'Reîmprospătează',
             icon: Icons.refresh_rounded,

@@ -222,6 +222,28 @@ deterministic build use `--dart-define=SKY_PERIOD=night` (`dawn`, `morning`, `mi
 `janitor/janitor123` (terminal only), `reporter/reporter123` (reports incidents).
 Back from a role screen returns to the login screen (no more app exit).
 
+### Reporting & alerting (who reports, who gets pinged)
+
+**Anyone can report.** The reporter role has the full voice/typed flow, the crew and dispatcher
+screens have a **Raportează** action (mic icon / overflow menu), and the PC dashboard has
+**＋ Raportează** (or press **N**; **Ctrl+Enter** submits).
+
+**Only the involved departments get notified.** A ticket alerts an account when the ticket's
+**primary departments** intersect that account's scope:
+
+| Incident (taxonomy) | Primary departments | Alerts |
+|---|---|---|
+| Fuel / liquid leak `SF-SPILL` | maintenance + terminal | **Earl Engineer AND John Janitor** |
+| Unattended bag `SC-BAG` | security | security only (neither engineer nor janitor) |
+| Belt fault `MT-BELT` | baggage + maintenance | Earl Engineer |
+
+Alerts are real Android notifications (high-importance channel, sound + vibration) showing
+`🚨 <code> · <label>` and `<location> · <departments>`. Notifications are local (no cloud push):
+the phone must stay connected to the laptop backend while the demo runs — keep the app open on
+the crew screen and the phone awake. The permission prompt appears on the first sign-in of an
+alerting account; it can also be granted with
+`adb shell pm grant com.wingman.wingman android.permission.POST_NOTIFICATIONS`.
+
 ---
 
 ## 7. Gates (run before every merge)

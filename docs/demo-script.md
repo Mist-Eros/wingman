@@ -17,8 +17,10 @@
    decides everything), `engineer/engineer123` (Earl Engineer — only maintenance/IT/baggage/
    airside), `janitor/janitor123` (John Janitor — only terminal incidents), `reporter/reporter123`
    (Rita Reporter). Sign in on the phones with the right scope for the story.
-5. Phones: install `D:\Hackathon\dist\wingman-tls-release.apk` on 2-3 devices, open the app,
-   confirm **„Server conectat"** on each. Keep charger connected, **Stay awake** ON.
+5. Phones: install `D:\Hackathon\dist\wingman-tls-release.apk`, sign in as **Earl Engineer** and
+   **John Janitor**, confirm **„Server conectat"**, and allow notifications on the first sign-in
+   (system prompt). Keep charger connected, **Stay awake** ON, app open on the crew screen —
+   notifications are local (no cloud push), so the phone must stay connected to the laptop.
 6. **Desktop control room**: `.\scripts\serve_dashboard.ps1` → **Waterfox** opens with the live
    dashboard (same store as the phones: REST snapshot + WSS live, confirm/deny/reclassify).
    Waterfox is launched with the dedicated demo profile so our CA is trusted automatically.
@@ -34,11 +36,12 @@
 | Time | Who | Screen | What happens |
 |---|---|---|---|
 | 0:00 | Lead | laptop | One sentence: „Wingman turns a 30-second voice report into a dispatched, department-assigned ticket — fully offline, on this laptop." |
-| 0:20 | Reporter phone (Rita) | Reporter | Hold mic → say: **„Este fum gros lângă poarta 12, în terminalul 1."** Release. Show transcription + AI card (SF-FIRE, critical, 95%, Poarta 12). Follow-up question → answer „Nimeni nu e rănit." → „Trimite". |
-| 0:50 | Desktop (Admin) | Control room | New ticket appears live. Point at urgency counters/departments; open the **low-confidence** seeded ticket → Confirmă (or Reclasifică, showing the closed taxonomy). |
-| 1:40 | Engineer phone | Echipaj | Sign in as **Earl Engineer** → only technical tickets (belt/bag/spill); fire/security are hidden. Tap **Preia** → **Rezolvat** (vote 1/2). |
-| 2:05 | Janitor phone | Echipaj | Sign in as **John Janitor** → ONLY the terminal spill incident. „Different crew, different alert — same taxonomy." |
-| 2:25 | Lead | laptop | The „why it's real" slide: local Qwen2.5 (0.3-0.6 s/classification on GPU), local Whisper, TLS pinned with a private CA, hashed demo accounts + department scoping, closed 14-type taxonomy with deterministic guards, `smoke 59/59` + 146 app tests, 5 s override + quorum server-side. |
+| 0:15 | Admin on PC | Waterfox dashboard | Press **N** → type „Scurgere de carburant lângă poarta 5, terminal 1", terminal T1, zona Poarta 5 → **Ctrl+Enter**. Point at the live ticket + AI code (SF-SPILL). |
+| 0:40 | Crew phone | Notification | The phone buzzes: „🚨 SF-SPILL · Scurgere de lichid…" (only for maintenance+terminal — the janitor/engineer). Open it. |
+| 1:00 | Engineer phone | Echipaj | Sign in as **Earl Engineer** → the same ticket is there; tap **Preia** → **Rezolvat** (vote 1/2). |
+| 1:30 | Janitor phone | Echipaj | Sign in as **John Janitor** → only terminal incidents (spill shown, security/bag hidden). „Different crew, different alert." |
+| 2:00 | Admin | Dashboard | Show urgency counters + ticket detail; Reclasifică shows the closed 14-type taxonomy. |
+| 2:30 | Lead | laptop | „Why it's real": local Qwen2.5 (0.3–0.6 s/classification), local Whisper, TLS pinned private CA, hashed demo accounts + department scoping + **scoped Android notifications**, 14-type taxonomy with deterministic guards, gates green, 5 s override + quorum server-side. |
 | 2:50 | Lead | — | Close: offline-capable, no cloud keys, rebuildable APKs, desktop control room for ops. |
 
 ## Fallbacks (say nothing, keep moving)
