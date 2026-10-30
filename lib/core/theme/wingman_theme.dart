@@ -106,8 +106,7 @@ abstract final class WingmanTheme {
     final scheme = _scheme(brightness);
     final background =
         isLight ? WingmanColors.background : const Color(0xFF0C121B);
-    final surface =
-        isLight ? WingmanColors.surface : const Color(0xFF141C28);
+    final surface = isLight ? WingmanColors.surface : const Color(0xFF141C28);
     final ink = isLight ? WingmanColors.ink : const Color(0xFFE7EDF6);
     final muted = isLight ? WingmanColors.muted : const Color(0xFF9AA9BD);
     final line = isLight ? WingmanColors.line : const Color(0xFF26313F);

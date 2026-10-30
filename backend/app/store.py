@@ -265,9 +265,7 @@ class TicketStore:
             ticket["incident_code"] = incident_type.code
             ticket["label_ro"] = incident_type.label_ro
             ticket["category"] = incident_type.category
-            ticket["urgency"] = self._escalate(
-                incident_type.urgency, urgency
-            )
+            ticket["urgency"] = self._escalate(incident_type.urgency, urgency)
             ticket["primary_departments"] = list(incident_type.primary_departments)
             ticket["standby_departments"] = list(incident_type.standby_departments)
             ticket["confidence"] = 1.0
@@ -298,9 +296,7 @@ class TicketStore:
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
             if ticket["status"] in ("pending_override", "resolved", "denied"):
-                raise Conflict(
-                    "Only dispatched or in-progress tickets can be joined"
-                )
+                raise Conflict("Only dispatched or in-progress tickets can be joined")
             changed = False
             if crew_id not in ticket["joined_crew_ids"]:
                 ticket["joined_crew_ids"].append(crew_id)

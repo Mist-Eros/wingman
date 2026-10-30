@@ -154,7 +154,9 @@ class _UrgencyStatTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? style.accent : style.accent.withValues(alpha: 0.25),
+              color: selected
+                  ? style.accent
+                  : style.accent.withValues(alpha: 0.25),
               width: selected ? 2 : 1,
             ),
           ),

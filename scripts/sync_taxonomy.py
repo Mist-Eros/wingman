@@ -108,9 +108,12 @@ def parse_types(source: str) -> list[dict[str, Any]]:
                 "labelRo": label_match.group(1),
                 "categoryMember": category_match.group(1),
                 "urgencyMember": urgency_match.group(1),
-                "primaryMembers": re.findall(r"Department\.(\w+)", primary_match.group(1)),
+                "primaryMembers": re.findall(
+                    r"Department\.(\w+)", primary_match.group(1)
+                ),
                 "standbyMembers": re.findall(
-                    r"Department\.(\w+)", standby_match.group(1) if standby_match else ""
+                    r"Department\.(\w+)",
+                    standby_match.group(1) if standby_match else "",
                 ),
             }
         )
@@ -160,9 +163,13 @@ def build_catalog(source: str) -> dict[str, Any]:
         if not parsed_type["labelRo"].strip():
             problems.append(f"{code}: empty labelRo")
         if parsed_type["categoryMember"] not in categories:
-            problems.append(f"{code}: unknown category member {parsed_type['categoryMember']!r}")
+            problems.append(
+                f"{code}: unknown category member {parsed_type['categoryMember']!r}"
+            )
         if parsed_type["urgencyMember"] not in urgency_members:
-            problems.append(f"{code}: unknown urgency member {parsed_type['urgencyMember']!r}")
+            problems.append(
+                f"{code}: unknown urgency member {parsed_type['urgencyMember']!r}"
+            )
         if not parsed_type["primaryMembers"]:
             problems.append(f"{code}: no primary departments")
         for member in parsed_type["primaryMembers"] + parsed_type["standbyMembers"]:
@@ -176,10 +183,12 @@ def build_catalog(source: str) -> dict[str, Any]:
                 "category": categories[parsed_type["categoryMember"]],
                 "urgency": urgency_members[parsed_type["urgencyMember"]],
                 "primary_departments": [
-                    department_members[member] for member in parsed_type["primaryMembers"]
+                    department_members[member]
+                    for member in parsed_type["primaryMembers"]
                 ],
                 "standby_departments": [
-                    department_members[member] for member in parsed_type["standbyMembers"]
+                    department_members[member]
+                    for member in parsed_type["standbyMembers"]
                 ],
             }
         )
@@ -189,9 +198,7 @@ def build_catalog(source: str) -> dict[str, Any]:
             problems.append(f"category {category!r} has no types")
 
     if problems:
-        raise TaxonomyParseError(
-            "invalid taxonomy.dart:\n - " + "\n - ".join(problems)
-        )
+        raise TaxonomyParseError("invalid taxonomy.dart:\n - " + "\n - ".join(problems))
 
     return {
         "version": schema_version,
@@ -243,7 +250,9 @@ def diff_catalog(expected: dict[str, Any], actual: dict[str, Any]) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--write", action="store_true", help="write backend/taxonomy.json")
+    parser.add_argument(
+        "--write", action="store_true", help="write backend/taxonomy.json"
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
 
@@ -255,8 +264,10 @@ def main() -> int:
         return 2
 
     text = json.dumps(catalog, indent=2, ensure_ascii=False) + "\n"
-    counts = {category: sum(1 for t in catalog["types"] if t["category"] == category)
-              for category in sorted(EXPECTED_CATEGORIES)}
+    counts = {
+        category: sum(1 for t in catalog["types"] if t["category"] == category)
+        for category in sorted(EXPECTED_CATEGORIES)
+    }
 
     if args.write:
         JSON_PATH.parent.mkdir(parents=True, exist_ok=True)

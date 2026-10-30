@@ -20,7 +20,16 @@ from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    Header,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 
@@ -346,8 +355,7 @@ async def create_report(report: schemas.ReportIn) -> dict:
     # field filled — pull the zone out of the sentence instead (Craiova zones,
     # gates, entrances, parking, etc.).
     if not any(
-        str(location.get(key) or "").strip()
-        for key in ("terminal", "zone", "note")
+        str(location.get(key) or "").strip() for key in ("terminal", "zone", "note")
     ):
         extracted = extract_location(report.transcript)
         if extracted:

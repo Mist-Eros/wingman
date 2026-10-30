@@ -187,13 +187,9 @@ class Taxonomy:
             if not incident_type.label_ro:
                 problems.append(f"{code}: empty label_ro")
             if incident_type.category not in CATEGORIES:
-                problems.append(
-                    f"{code}: unknown category {incident_type.category!r}"
-                )
+                problems.append(f"{code}: unknown category {incident_type.category!r}")
             if incident_type.urgency not in URGENCY_LEVELS:
-                problems.append(
-                    f"{code}: unknown urgency {incident_type.urgency!r}"
-                )
+                problems.append(f"{code}: unknown urgency {incident_type.urgency!r}")
             if not incident_type.primary_departments:
                 problems.append(f"{code}: no primary departments")
             for department in (

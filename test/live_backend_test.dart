@@ -57,7 +57,8 @@ void main() {
         Platform.environment['WINGMAN_API'] ?? 'https://127.0.0.1:8443';
     final token = Platform.environment['WINGMAN_TOKEN'] ?? 'demo-token';
     api = ApiClient(baseUrl: base, token: token, caPem: caPem);
-    badTokenApi = ApiClient(baseUrl: base, token: 'definitely-wrong', caPem: caPem);
+    badTokenApi =
+        ApiClient(baseUrl: base, token: 'definitely-wrong', caPem: caPem);
   });
 
   tearDownAll(() async {
@@ -205,7 +206,8 @@ void main() {
     await subscription.cancel();
   }, skip: _live ? false : _skipReason);
 
-  test('conversational /analyze: question -> slots -> dispatcher cap', () async {
+  test('conversational /analyze: question -> slots -> dispatcher cap',
+      () async {
     var result = await api.analyze(
       const AnalyzeRequest(
         transcript: 'Este un miros înțepător, cred că e ceva periculos.',

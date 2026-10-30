@@ -18,7 +18,8 @@ extension DispatcherDensityX on DispatcherDensity {
       };
 
   EdgeInsets get cardPadding => switch (this) {
-        DispatcherDensity.comfortable => const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        DispatcherDensity.comfortable =>
+          const EdgeInsets.fromLTRB(14, 14, 14, 12),
         DispatcherDensity.compact => const EdgeInsets.fromLTRB(10, 10, 10, 8),
       };
 

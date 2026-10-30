@@ -63,8 +63,7 @@ class DemoAccount {
   /// Short role badge for the UI ("ADMIN", "ENGINEER", ...).
   final String tag;
 
-  bool checkPassword(String input) =>
-      hashDemoPassword(input) == passwordHash;
+  bool checkPassword(String input) => hashDemoPassword(input) == passwordHash;
 
   Session toSession() => Session(
         role: role,

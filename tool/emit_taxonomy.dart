@@ -41,5 +41,6 @@ void main(List<String> args) {
   stderr
     ..writeln('OK · ${IncidentTaxonomy.all.length} incident types · '
         'schema v${IncidentTaxonomy.schemaVersion}')
-    ..writeln('Categories: ${byCategory.entries.map((e) => '${e.key}=${e.value}').join(', ')}');
+    ..writeln(
+        'Categories: ${byCategory.entries.map((e) => '${e.key}=${e.value}').join(', ')}');
 }

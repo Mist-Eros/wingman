@@ -65,10 +65,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   void initState() {
     super.initState();
     _demoTickets = buildDemoTickets();
-    _knownPendingIds = _demoTickets
-        .where((t) => t.isPendingOverride)
-        .map((t) => t.id)
-        .toSet();
+    _knownPendingIds =
+        _demoTickets.where((t) => t.isPendingOverride).map((t) => t.id).toSet();
     _flashController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
@@ -310,10 +308,10 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     return _runLiveAction(
       ticketId,
       () => board.confirm(
-            ticketId,
-            dispatcherId: session.userId,
-            dispatcherName: session.displayName,
-          ),
+        ticketId,
+        dispatcherId: session.userId,
+        dispatcherName: session.displayName,
+      ),
     ).then((_) {
       final t = board.find(ticketId);
       if (t != null) {
@@ -361,10 +359,10 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     return _runLiveAction(
       ticketId,
       () => board.deny(
-            ticketId,
-            reason: reason,
-            dispatcherId: session.userId,
-          ),
+        ticketId,
+        reason: reason,
+        dispatcherId: session.userId,
+      ),
     ).then((_) {
       final t = board.find(ticketId);
       if (t != null) {
@@ -431,11 +429,11 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     return _runLiveAction(
       ticketId,
       () => board.reclassify(
-            ticketId,
-            incidentCode: choice.incidentCode,
-            urgency: choice.urgency,
-            dispatcherId: session.userId,
-          ),
+        ticketId,
+        incidentCode: choice.incidentCode,
+        urgency: choice.urgency,
+        dispatcherId: session.userId,
+      ),
     ).then((_) {
       final t = board.find(ticketId);
       if (t != null) {
@@ -629,8 +627,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   } else {
                     setState(() {
                       final values = DispatcherDensity.values;
-                      _density =
-                          values[(_density.index + 1) % values.length];
+                      _density = values[(_density.index + 1) % values.length];
                     });
                   }
                 },
@@ -665,92 +662,92 @@ class _DispatcherScreenState extends State<DispatcherScreen>
         body: SafeArea(
           top: false,
           child: ListenableBuilder(
-          listenable: board,
-          builder: (context, _) {
-            final demo = _usingDemo(board);
-            final allTickets = _sourceTickets(board);
-            final pending = _pending(board);
-            final feed = _feed(board);
-            final selected = _findTicket(board, _selectedTicketId);
-            final liveCount = board.tickets.length;
+            listenable: board,
+            builder: (context, _) {
+              final demo = _usingDemo(board);
+              final allTickets = _sourceTickets(board);
+              final pending = _pending(board);
+              final feed = _feed(board);
+              final selected = _findTicket(board, _selectedTicketId);
+              final liveCount = board.tickets.length;
 
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final wide = constraints.maxWidth >= 1100;
-                final showDetail = wide && selected != null;
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 1100;
+                  final showDetail = wide && selected != null;
 
-                final feedPane = _FeedPane(
-                  demoMode: demo,
-                  liveCount: liveCount,
-                  connected: board.connected,
-                  lastEventLabel: _lastEventLabel,
-                  pendingFlash: _pendingFlash,
-                  density: _density,
-                  filters: _filters,
-                  allTickets: allTickets,
-                  pending: pending,
-                  feed: feed,
-                  selectedTicketId: _selectedTicketId,
-                  busyIds: _busyIds,
-                  loading: board.loading && !demo,
-                  lastError: demo ? null : board.lastError,
-                  lastActionError: demo ? null : board.lastActionError,
-                  compact: compact,
-                  onFiltersChanged: (next) => setState(() => _filters = next),
-                  onSelectTicket: (id) =>
-                      setState(() => _selectedTicketId = id),
-                  onConfirm: (id) => _confirm(session, board, id),
-                  onDenyReason: (id, reason) =>
-                      _deny(session, board, id, reason),
-                  onReclassifyChoice: (id, choice) =>
-                      _reclassify(session, board, id, choice),
-                  onDenyFlow: (id) => _denyFlow(session, board, id),
-                  onReclassifyFlow: (id) =>
-                      _reclassifyFlow(session, board, id),
-                  onLoadDemoScene: _reloadDemo,
-                );
+                  final feedPane = _FeedPane(
+                    demoMode: demo,
+                    liveCount: liveCount,
+                    connected: board.connected,
+                    lastEventLabel: _lastEventLabel,
+                    pendingFlash: _pendingFlash,
+                    density: _density,
+                    filters: _filters,
+                    allTickets: allTickets,
+                    pending: pending,
+                    feed: feed,
+                    selectedTicketId: _selectedTicketId,
+                    busyIds: _busyIds,
+                    loading: board.loading && !demo,
+                    lastError: demo ? null : board.lastError,
+                    lastActionError: demo ? null : board.lastActionError,
+                    compact: compact,
+                    onFiltersChanged: (next) => setState(() => _filters = next),
+                    onSelectTicket: (id) =>
+                        setState(() => _selectedTicketId = id),
+                    onConfirm: (id) => _confirm(session, board, id),
+                    onDenyReason: (id, reason) =>
+                        _deny(session, board, id, reason),
+                    onReclassifyChoice: (id, choice) =>
+                        _reclassify(session, board, id, choice),
+                    onDenyFlow: (id) => _denyFlow(session, board, id),
+                    onReclassifyFlow: (id) =>
+                        _reclassifyFlow(session, board, id),
+                    onLoadDemoScene: _reloadDemo,
+                  );
 
-                if (!wide) return feedPane;
+                  if (!wide) return feedPane;
 
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    SizedBox(
-                      width: 310,
-                      child: _FilterSidebar(
-                        tickets: allTickets,
-                        filters: _filters,
-                        demoMode: demo,
-                        liveCount: liveCount,
-                        history: _history,
-                        onChanged: (next) => setState(() => _filters = next),
-                        onSelectTicket: (id) =>
-                            setState(() => _selectedTicketId = id),
-                        onLoadDemoScene: _reloadDemo,
-                      ),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: feedPane),
-                    if (showDetail) ...[
-                      const VerticalDivider(width: 1),
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
                       SizedBox(
-                        width: 380,
-                        child: _DetailPane(
-                          ticket: selected,
-                          history: _history
-                              .where((e) => e.ticketId == selected.id)
-                              .toList(),
-                          onClose: () =>
-                              setState(() => _selectedTicketId = null),
+                        width: 310,
+                        child: _FilterSidebar(
+                          tickets: allTickets,
+                          filters: _filters,
+                          demoMode: demo,
+                          liveCount: liveCount,
+                          history: _history,
+                          onChanged: (next) => setState(() => _filters = next),
+                          onSelectTicket: (id) =>
+                              setState(() => _selectedTicketId = id),
+                          onLoadDemoScene: _reloadDemo,
                         ),
                       ),
+                      const VerticalDivider(width: 1),
+                      Expanded(child: feedPane),
+                      if (showDetail) ...[
+                        const VerticalDivider(width: 1),
+                        SizedBox(
+                          width: 380,
+                          child: _DetailPane(
+                            ticket: selected,
+                            history: _history
+                                .where((e) => e.ticketId == selected.id)
+                                .toList(),
+                            onClose: () =>
+                                setState(() => _selectedTicketId = null),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                );
-              },
-            );
-          },
-        ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -827,8 +824,7 @@ class _FeedPane extends StatelessWidget {
         if (!compact && demoMode)
           _Banner(
             color: const Color(0xFFE0F2FE),
-            text:
-                'Nu ești pe WSS live — Date locale (demo). '
+            text: 'Nu ești pe WSS live — Date locale (demo). '
                 'Live pe server: $liveCount tichet(e). '
                 'Comenzi pending: 1 Confirmă · 2 Respinge · 3 Reclasifică.',
             icon: Icons.science_outlined,
@@ -837,7 +833,8 @@ class _FeedPane extends StatelessWidget {
           ),
         if (!compact)
           _Banner(
-            color: connected ? const Color(0xFFECFDF3) : const Color(0xFFFEE4E2),
+            color:
+                connected ? const Color(0xFFECFDF3) : const Color(0xFFFEE4E2),
             text:
                 '${connected ? 'WSS OK' : 'WSS DOWN'} · Ultimul eveniment: $lastEventLabel',
             icon: connected ? Icons.bolt : Icons.link_off,
@@ -969,8 +966,7 @@ class _FeedPane extends StatelessWidget {
                             demoMode: demoMode,
                             onSelect: () => onSelectTicket(ticket.id),
                             onConfirm: () => onConfirm(ticket.id),
-                            onDeny: (reason) =>
-                                onDenyReason(ticket.id, reason),
+                            onDeny: (reason) => onDenyReason(ticket.id, reason),
                             onReclassify: (choice) =>
                                 onReclassifyChoice(ticket.id, choice),
                           ),
@@ -1032,7 +1028,8 @@ class _FeedPane extends StatelessWidget {
               else
                 for (final ticket in feed) ...[
                   AnimatedTicketItem(
-                    itemKey: '${ticket.id}-${ticket.version}-${ticket.status.wire}',
+                    itemKey:
+                        '${ticket.id}-${ticket.version}-${ticket.status.wire}',
                     child: TicketFeedCard(
                       ticket: ticket,
                       selected: selectedTicketId == ticket.id,
@@ -1425,7 +1422,8 @@ class _CompactUrgencyRow extends StatelessWidget {
           Icon(
             Icons.circle,
             size: 9,
-            color: connected ? const Color(0xFF027A48) : const Color(0xFFD92D20),
+            color:
+                connected ? const Color(0xFF027A48) : const Color(0xFFD92D20),
           ),
           const SizedBox(width: 6),
           Text(
@@ -1539,7 +1537,8 @@ class _Banner extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: const TextStyle(fontWeight: FontWeight.w600, height: 1.3),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, height: 1.3),
               ),
             ),
             if (actionLabel != null && onAction != null)

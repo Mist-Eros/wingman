@@ -204,7 +204,8 @@ void main() {
     expect(find.textContaining('1 membru alăturat'), findsOneWidget);
   });
 
-  testWidgets('two votes reach quorum and show resolved snackbar', (tester) async {
+  testWidgets('two votes reach quorum and show resolved snackbar',
+      (tester) async {
     final ticket = _sampleTicket(
       status: TicketStatus.inProgress,
       joined: const <String>['crew-1', 'crew-2'],

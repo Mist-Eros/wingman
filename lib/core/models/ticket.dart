@@ -366,7 +366,8 @@ class Ticket {
       id: id,
       incidentCode: _asString(json['incident_code'], 'incident_code'),
       labelRo: _asString(json['label_ro'], 'label_ro'),
-      category: IncidentCategory.fromWire(_asString(json['category'], 'category')),
+      category:
+          IncidentCategory.fromWire(_asString(json['category'], 'category')),
       urgency: Urgency.fromWire(_asString(json['urgency'], 'urgency')),
       status: TicketStatus.fromWire(_asString(json['status'], 'status')),
       source: ReportSource.fromWire(_asString(json['source'], 'source')),
@@ -377,8 +378,10 @@ class Ticket {
       confidence: _asDouble(json['confidence'], 'confidence'),
       aiSource: AiSource.fromWire(_asString(json['ai_source'], 'ai_source')),
       aiRationale: _asStringOrNull(json['ai_rationale']),
-      primaryDepartments: _departments(json['primary_departments'], 'primary_departments'),
-      standbyDepartments: _departments(json['standby_departments'], 'standby_departments'),
+      primaryDepartments:
+          _departments(json['primary_departments'], 'primary_departments'),
+      standbyDepartments:
+          _departments(json['standby_departments'], 'standby_departments'),
       joinedCrewIds: _strings(json['joined_crew_ids']),
       resolveVotes: _asInt(json['resolve_votes'] ?? 0, 'resolve_votes'),
       resolveVoterIds: _strings(json['resolve_voter_ids']),
@@ -441,13 +444,15 @@ class Ticket {
         dispatchedAt: identical(dispatchedAt, _unset)
             ? this.dispatchedAt
             : dispatchedAt as DateTime?,
-        resolvedAt:
-            identical(resolvedAt, _unset) ? this.resolvedAt : resolvedAt as DateTime?,
+        resolvedAt: identical(resolvedAt, _unset)
+            ? this.resolvedAt
+            : resolvedAt as DateTime?,
         resolutionNote: identical(resolutionNote, _unset)
             ? this.resolutionNote
             : resolutionNote as String?,
-        decidedBy:
-            identical(decidedBy, _unset) ? this.decidedBy : decidedBy as String?,
+        decidedBy: identical(decidedBy, _unset)
+            ? this.decidedBy
+            : decidedBy as String?,
         createdAt: createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         version: version ?? this.version,
@@ -563,7 +568,10 @@ String? _dateToWire(DateTime? value) =>
 List<String> _strings(Object? value) {
   if (value is! List) return const <String>[];
   return List<String>.unmodifiable(
-    <String>[for (final item in value) if (item is String) item],
+    <String>[
+      for (final item in value)
+        if (item is String) item
+    ],
   );
 }
 

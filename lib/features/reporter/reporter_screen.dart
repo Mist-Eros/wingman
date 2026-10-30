@@ -320,8 +320,8 @@ class _ReporterScreenState extends State<ReporterScreen> {
     final hint = c.hintCode;
     final hintLabel =
         hint == null ? null : IncidentTaxonomy.byCode(hint)?.labelRo;
-    final incomplete = result != null &&
-        (result.missing.isNotEmpty || result.needsMoreInfo);
+    final incomplete =
+        result != null && (result.missing.isNotEmpty || result.needsMoreInfo);
     return ListView(
       padding: const EdgeInsets.all(20),
       children: <Widget>[
@@ -405,7 +405,8 @@ class _ReporterScreenState extends State<ReporterScreen> {
         const SizedBox(height: 8),
         TextButton.icon(
           icon: const Icon(Icons.apps),
-          label: Text(tr('Schimbă tipul din meniu', 'Change the type from menu')),
+          label:
+              Text(tr('Schimbă tipul din meniu', 'Change the type from menu')),
           onPressed: () => _pickType(c),
         ),
       ],
@@ -438,9 +439,12 @@ class _ReporterScreenState extends State<ReporterScreen> {
                       Text(ticket.labelRo,
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 6),
-                      Text('${tr('Stare', 'Status')}: ${ticket.status.labelRo}'),
-                      Text('${tr('Locație', 'Location')}: ${ticket.location.display}'),
-                      Text('${tr('Echipe', 'Teams')}: ${ticket.departmentsLabel}'),
+                      Text(
+                          '${tr('Stare', 'Status')}: ${ticket.status.labelRo}'),
+                      Text(
+                          '${tr('Locație', 'Location')}: ${ticket.location.display}'),
+                      Text(
+                          '${tr('Echipe', 'Teams')}: ${ticket.departmentsLabel}'),
                       if (ticket.isPendingOverride) ...<Widget>[
                         const SizedBox(height: 6),
                         Text(
@@ -489,8 +493,9 @@ class _LanguageToggle extends StatelessWidget {
           ),
       ],
       selected: <ReporterLanguage>{controller.language},
-      onSelectionChanged:
-          listening ? null : (selection) => controller.setLanguage(selection.first),
+      onSelectionChanged: listening
+          ? null
+          : (selection) => controller.setLanguage(selection.first),
     );
   }
 }

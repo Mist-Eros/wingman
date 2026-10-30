@@ -186,8 +186,7 @@ class _OverrideCountdownCardState extends State<OverrideCountdownCard> {
                       backgroundColor: const Color(0xFF027A48),
                       minimumSize: const Size(120, 44),
                     ),
-                    onPressed:
-                        widget.busy || expired ? null : widget.onConfirm,
+                    onPressed: widget.busy || expired ? null : widget.onConfirm,
                     icon: widget.busy
                         ? const SizedBox(
                             width: 16,

@@ -17,12 +17,42 @@ import 'package:flutter/material.dart';
 
 /// One of the six looks of the day.
 enum SkyPeriod {
-  dawn('Zori', <Color>[Color(0xFF2B1B4D), Color(0xFF6B4A8A), Color(0xFFD98BA0), Color(0xFFF7C79A)]),
-  morning('Dimineață', <Color>[Color(0xFF123A63), Color(0xFF2F6FA8), Color(0xFF8CC4E8), Color(0xFFE6F3FB)]),
-  midday('Amiază', <Color>[Color(0xFF0E3A66), Color(0xFF1E6FB8), Color(0xFF63B3E8), Color(0xFFDDF1FF)]),
-  afternoon('După-amiază', <Color>[Color(0xFF153E66), Color(0xFF2C7CB5), Color(0xFF83C3DF), Color(0xFFF6E7C8)]),
-  sunset('Apus', <Color>[Color(0xFF2A1A3E), Color(0xFF7A3B5E), Color(0xFFD96A4E), Color(0xFFF7B267)]),
-  night('Noapte', <Color>[Color(0xFF040A18), Color(0xFF0A1B33), Color(0xFF123A63), Color(0xFF1E4B7A)]);
+  dawn('Zori', <Color>[
+    Color(0xFF2B1B4D),
+    Color(0xFF6B4A8A),
+    Color(0xFFD98BA0),
+    Color(0xFFF7C79A)
+  ]),
+  morning('Dimineață', <Color>[
+    Color(0xFF123A63),
+    Color(0xFF2F6FA8),
+    Color(0xFF8CC4E8),
+    Color(0xFFE6F3FB)
+  ]),
+  midday('Amiază', <Color>[
+    Color(0xFF0E3A66),
+    Color(0xFF1E6FB8),
+    Color(0xFF63B3E8),
+    Color(0xFFDDF1FF)
+  ]),
+  afternoon('După-amiază', <Color>[
+    Color(0xFF153E66),
+    Color(0xFF2C7CB5),
+    Color(0xFF83C3DF),
+    Color(0xFFF6E7C8)
+  ]),
+  sunset('Apus', <Color>[
+    Color(0xFF2A1A3E),
+    Color(0xFF7A3B5E),
+    Color(0xFFD96A4E),
+    Color(0xFFF7B267)
+  ]),
+  night('Noapte', <Color>[
+    Color(0xFF040A18),
+    Color(0xFF0A1B33),
+    Color(0xFF123A63),
+    Color(0xFF1E4B7A)
+  ]);
 
   const SkyPeriod(this.labelRo, this.skyColors);
 
@@ -172,9 +202,11 @@ class _SkyPainter extends CustomPainter {
 
     // Drifting solid-white clouds (parallax).
     _cloud(canvas, size, x: _wrap(0.10 + progress * 0.6), y: 0.30, scale: 1.05);
-    _cloud(canvas, size, x: _wrap(0.55 + progress * 0.45), y: 0.17, scale: 0.72);
+    _cloud(canvas, size,
+        x: _wrap(0.55 + progress * 0.45), y: 0.17, scale: 0.72);
     _cloud(canvas, size, x: _wrap(0.82 - progress * 0.5), y: 0.50, scale: 1.3);
-    _cloud(canvas, size, x: _wrap(0.32 - progress * 0.35), y: 0.64, scale: 0.58);
+    _cloud(canvas, size,
+        x: _wrap(0.32 - progress * 0.35), y: 0.64, scale: 0.58);
 
     // Faint airliner crossing the sky (top-down silhouette, so it reads as a
     // plane instead of a blob).
@@ -204,7 +236,10 @@ class _SkyPainter extends CustomPainter {
       radius,
       Paint()
         ..shader = RadialGradient(
-          colors: <Color>[tint.withValues(alpha: 0.62), tint.withValues(alpha: 0.0)],
+          colors: <Color>[
+            tint.withValues(alpha: 0.62),
+            tint.withValues(alpha: 0.0)
+          ],
         ).createShader(Rect.fromCircle(center: center, radius: radius)),
     );
     canvas.drawCircle(
@@ -228,7 +263,8 @@ class _SkyPainter extends CustomPainter {
             Colors.white.withValues(alpha: 0.16),
             Colors.white.withValues(alpha: 0.0),
           ],
-        ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.5)),
+        ).createShader(
+            Rect.fromCircle(center: center, radius: size.width * 0.5)),
     );
 
     // True crescent: draw a full disc in a layer, then cut the bite out with
@@ -265,7 +301,8 @@ class _SkyPainter extends CustomPainter {
       final base = 0.6 + random.nextDouble() * 2.2;
       final twinkle =
           0.55 + 0.45 * math.sin((progress * 2 * math.pi) + i * 0.7).abs();
-      paint.color = Colors.white.withValues(alpha: (0.25 + 0.55 * twinkle) * glow);
+      paint.color =
+          Colors.white.withValues(alpha: (0.25 + 0.55 * twinkle) * glow);
       canvas.drawCircle(Offset(x, y), base * 0.7, paint);
     }
   }
@@ -381,14 +418,16 @@ class _SkyPainter extends CustomPainter {
   // ── ground ─────────────────────────────────────────────────────────────────
   void _ground(Canvas canvas, Size size) {
     final top = size.height * 0.82;
-    final deep = period.isNight ? const Color(0xFF040A12) : const Color(0xFF0B1D31);
+    final deep =
+        period.isNight ? const Color(0xFF040A12) : const Color(0xFF0B1D31);
     final groundPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[deep.withValues(alpha: 0.92), const Color(0xFF050B14)],
       ).createShader(Rect.fromLTWH(0, top, size.width, size.height - top));
-    canvas.drawRect(Rect.fromLTWH(0, top, size.width, size.height - top), groundPaint);
+    canvas.drawRect(
+        Rect.fromLTWH(0, top, size.width, size.height - top), groundPaint);
 
     final dash = Paint()
       ..color = Colors.white.withValues(alpha: 0.30)

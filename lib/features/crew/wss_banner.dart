@@ -8,10 +8,8 @@ class WssBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        connected ? const Color(0xFF0F7A4F) : const Color(0xFFB3261E);
-    final bg =
-        connected ? const Color(0xFFE6F4EE) : const Color(0xFFFCE8E6);
+    final color = connected ? const Color(0xFF0F7A4F) : const Color(0xFFB3261E);
+    final bg = connected ? const Color(0xFFE6F4EE) : const Color(0xFFFCE8E6);
     final label = connected ? 'WSS: conectat' : 'WSS: deconectat';
 
     return AnimatedContainer(

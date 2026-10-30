@@ -92,7 +92,8 @@ class ServerEvent {
   bool get isConnectionEvent => connection != null;
   bool get isConnected => connection == true;
 
-  factory ServerEvent.connection(bool connected, {String? detail}) => ServerEvent(
+  factory ServerEvent.connection(bool connected, {String? detail}) =>
+      ServerEvent(
         type: connected ? typeConnected : typeDisconnected,
         connection: connected,
         detail: detail,
@@ -151,7 +152,8 @@ class ApiClient {
   }
 
   Map<String, dynamic> get wsHeaders => <String, dynamic>{
-        if (_token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $_token',
+        if (_token.isNotEmpty)
+          HttpHeaders.authorizationHeader: 'Bearer $_token',
       };
 
   // ── REST ──────────────────────────────────────────────────────────────────
@@ -384,11 +386,11 @@ class ApiClient {
     final client = newHttpClient();
     final limit = timeout ?? _timeout;
     try {
-      final request = await client.openUrl(method, _resolve(path)).timeout(limit);
+      final request =
+          await client.openUrl(method, _resolve(path)).timeout(limit);
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       if (_token.isNotEmpty) {
-        request.headers
-            .set(HttpHeaders.authorizationHeader, 'Bearer $_token');
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
       }
       if (body != null) {
         final payload = utf8.encode(jsonEncode(body));
@@ -702,9 +704,8 @@ class _RealtimeChannel {
     }
 
     final rawData = envelope['data'];
-    final data = rawData is Map<String, dynamic>
-        ? rawData
-        : const <String, dynamic>{};
+    final data =
+        rawData is Map<String, dynamic> ? rawData : const <String, dynamic>{};
 
     Ticket? ticket;
     final rawTicket = data['ticket'];

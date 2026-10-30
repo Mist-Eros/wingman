@@ -119,95 +119,194 @@ KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "SF-FIRE",
         (
-            "foc", "fum", "incendiu", "flacăr", "flacar", "arde", "scânte",
-            "scante", "fire", "smoke", "burning", "flame",
+            "foc",
+            "fum",
+            "incendiu",
+            "flacăr",
+            "flacar",
+            "arde",
+            "scânte",
+            "scante",
+            "fire",
+            "smoke",
+            "burning",
+            "flame",
         ),
     ),
     (
         "SF-FOD",
         (
-            "fod", "corp străin", "corp strain", "debris", "obstacol",
-            "pistă", "pista", "runway", "taxiway", "platformă", "platforma",
+            "fod",
+            "corp străin",
+            "corp strain",
+            "debris",
+            "obstacol",
+            "pistă",
+            "pista",
+            "runway",
+            "taxiway",
+            "platformă",
+            "platforma",
         ),
     ),
     (
         "SF-EQUIP",
         (
-            "stingător", "stingator", "hidrant", "extinctor", "extinguisher",
-            "fire equipment", "sprinkler",
+            "stingător",
+            "stingator",
+            "hidrant",
+            "extinctor",
+            "extinguisher",
+            "fire equipment",
+            "sprinkler",
         ),
     ),
     (
         "SF-SPILL",
         (
-            "scurgere", "lichid", "alunec", "ulei", "varsat", "vărsat",
-            "spill", "slip", "wet floor",
+            "scurgere",
+            "lichid",
+            "alunec",
+            "ulei",
+            "varsat",
+            "vărsat",
+            "spill",
+            "slip",
+            "wet floor",
         ),
     ),
     (
         "SC-BAG",
         (
-            "bagaj", "geamantan", "nesupravegheat", "abandonat", "rucsac",
-            "unattended", "luggage", "bag",
+            "bagaj",
+            "geamantan",
+            "nesupravegheat",
+            "abandonat",
+            "rucsac",
+            "unattended",
+            "luggage",
+            "bag",
         ),
     ),
     (
         "SC-ACCESS",
         (
-            "acces neautorizat", "neautorizat", "intrus", "efracție",
-            "efractie", "zonă restricționată", "zona restrictionata",
-            "usa de serviciu", "unauthorized", "secure area", "tailgating",
+            "acces neautorizat",
+            "neautorizat",
+            "intrus",
+            "efracție",
+            "efractie",
+            "zonă restricționată",
+            "zona restrictionata",
+            "usa de serviciu",
+            "unauthorized",
+            "secure area",
+            "tailgating",
         ),
     ),
     (
         "SC-ITEM",
         (
-            "obiect interzis", "cuțit", "cutit", "armă", "arma", "scaner",
-            "raze x", "raze-x", "x-ray", "prohibited", "knife", "weapon",
+            "obiect interzis",
+            "cuțit",
+            "cutit",
+            "armă",
+            "arma",
+            "scaner",
+            "raze x",
+            "raze-x",
+            "x-ray",
+            "prohibited",
+            "knife",
+            "weapon",
         ),
     ),
     (
         "SC-BEHAV",
         (
-            "agresiv", "altercație", "altercatie", "bătaie", "bataie",
-            "suspicios", "comportament", "panică", "panica", "suspect",
-            "fighting", "aggressive",
+            "agresiv",
+            "altercație",
+            "altercatie",
+            "bătaie",
+            "bataie",
+            "suspicios",
+            "comportament",
+            "panică",
+            "panica",
+            "suspect",
+            "fighting",
+            "aggressive",
         ),
     ),
     (
         "MT-BELT",
         (
-            "bandă", "banda", "transportoare", "carusel", "conveyor",
-            "belt", "bagaj blocat",
+            "bandă",
+            "banda",
+            "transportoare",
+            "carusel",
+            "conveyor",
+            "belt",
+            "bagaj blocat",
         ),
     ),
     (
         "MT-ESC",
         (
-            "escalator", "scări rulante", "scari rulante", "lift",
-            "ascensor", "elevator", "blocat între etaje",
+            "escalator",
+            "scări rulante",
+            "scari rulante",
+            "lift",
+            "ascensor",
+            "elevator",
+            "blocat între etaje",
         ),
     ),
     (
         "MT-JBRIDGE",
         (
-            "pasarelă", "pasarela", "jet bridge", "jetbridge", "boarding bridge",
-            "burduf", "poarta de îmbarcare", "poarta de imbarcare",
+            "pasarelă",
+            "pasarela",
+            "jet bridge",
+            "jetbridge",
+            "boarding bridge",
+            "burduf",
+            "poarta de îmbarcare",
+            "poarta de imbarcare",
         ),
     ),
     (
         "OP-QUEUE",
         (
-            "coadă", "coada", "aglomer", "flux", "îmbulzeală", "imbulzeala",
-            "security line", "queue",
+            "coadă",
+            "coada",
+            "aglomer",
+            "flux",
+            "îmbulzeală",
+            "imbulzeala",
+            "security line",
+            "queue",
         ),
     ),
     (
         "OP-IT",
         (
-            "it", "sistem", "server", "check-in", "check in", "dcs",
-            "rețea", "retea", "network", "calculator", "imprimantă",
-            "imprimanta", "printer", "outage", "căzut", "cazut",
+            "it",
+            "sistem",
+            "server",
+            "check-in",
+            "check in",
+            "dcs",
+            "rețea",
+            "retea",
+            "network",
+            "calculator",
+            "imprimantă",
+            "imprimanta",
+            "printer",
+            "outage",
+            "căzut",
+            "cazut",
         ),
     ),
 )
@@ -560,16 +659,28 @@ _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "SC-ACCESS",
         (
-            "acces neautorizat", "zona restricționat", "zona restrictionat",
-            "efrac", "a intrat fără", "a intrat fara", "intrat ilegal",
-            "fără drept", "fara drept",
+            "acces neautorizat",
+            "zona restricționat",
+            "zona restrictionat",
+            "efrac",
+            "a intrat fără",
+            "a intrat fara",
+            "intrat ilegal",
+            "fără drept",
+            "fara drept",
         ),
     ),
     (
         "SC-BAG",
         (
-            "bagaj nesupravegheat", "bagaj abandonat", "bagaj suspect",
-            "bagaj lăsat", "bagaj lasat", "valiz", "geamantan", "calet",
+            "bagaj nesupravegheat",
+            "bagaj abandonat",
+            "bagaj suspect",
+            "bagaj lăsat",
+            "bagaj lasat",
+            "valiz",
+            "geamantan",
+            "calet",
         ),
     ),
     (
@@ -584,8 +695,13 @@ _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 
 _UNATTENDED_BAG_SIGNALS: tuple[str, ...] = (
-    "fără proprietar", "fara proprietar", "nesupravegheat", "abandonat",
-    "nimeni nu știe al cui", "nimeni nu stie al cui", "proprietar necunoscut",
+    "fără proprietar",
+    "fara proprietar",
+    "nesupravegheat",
+    "abandonat",
+    "nimeni nu știe al cui",
+    "nimeni nu stie al cui",
+    "proprietar necunoscut",
 )
 
 
@@ -637,9 +753,9 @@ def apply_classification_guards(
             incident_code="SC-BAG",
             urgency=urgency,
             confidence=max(min(classification.confidence, 0.95), 0.85),
-            rationale=(
-                classification.rationale + " [bagaj nesupravegheat]"
-            ).strip()[:200],
+            rationale=(classification.rationale + " [bagaj nesupravegheat]").strip()[
+                :200
+            ],
         )
 
     for code, words in _KEYWORD_GUARDS:
@@ -671,9 +787,9 @@ def apply_classification_guards(
             incident_code=code,
             urgency=urgency,
             confidence=max(min(classification.confidence, 0.95), 0.80),
-            rationale=(
-                classification.rationale + f" [ghid cheie: {matched}]"
-            ).strip()[:200],
+            rationale=(classification.rationale + f" [ghid cheie: {matched}]").strip()[
+                :200
+            ],
         )
     return classification
 
@@ -688,17 +804,49 @@ def apply_classification_guards(
 # are always critical.
 # ─────────────────────────────────────────────────────────────────────────────
 _CRITICAL_SIGNALS: tuple[str, ...] = (
-    "fum", "foc", "incendiu", "exploz", "gaz", "lavă", "lava", "toxic",
-    "otrav", "otrăv", "radioactiv", "substanță periculoasă",
-    "substanta periculoasa", "nu respiră", "nu respira", "inconștient",
-    "inconstient", "leșin", "lesin", "infarct", "hemoragie", "sânger",
-    "sanger", "ameninț", "amenint", "sinucid", "criză", "criza",
-    "în pericol", "in pericol",
+    "fum",
+    "foc",
+    "incendiu",
+    "exploz",
+    "gaz",
+    "lavă",
+    "lava",
+    "toxic",
+    "otrav",
+    "otrăv",
+    "radioactiv",
+    "substanță periculoasă",
+    "substanta periculoasa",
+    "nu respiră",
+    "nu respira",
+    "inconștient",
+    "inconstient",
+    "leșin",
+    "lesin",
+    "infarct",
+    "hemoragie",
+    "sânger",
+    "sanger",
+    "ameninț",
+    "amenint",
+    "sinucid",
+    "criză",
+    "criza",
+    "în pericol",
+    "in pericol",
 )
 # Each group found in the text raises the urgency by one level (capped at critical).
 _ADD_ONE_GROUPS: tuple[tuple[str, ...], ...] = (
-    ("inflamabil", "combustibil", "benzină", "benzina", "motorină", "motorina",
-     "scânte", "scante"),
+    (
+        "inflamabil",
+        "combustibil",
+        "benzină",
+        "benzina",
+        "motorină",
+        "motorina",
+        "scânte",
+        "scante",
+    ),
     ("se extinde", "se răspândește", "se raspandeste", "degajare", "degajări"),
     ("pistă", "pista", "platformă", "platforma", "avion", "aeroport"),
     ("a căzut", "a cazut", "căzut", "cazut", "alunecat", "împiedicat", "impiedicat"),
@@ -710,10 +858,26 @@ _SIZE_WORDS = ("mare", "uriaș", "urias", "uriașă", "uriasa", "catastrofal", "
 # Medical reports have no dedicated type yet: triage them to OP-OTHER (which
 # now lists Department.medical as standby) and make them critical.
 _MEDICAL_SIGNALS: tuple[str, ...] = (
-    "leșin", "lesin", "inconștient", "inconstient", "nu respiră", "nu respira",
-    "infarct", "dureri în piept", "dureri in piept", "hemoragie", "sânger",
-    "sanger", "ambulanță", "ambulanta", "doctor", "medical", "rănit grav",
-    "ranit grav", "comă", "coma",
+    "leșin",
+    "lesin",
+    "inconștient",
+    "inconstient",
+    "nu respiră",
+    "nu respira",
+    "infarct",
+    "dureri în piept",
+    "dureri in piept",
+    "hemoragie",
+    "sânger",
+    "sanger",
+    "ambulanță",
+    "ambulanta",
+    "doctor",
+    "medical",
+    "rănit grav",
+    "ranit grav",
+    "comă",
+    "coma",
 )
 _MEDICAL_OVERRIABLE = {"OP-OTHER", "OP-QUEUE", "OP-IT", "SC-BEHAV"}
 
@@ -740,9 +904,9 @@ def apply_transcript_urgency(
             classification,
             incident_code="OP-OTHER",
             confidence=max(min(classification.confidence, 0.95), 0.80),
-            rationale=(
-                classification.rationale + " [medical: triaj dispecer]"
-            ).strip()[:200],
+            rationale=(classification.rationale + " [medical: triaj dispecer]").strip()[
+                :200
+            ],
         )
         target = max(target, level("critical"))
 
@@ -752,9 +916,8 @@ def apply_transcript_urgency(
         for group in _ADD_ONE_GROUPS:
             if any(word in text for word in group):
                 target = min(3, target + 1)
-        if (
-            classification.incident_code in _SIZE_CODES
-            and any(word in text for word in _SIZE_WORDS)
+        if classification.incident_code in _SIZE_CODES and any(
+            word in text for word in _SIZE_WORDS
         ):
             target = min(3, target + 1)
 
@@ -777,6 +940,8 @@ def apply_transcript_urgency(
             classification.rationale + f" [urgență din teren: {urgency}]"
         ).strip()[:200],
     )
+
+
 #
 # The app asks one question per turn, speaks it, appends the answer to the
 # transcript and posts again with `clarifications_asked + 1`. The server keeps
@@ -794,9 +959,7 @@ def apply_transcript_urgency(
 MAX_CLARIFICATIONS = 3
 REQUIRED_SLOTS: tuple[str, ...] = ("incident_code", "location")
 
-QUESTION_TYPE = (
-    "Ce fel de problemă este: siguranță/incendiu, securitate, mentenanță sau operațional?"
-)
+QUESTION_TYPE = "Ce fel de problemă este: siguranță/incendiu, securitate, mentenanță sau operațional?"
 QUESTION_LOCATION = "Unde se întâmplă exact? (terminal, poartă sau zonă)"
 
 _LOCATION_PATTERNS: tuple[tuple[str, str], ...] = (
@@ -956,9 +1119,34 @@ _PERSON_HARM_RE = re.compile(
 
 
 _LOCATION_TRAILING_STOPWORDS: tuple[str, ...] = (
-    "și", "si", "sau", "dacă", "daca", "când", "cand", "unde", "care",
-    "este", "sunt", "se", "a", "al", "ale", "lângă", "langa", "aproape",
-    "din", "de", "la", "pe", "în", "in", "cu", "pentru", "către", "catre",
+    "și",
+    "si",
+    "sau",
+    "dacă",
+    "daca",
+    "când",
+    "cand",
+    "unde",
+    "care",
+    "este",
+    "sunt",
+    "se",
+    "a",
+    "al",
+    "ale",
+    "lângă",
+    "langa",
+    "aproape",
+    "din",
+    "de",
+    "la",
+    "pe",
+    "în",
+    "in",
+    "cu",
+    "pentru",
+    "către",
+    "catre",
 )
 
 

@@ -376,7 +376,8 @@ class _DispatchPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final progress = quorum == 0 ? 0.0 : (resolveVotes / quorum).clamp(0.0, 1.0);
+    final progress =
+        quorum == 0 ? 0.0 : (resolveVotes / quorum).clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,
@@ -540,7 +541,8 @@ class _Chip extends StatelessWidget {
             ? color.withValues(alpha: 0.14)
             : color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: filled ? 0.28 : 0.22)),
+        border:
+            Border.all(color: color.withValues(alpha: filled ? 0.28 : 0.22)),
       ),
       child: Text(
         label,

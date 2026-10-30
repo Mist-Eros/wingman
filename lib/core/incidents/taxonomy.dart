@@ -418,7 +418,7 @@ class IncidentTaxonomy {
         Department.security,
         Department.maintenance,
         // Medical triage: faint / not breathing / chest pain land here until a
-        // dedicated medical type exists (see docs/backlog.md + NOTES_FOR_LEAD).
+        // dedicated medical type exists (see docs/backlog.md + docs/reporter.md).
         Department.medical,
       ],
     ),
@@ -433,7 +433,8 @@ class IncidentTaxonomy {
       List<String>.unmodifiable(all.map((type) => type.code));
 
   /// Lookup used by the app when a ticket arrives from the server.
-  static IncidentType? byCode(String code) => _byCode[code.trim().toUpperCase()];
+  static IncidentType? byCode(String code) =>
+      _byCode[code.trim().toUpperCase()];
 
   /// Throwing lookup — use in UI flows where an unknown code is a real bug.
   static IncidentType requireCode(String code) {
@@ -493,7 +494,8 @@ class IncidentTaxonomy {
     final problems = <String>[];
 
     if (all.length != expectedCount) {
-      problems.add('expected $expectedCount incident types, found ${all.length}');
+      problems
+          .add('expected $expectedCount incident types, found ${all.length}');
     }
 
     final seen = <String>{};
@@ -518,7 +520,8 @@ class IncidentTaxonomy {
       final duplicates = <Department>{};
       for (final department in type.primaryDepartments) {
         if (!duplicates.add(department)) {
-          problems.add('$code: duplicate primary department ${department.wire}');
+          problems
+              .add('$code: duplicate primary department ${department.wire}');
         }
       }
     }
@@ -530,7 +533,8 @@ class IncidentTaxonomy {
     }
 
     if (problems.isNotEmpty) {
-      throw StateError('Invalid incident taxonomy:\n - ${problems.join('\n - ')}');
+      throw StateError(
+          'Invalid incident taxonomy:\n - ${problems.join('\n - ')}');
     }
   }
 }

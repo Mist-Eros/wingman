@@ -48,7 +48,9 @@ def dart_ticket_keys(source: str) -> tuple[set[str], set[str]]:
 
 
 def dart_report_keys(source: str) -> set[str]:
-    section = source.split("class ReportDraft", 1)[-1].split("Map<String, dynamic> toJson()", 1)[-1]
+    section = source.split("class ReportDraft", 1)[-1].split(
+        "Map<String, dynamic> toJson()", 1
+    )[-1]
     section = section.split("};", 1)[0]
     return set(re.findall(r"'([a-z_]+)'\s*:", section))
 
@@ -56,7 +58,9 @@ def dart_report_keys(source: str) -> set[str]:
 def python_ticket_keys(source: str) -> tuple[set[str], set[str]]:
     """Keys of the ticket dict and location dict built in TicketStore.create()."""
     section = source.split("async def create(", 1)[-1].split("async def confirm(", 1)[0]
-    ticket_block = section.split("ticket: dict[str, Any] = {", 1)[-1].split("\n        }", 1)[0]
+    ticket_block = section.split("ticket: dict[str, Any] = {", 1)[-1].split(
+        "\n        }", 1
+    )[0]
     ticket_keys = set(re.findall(r'^\s{12}"([a-z_]+)":', ticket_block, re.M))
     location_block = ticket_block.split('"location": {', 1)[-1].split("},", 1)[0]
     location_keys = set(re.findall(r'"([a-z_]+)":', location_block))

@@ -54,7 +54,8 @@ void main() {
       IncidentTaxonomy.validate();
       expect(IncidentTaxonomy.all, hasLength(14));
       expect(IncidentTaxonomy.codes.toSet(), hasLength(14));
-      expect(IncidentTaxonomy.codes.toSet(), hasLength(IncidentTaxonomy.all.length));
+      expect(IncidentTaxonomy.codes.toSet(),
+          hasLength(IncidentTaxonomy.all.length));
 
       for (final category in IncidentCategory.values) {
         expect(
@@ -65,8 +66,10 @@ void main() {
       }
 
       for (final type in IncidentTaxonomy.all) {
-        expect(type.code, type.code.toUpperCase(), reason: '${type.code} must be uppercase');
-        expect(type.primaryDepartments, isNotEmpty, reason: '${type.code} needs a primary department');
+        expect(type.code, type.code.toUpperCase(),
+            reason: '${type.code} must be uppercase');
+        expect(type.primaryDepartments, isNotEmpty,
+            reason: '${type.code} needs a primary department');
         expect(type.labelRo.trim(), isNotEmpty);
       }
     });
@@ -75,14 +78,16 @@ void main() {
       expect(IncidentTaxonomy.isValidCode('OP-OTHER'), isTrue);
       expect(IncidentTaxonomy.byCode('sf-fire')?.code, 'SF-FIRE');
       expect(IncidentTaxonomy.isValidCode('XX-NOT-REAL'), isFalse);
-      expect(() => IncidentTaxonomy.requireCode('XX-NOT-REAL'), throwsFormatException);
+      expect(() => IncidentTaxonomy.requireCode('XX-NOT-REAL'),
+          throwsFormatException);
     });
 
     test('exports a backend catalog of the same shape', () {
       final catalog = IncidentTaxonomy.toJson();
       expect(catalog['version'], IncidentTaxonomy.schemaVersion);
       expect(catalog['types'], hasLength(14));
-      final first = (catalog['types'] as List<dynamic>).first as Map<String, dynamic>;
+      final first =
+          (catalog['types'] as List<dynamic>).first as Map<String, dynamic>;
       expect(first.keys.toSet(), <String>{
         'code',
         'label_ro',
@@ -96,10 +101,12 @@ void main() {
 
   group('enum wire parsing', () {
     test('accepts backend values', () {
-      expect(IncidentCategory.fromWire('safety_fire'), IncidentCategory.safetyFire);
+      expect(IncidentCategory.fromWire('safety_fire'),
+          IncidentCategory.safetyFire);
       expect(Urgency.fromWire('critical'), Urgency.critical);
       expect(Department.fromWire('fire_rescue'), Department.fireRescue);
-      expect(TicketStatus.fromWire('pending_override'), TicketStatus.pendingOverride);
+      expect(TicketStatus.fromWire('pending_override'),
+          TicketStatus.pendingOverride);
       expect(ReportSource.fromWire('voice'), ReportSource.voice);
       expect(AiSource.fromWire('manual'), AiSource.manual);
     });
@@ -163,7 +170,8 @@ void main() {
 
     test('copyWith can clear nullable fields', () {
       final ticket = Ticket.fromJson(sampleTicketJson());
-      final cleared = ticket.copyWith(status: TicketStatus.resolved, decidedBy: null);
+      final cleared =
+          ticket.copyWith(status: TicketStatus.resolved, decidedBy: null);
       expect(cleared.status, TicketStatus.resolved);
       expect(cleared.decidedBy, isNull);
       expect(cleared.id, ticket.id);

@@ -175,7 +175,8 @@ String errorMessage(ReporterController c, Tr tr) {
     case ReporterError.transcribe:
     case ReporterError.server:
       return (detail == null || detail.isEmpty)
-          ? tr('Ceva n-a mers. Încearcă din nou.', 'Something went wrong. Try again.')
+          ? tr('Ceva n-a mers. Încearcă din nou.',
+              'Something went wrong. Try again.')
           : detail;
     case null:
       return '';
@@ -231,27 +232,30 @@ class UnderstoodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fields = result.fields;
     final text = Theme.of(context).textTheme;
-    final typeLabel =
-        typeOverride ?? fields.labelRo ?? tr('nu am înțeles tipul', 'type not understood');
-    final location = fields.location.isEmpty
-        ? tr('lipsește', 'missing')
-        : fields.location;
+    final typeLabel = typeOverride ??
+        fields.labelRo ??
+        tr('nu am înțeles tipul', 'type not understood');
+    final location =
+        fields.location.isEmpty ? tr('lipsește', 'missing') : fields.location;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(tr('Ce am înțeles', 'What I understood'), style: text.titleSmall),
+            Text(tr('Ce am înțeles', 'What I understood'),
+                style: text.titleSmall),
             const SizedBox(height: 8),
-            _Row(Icons.report_problem_outlined, tr('Tip', 'Type'),
-                typeOverride == null ? typeLabel : '$typeLabel (${tr('ales de tine', 'your pick')})'),
+            _Row(
+                Icons.report_problem_outlined,
+                tr('Tip', 'Type'),
+                typeOverride == null
+                    ? typeLabel
+                    : '$typeLabel (${tr('ales de tine', 'your pick')})'),
             _Row(Icons.place_outlined, tr('Locație', 'Location'), location),
             for (final entry in details.entries)
               _Row(
-                entry.key == 'size'
-                    ? Icons.straighten
-                    : Icons.groups_outlined,
+                entry.key == 'size' ? Icons.straighten : Icons.groups_outlined,
                 detailLabel(entry.key, ro: tr.language == ReporterLanguage.ro),
                 entry.value,
               ),

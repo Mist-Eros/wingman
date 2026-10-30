@@ -83,9 +83,7 @@ def load_settings() -> Settings:
         whisper_compute_type=_env_str("WHISPER_COMPUTE_TYPE", "int8"),
         max_audio_bytes=max(1_000_000, _env_int("MAX_AUDIO_BYTES", 25 * 1024 * 1024)),
         allow_dev_reset=_env_bool("ENABLE_DEV_RESET", True),
-        taxonomy_path=Path(
-            _env_str("TAXONOMY_PATH", str(BASE_DIR / "taxonomy.json"))
-        ),
+        taxonomy_path=Path(_env_str("TAXONOMY_PATH", str(BASE_DIR / "taxonomy.json"))),
     )
 
 

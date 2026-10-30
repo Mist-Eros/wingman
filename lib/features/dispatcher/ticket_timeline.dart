@@ -107,8 +107,7 @@ class TicketTimeline extends StatelessWidget {
           label: 'Rezolvat',
           done: ticket.status == TicketStatus.resolved,
           time: ticket.resolvedAt,
-          detail:
-              'Voturi ${ticket.resolveVotes}/${ticket.quorum}',
+          detail: 'Voturi ${ticket.resolveVotes}/${ticket.quorum}',
         ),
       );
     }

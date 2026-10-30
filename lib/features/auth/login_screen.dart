@@ -92,7 +92,8 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openLoginSheet(BuildContext context, DemoAccount account) async {
+  Future<void> _openLoginSheet(
+      BuildContext context, DemoAccount account) async {
     final session = await showModalBottomSheet<Session>(
       context: context,
       isScrollControlled: true,
@@ -194,7 +195,9 @@ class _Header extends StatelessWidget {
               Icon(
                 connected ? Icons.wifi_rounded : Icons.wifi_off_rounded,
                 size: 16,
-                color: connected ? const Color(0xFF7CE8B4) : const Color(0xFFFFB4AB),
+                color: connected
+                    ? const Color(0xFF7CE8B4)
+                    : const Color(0xFFFFB4AB),
               ),
               const SizedBox(width: WingmanSpacing.sm),
               Text(
@@ -431,7 +434,8 @@ class _LoginSheetState extends State<_LoginSheet> {
       Navigator.of(context).pop(widget.account.toSession());
       return;
     }
-    setState(() => _error = 'Parolă greșită pentru @${widget.account.username}.');
+    setState(
+        () => _error = 'Parolă greșită pentru @${widget.account.username}.');
   }
 
   @override

@@ -113,36 +113,68 @@ IncidentCategory? _guessCategory(String norm) {
 // ── location ────────────────────────────────────────────────────────────────
 
 const Map<String, String> _placeNouns = <String, String>{
-  'poarta': 'Poarta', 'gate': 'Gate', 'stand': 'Stand', 'sectorul': 'Sector',
-  'sector': 'Sector', 'terminalul': 'Terminal', 'terminal': 'Terminal',
-  'zona': 'Zona', 'zone': 'Zone', 'banda': 'Banda', 'carousel': 'Carousel',
+  'poarta': 'Poarta',
+  'gate': 'Gate',
+  'stand': 'Stand',
+  'sectorul': 'Sector',
+  'sector': 'Sector',
+  'terminalul': 'Terminal',
+  'terminal': 'Terminal',
+  'zona': 'Zona',
+  'zone': 'Zone',
+  'banda': 'Banda',
+  'carousel': 'Carousel',
   'pista': 'Pista',
-  'runway': 'Runway', 'nivel': 'Nivel', 'nivelul': 'Nivel', 'etaj': 'Etaj',
-  'etajul': 'Etaj', 'floor': 'Floor', 'level': 'Level', 'ghiseul': 'Ghișeu',
+  'runway': 'Runway',
+  'nivel': 'Nivel',
+  'nivelul': 'Nivel',
+  'etaj': 'Etaj',
+  'etajul': 'Etaj',
+  'floor': 'Floor',
+  'level': 'Level',
+  'ghiseul': 'Ghișeu',
   'desk': 'Desk',
 };
 
 /// Places that are a location even without a number ("pe pistă").
 const Map<String, String> _placeWords = <String, String>{
-  'pista': 'Pistă 09/27', 'runway': 'Pistă 09/27',
-  'platforma': 'Platformă', 'apron': 'Platformă',
-  'terminal': 'Terminal', 'terminalul': 'Terminal',
-  'parcare': 'Parcare', 'parcarea': 'Parcare',
-  'hol': 'Hol', 'holul': 'Hol',
-  'intrare': 'Intrarea principală', 'intrarea': 'Intrarea principală',
+  'pista': 'Pistă 09/27',
+  'runway': 'Pistă 09/27',
+  'platforma': 'Platformă',
+  'apron': 'Platformă',
+  'terminal': 'Terminal',
+  'terminalul': 'Terminal',
+  'parcare': 'Parcare',
+  'parcarea': 'Parcare',
+  'hol': 'Hol',
+  'holul': 'Hol',
+  'intrare': 'Intrarea principală',
+  'intrarea': 'Intrarea principală',
   'intrare principala': 'Intrarea principală',
-  'iesire': 'Ieșirea principală', 'iesirea': 'Ieșirea principală',
-  'sosiri': 'Terminal Sosiri', 'plecari': 'Terminal Plecări',
-  'arrivals': 'Terminal Sosiri', 'departures': 'Terminal Plecări',
-  'vama': 'Vamă', 'customs': 'Vamă',
-  'cargo': 'Terminal Cargo', 'hangar': 'Hangar',
+  'iesire': 'Ieșirea principală',
+  'iesirea': 'Ieșirea principală',
+  'sosiri': 'Terminal Sosiri',
+  'plecari': 'Terminal Plecări',
+  'arrivals': 'Terminal Sosiri',
+  'departures': 'Terminal Plecări',
+  'vama': 'Vamă',
+  'customs': 'Vamă',
+  'cargo': 'Terminal Cargo',
+  'hangar': 'Hangar',
   'terasa': 'Terasă / zonă publică',
-  'control': 'Control securitate', 'securitate': 'Control securitate',
-  'imbarcare': 'Zona de îmbarcare', 'boarding': 'Zona de îmbarcare',
-  'checkin': 'Check-in', 'check-in': 'Check-in',
+  'control': 'Control securitate',
+  'securitate': 'Control securitate',
+  'imbarcare': 'Zona de îmbarcare',
+  'boarding': 'Zona de îmbarcare',
+  'checkin': 'Check-in',
+  'check-in': 'Check-in',
   'turn': 'Turn de control',
-  'toaleta': 'Toaletă', 'toalete': 'Toaletă', 'restroom': 'Restroom',
-  'cafenea': 'Cafenea', 'magazin': 'Magazin', 'depozit': 'Depozit',
+  'toaleta': 'Toaletă',
+  'toalete': 'Toaletă',
+  'restroom': 'Restroom',
+  'cafenea': 'Cafenea',
+  'magazin': 'Magazin',
+  'depozit': 'Depozit',
 };
 
 final RegExp _placeWithId = RegExp(
@@ -163,8 +195,8 @@ String _findLocation(String norm) {
   final withId = _placeWithId.firstMatch(norm);
   if (withId != null) {
     final found = withId.group(1)!;
-    final noun = _placeNouns[found] ??
-        '${found[0].toUpperCase()}${found.substring(1)}';
+    final noun =
+        _placeNouns[found] ?? '${found[0].toUpperCase()}${found.substring(1)}';
     final raw = withId.group(2)!;
     final id = numberFromToken(raw) ?? raw.toUpperCase();
     return '$noun $id';
@@ -248,9 +280,11 @@ String? _findPeople(String norm) {
 }
 
 final RegExp _count = RegExp(
-  r'\b(\d{1,3}|' + kNumberWordsPattern + r')\s+'
-  r'(persoane|persoana|oameni|barbati|femei|copii|people|persons|person|men|'
-  r'women|individuals|children)\b',
+  r'\b(\d{1,3}|' +
+      kNumberWordsPattern +
+      r')\s+'
+          r'(persoane|persoana|oameni|barbati|femei|copii|people|persons|person|men|'
+          r'women|individuals|children)\b',
 );
 
 String? _findCount(String original, String norm) {
@@ -265,10 +299,14 @@ String? yesNoFromAnswer(String answer) {
   if (_peopleYes.hasMatch(norm)) return 'Da';
   if (_peopleNo.hasMatch(norm)) return 'Nu';
   final tokens = tokensOf(norm);
-  if (tokens.contains('nu') || tokens.contains('no') || tokens.contains('nope')) {
+  if (tokens.contains('nu') ||
+      tokens.contains('no') ||
+      tokens.contains('nope')) {
     return 'Nu';
   }
-  if (tokens.contains('da') || tokens.contains('yes') || tokens.contains('yeah')) {
+  if (tokens.contains('da') ||
+      tokens.contains('yes') ||
+      tokens.contains('yeah')) {
     return 'Da';
   }
   return null;

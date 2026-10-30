@@ -102,7 +102,8 @@ class _PreviewBoard extends ChangeNotifier {
 
   void _replace(Ticket updated) {
     _tickets = <Ticket>[
-      for (final t in _tickets) if (t.id == updated.id) updated else t,
+      for (final t in _tickets)
+        if (t.id == updated.id) updated else t,
     ];
     notifyListeners();
   }

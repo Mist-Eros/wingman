@@ -42,8 +42,8 @@ class DispatcherHistoryEntry {
 List<Ticket> sortDispatcherTickets(Iterable<Ticket> tickets) {
   final list = tickets.toList();
   list.sort((a, b) {
-    final byPending = (b.isPendingOverride ? 1 : 0)
-        .compareTo(a.isPendingOverride ? 1 : 0);
+    final byPending =
+        (b.isPendingOverride ? 1 : 0).compareTo(a.isPendingOverride ? 1 : 0);
     if (byPending != 0) return byPending;
     final byUrgency = b.urgency.level.compareTo(a.urgency.level);
     if (byUrgency != 0) return byUrgency;

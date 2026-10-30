@@ -103,8 +103,7 @@ int sizeLevelOf(String? phrase) {
 
   final measure = _measure.firstMatch(norm);
   if (measure != null) {
-    final value =
-        double.tryParse(measure.group(1)!.replaceAll(',', '.')) ?? 0;
+    final value = double.tryParse(measure.group(1)!.replaceAll(',', '.')) ?? 0;
     final unit = measure.group(2)!;
     double meters = value;
     switch (unit) {
@@ -132,10 +131,27 @@ int sizeLevelOf(String? phrase) {
     return meters >= 10 ? 2 : (meters >= 3 ? 1 : 0);
   }
 
-  const small = <String>['mica', 'mic', 'mici', 'small', 'tiny', 'little',
-    'minuscula', 'minuscul'];
-  const huge = <String>['uriasa', 'uriasi', 'imensa', 'imens', 'enorma',
-    'enorm', 'huge', 'massive', 'giant'];
+  const small = <String>[
+    'mica',
+    'mic',
+    'mici',
+    'small',
+    'tiny',
+    'little',
+    'minuscula',
+    'minuscul'
+  ];
+  const huge = <String>[
+    'uriasa',
+    'uriasi',
+    'imensa',
+    'imens',
+    'enorma',
+    'enorm',
+    'huge',
+    'massive',
+    'giant'
+  ];
   const big = <String>['mare', 'mari', 'large', 'big', 'intinsa', 'intins'];
   const intensifiers = <String>['foarte', 'extrem', 'very', 'really'];
 
@@ -164,8 +180,8 @@ class Severity {
   final bool escalated;
 }
 
-Urgency _urgencyOf(int level) => Urgency.values
-    .firstWhere((urgency) => urgency.level == level.clamp(1, 4));
+Urgency _urgencyOf(int level) =>
+    Urgency.values.firstWhere((urgency) => urgency.level == level.clamp(1, 4));
 
 Severity assessSeverity({
   required Urgency floor,

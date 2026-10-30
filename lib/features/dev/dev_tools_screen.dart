@@ -84,7 +84,8 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
       final ticket = await _api.report(
         const ReportDraft(
           source: ReportSource.voice,
-          transcript: 'Ceva nu este în regulă pe hol, nu îmi dau seama exact ce.',
+          transcript:
+              'Ceva nu este în regulă pe hol, nu îmi dau seama exact ce.',
           reporterId: 'dev-tools',
           reporterName: 'Dev Tools',
           forceOverride: true,
@@ -203,8 +204,8 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
             '${TimeOfDay.now().minute.toString().padLeft(2, '0')}). '
             'Aplicația alege automat; aici poți forța pentru poze/demo. '
             'Build determinist: --dart-define=SKY_PERIOD=night',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: WingmanColors.muted),
+            style:
+                theme.textTheme.bodySmall?.copyWith(color: WingmanColors.muted),
           ),
           const SizedBox(height: WingmanSpacing.md),
           Wrap(
@@ -396,8 +397,8 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
           Text(
             'Control room (desktop): rulează scripts\\serve_dashboard.ps1 '
             '(Waterfox) sau deschide http://127.0.0.1:8090/',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: WingmanColors.muted),
+            style:
+                theme.textTheme.bodySmall?.copyWith(color: WingmanColors.muted),
           ),
         ],
       ),

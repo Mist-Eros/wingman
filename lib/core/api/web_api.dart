@@ -42,7 +42,8 @@ class WebApi {
     if (response.statusCode != 200) {
       throw WebApiException('HTTP ${response.statusCode} la /api/tickets');
     }
-    final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final body =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
     final rawTickets = body['tickets'] as List<dynamic>? ?? const <dynamic>[];
     return <Ticket>[
       for (final raw in rawTickets)
@@ -98,7 +99,9 @@ class WebApi {
 
   /// WSS stream of raw envelopes (`{"type": "...", "ticket": {...}}`).
   Stream<Map<String, dynamic>> events() {
-    final wsBase = baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
+    final wsBase = baseUrl
+        .replaceFirst('https://', 'wss://')
+        .replaceFirst('http://', 'ws://');
     final channel = WebSocketChannel.connect(
       Uri.parse('$wsBase/ws?token=$token'),
     );

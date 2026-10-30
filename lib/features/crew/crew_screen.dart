@@ -42,8 +42,7 @@ class _CrewScreenState extends State<CrewScreen> {
       .where(
         // Primary departments = "this incident requires me now". Standby
         // departments are shown on the card but don't alert every crew.
-        (Ticket ticket) =>
-            session.seesDepartments(ticket.primaryDepartments),
+        (Ticket ticket) => session.seesDepartments(ticket.primaryDepartments),
       )
       .toList(growable: false);
 
@@ -99,7 +98,8 @@ class _CrewScreenState extends State<CrewScreen> {
         SnackBar(
           content: Text('Intervenție rezolvată · ${ticket.incidentCode}'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -231,7 +231,8 @@ class _CrewScreenState extends State<CrewScreen> {
                               return TweenAnimationBuilder<double>(
                                 tween: Tween<double>(begin: 0, end: 1),
                                 duration: Duration(
-                                  milliseconds: 280 + (index * 40).clamp(0, 160),
+                                  milliseconds:
+                                      280 + (index * 40).clamp(0, 160),
                                 ),
                                 curve: Curves.easeOutCubic,
                                 builder: (context, value, child) {

@@ -143,8 +143,12 @@ def http_call(
             return exc.code, {"raw": body}
 
 
-def report(base: str, token: str, body: dict[str, Any], insecure: bool) -> tuple[int, Any]:
-    return http_call(base, token, "/api/reports", method="POST", payload=body, insecure=insecure)
+def report(
+    base: str, token: str, body: dict[str, Any], insecure: bool
+) -> tuple[int, Any]:
+    return http_call(
+        base, token, "/api/reports", method="POST", payload=body, insecure=insecure
+    )
 
 
 async def _ws_listen(
@@ -203,12 +207,18 @@ async def run(args: argparse.Namespace) -> int:
     check("wrong token rejected (401)", status == 401, f"status={status}")
     status, health = http_call(base, token, "/api/health", insecure=insecure)
     check("right token accepted (200)", status == 200, f"status={status}")
-    check("health has taxonomy_version", isinstance(health.get("taxonomy_version"), int))
+    check(
+        "health has taxonomy_version", isinstance(health.get("taxonomy_version"), int)
+    )
     check("health reports ollama block", isinstance(health.get("ollama"), dict))
 
     # 3 ── taxonomy parity with the generated file ───────────────────────────
     print("[3] taxonomy")
-    expected = json.loads(TAXONOMY_JSON.read_text(encoding="utf-8")) if TAXONOMY_JSON.exists() else {"types": []}
+    expected = (
+        json.loads(TAXONOMY_JSON.read_text(encoding="utf-8"))
+        if TAXONOMY_JSON.exists()
+        else {"types": []}
+    )
     expected_codes = [item["code"] for item in expected.get("types", [])]
     status, taxonomy = http_call(base, token, "/api/taxonomy", insecure=insecure)
     actual_codes = [item.get("code") for item in taxonomy.get("types", [])]
@@ -224,8 +234,13 @@ async def run(args: argparse.Namespace) -> int:
     listener = asyncio.create_task(_ws_listen(ws_uri, insecure, events))
     hello = await wait_for_type(events, "hello", timeout=10)
     error = next((e for e in events if e.get("type") == "__error__"), None)
-    check("WSS connected", hello is not None, (error or {}).get("error", "no hello event"))
-    check("hello advertises 14 types", (hello or {}).get("data", {}).get("incident_types") == 14)
+    check(
+        "WSS connected", hello is not None, (error or {}).get("error", "no hello event")
+    )
+    check(
+        "hello advertises 14 types",
+        (hello or {}).get("data", {}).get("incident_types") == 14,
+    )
 
     try:
         # 5 ── manual report (menu flow, no AI latency) ──────────────────────
@@ -246,7 +261,11 @@ async def run(args: argparse.Namespace) -> int:
         )
         check("POST /api/reports -> 201", status == 201, f"status={status}")
         manual = payload.get("ticket", {})
-        check("manual ticket dispatched", manual.get("status") == "dispatched", str(manual.get("status")))
+        check(
+            "manual ticket dispatched",
+            manual.get("status") == "dispatched",
+            str(manual.get("status")),
+        )
         check("manual ticket ai_source=manual", manual.get("ai_source") == "manual")
         check("manual ticket confidence=1.0", manual.get("confidence") == 1.0)
         check(
@@ -282,47 +301,90 @@ async def run(args: argparse.Namespace) -> int:
         if args.skip_override_wait:
             print("  SKIP  auto-dispatch wait (--skip-override-wait)")
         else:
-            check("status is pending_override", override.get("status") == "pending_override", str(override.get("status")))
+            check(
+                "status is pending_override",
+                override.get("status") == "pending_override",
+                str(override.get("status")),
+            )
             check("override_deadline present", bool(override.get("override_deadline")))
-            check("confidence below threshold", float(override.get("confidence", 1)) < 0.65, str(override.get("confidence")))
+            check(
+                "confidence below threshold",
+                float(override.get("confidence", 1)) < 0.65,
+                str(override.get("confidence")),
+            )
             await asyncio.sleep(5.6)
             status, payload = http_call(
                 base, token, f"/api/tickets/{override.get('id')}", insecure=insecure
             )
             auto = payload.get("ticket", {})
-            check("auto-dispatched after 5 s", auto.get("status") == "dispatched", str(auto.get("status")))
+            check(
+                "auto-dispatched after 5 s",
+                auto.get("status") == "dispatched",
+                str(auto.get("status")),
+            )
             check("auto-dispatch has no dispatcher", auto.get("decided_by") is None)
 
         # 7 ── join + vote quorum ────────────────────────────────────────────
         print("[7] crew join + vote")
         join_body = {"crew_id": "smoke-crew-a", "crew_name": "Crew A"}
         status, payload = http_call(
-            base, token, f"/api/tickets/{manual_id}/join", method="POST", payload=join_body, insecure=insecure
+            base,
+            token,
+            f"/api/tickets/{manual_id}/join",
+            method="POST",
+            payload=join_body,
+            insecure=insecure,
         )
         check("join -> 200", status == 200, f"status={status}")
-        check("join moves ticket to in_progress", payload.get("ticket", {}).get("status") == "in_progress")
+        check(
+            "join moves ticket to in_progress",
+            payload.get("ticket", {}).get("status") == "in_progress",
+        )
 
         vote_body = {"crew_id": "smoke-crew-a", "approve": True}
         status, payload = http_call(
-            base, token, f"/api/tickets/{manual_id}/vote", method="POST", payload=vote_body, insecure=insecure
+            base,
+            token,
+            f"/api/tickets/{manual_id}/vote",
+            method="POST",
+            payload=vote_body,
+            insecure=insecure,
         )
         ticket = payload.get("ticket", {})
-        check("first vote counted", ticket.get("resolve_votes") == 1, str(ticket.get("resolve_votes")))
-        check("one vote is not enough (quorum 2)", ticket.get("status") == "in_progress", str(ticket.get("status")))
+        check(
+            "first vote counted",
+            ticket.get("resolve_votes") == 1,
+            str(ticket.get("resolve_votes")),
+        )
+        check(
+            "one vote is not enough (quorum 2)",
+            ticket.get("status") == "in_progress",
+            str(ticket.get("status")),
+        )
 
         second_vote = {"crew_id": "smoke-crew-b", "approve": True}
         http_call(
-            base, token, f"/api/tickets/{manual_id}/join",
+            base,
+            token,
+            f"/api/tickets/{manual_id}/join",
             method="POST",
             payload={"crew_id": "smoke-crew-b", "crew_name": "Crew B"},
             insecure=insecure,
         )
         status, payload = http_call(
-            base, token, f"/api/tickets/{manual_id}/vote",
-            method="POST", payload=second_vote, insecure=insecure,
+            base,
+            token,
+            f"/api/tickets/{manual_id}/vote",
+            method="POST",
+            payload=second_vote,
+            insecure=insecure,
         )
         ticket = payload.get("ticket", {})
-        check("quorum reached -> resolved", ticket.get("status") == "resolved", str(ticket.get("status")))
+        check(
+            "quorum reached -> resolved",
+            ticket.get("status") == "resolved",
+            str(ticket.get("status")),
+        )
         check("resolved_at set", bool(ticket.get("resolved_at")))
         check("summary note present", bool(ticket.get("resolution_note")))
         resolved_event = await wait_for_type(events, "ticket.resolved", timeout=5)
@@ -331,7 +393,8 @@ async def run(args: argparse.Namespace) -> int:
         # 8 ── deny ──────────────────────────────────────────────────────────
         print("[8] dispatcher deny")
         _, payload = report(
-            base, token,
+            base,
+            token,
             {
                 "source": "menu",
                 "transcript": "Acces neautorizat în zonă restricționată",
@@ -344,24 +407,39 @@ async def run(args: argparse.Namespace) -> int:
         )
         deny_id = payload.get("ticket", {}).get("id", "")
         status, payload = http_call(
-            base, token, f"/api/tickets/{deny_id}/deny",
+            base,
+            token,
+            f"/api/tickets/{deny_id}/deny",
             method="POST",
-            payload={"reason": "Test: fals pozitiv", "dispatcher_id": "smoke-dispatcher"},
+            payload={
+                "reason": "Test: fals pozitiv",
+                "dispatcher_id": "smoke-dispatcher",
+            },
             insecure=insecure,
         )
         check("deny -> 200", status == 200, f"status={status}")
         check("status is denied", payload.get("ticket", {}).get("status") == "denied")
-        check("decided_by recorded", payload.get("ticket", {}).get("decided_by") == "smoke-dispatcher")
+        check(
+            "decided_by recorded",
+            payload.get("ticket", {}).get("decided_by") == "smoke-dispatcher",
+        )
 
         # 9 ── invalid override code ─────────────────────────────────────────
         print("[9] invalid reclassification code")
         status, payload = http_call(
-            base, token, f"/api/tickets/{deny_id}/override",
+            base,
+            token,
+            f"/api/tickets/{deny_id}/override",
             method="POST",
-            payload={"incident_code": "XX-NOT-REAL", "dispatcher_id": "smoke-dispatcher"},
+            payload={
+                "incident_code": "XX-NOT-REAL",
+                "dispatcher_id": "smoke-dispatcher",
+            },
             insecure=insecure,
         )
-        check("invalid code rejected (400/409)", status in (400, 409), f"status={status}")
+        check(
+            "invalid code rejected (400/409)", status in (400, 409), f"status={status}"
+        )
     finally:
         listener.cancel()
         await asyncio.gather(listener, return_exceptions=True)
@@ -369,7 +447,9 @@ async def run(args: argparse.Namespace) -> int:
     # 10 ── conversational /analyze contract (reporter flow) ────────────────
     print("[10] conversational /analyze (fields + missing + question)")
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "Este un miros înțepător, cred că e ceva periculos.",
@@ -396,8 +476,15 @@ async def run(args: argparse.Namespace) -> int:
         str(sorted(body.keys())),
     )
     fields = body.get("fields") or {}
-    check("fields carry an incident code", isinstance(fields.get("incident_code"), str), str(fields))
-    check("location is reported missing without a location", "location" in (body.get("missing") or []))
+    check(
+        "fields carry an incident code",
+        isinstance(fields.get("incident_code"), str),
+        str(fields),
+    )
+    check(
+        "location is reported missing without a location",
+        "location" in (body.get("missing") or []),
+    )
     check(
         "server asks a location question",
         isinstance(body.get("question"), str) and len(body["question"]) > 5,
@@ -407,7 +494,9 @@ async def run(args: argparse.Namespace) -> int:
     check("max_clarifications is 3", body.get("max_clarifications") == 3)
 
     status, body2 = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": (
@@ -420,17 +509,35 @@ async def run(args: argparse.Namespace) -> int:
         insecure=insecure,
     )
     fields2 = body2.get("fields") or {}
-    check("location extracted from the answer", bool(fields2.get("location")), str(fields2.get("location")))
-    check("people_at_risk honours the negation", fields2.get("people_at_risk") is False, str(fields2.get("people_at_risk")))
-    check("slot questions disappear once slots are filled", (body2.get("missing") or []) == [], str(body2.get("missing")))
+    check(
+        "location extracted from the answer",
+        bool(fields2.get("location")),
+        str(fields2.get("location")),
+    )
+    check(
+        "people_at_risk honours the negation",
+        fields2.get("people_at_risk") is False,
+        str(fields2.get("people_at_risk")),
+    )
+    check(
+        "slot questions disappear once slots are filled",
+        (body2.get("missing") or []) == [],
+        str(body2.get("missing")),
+    )
 
     status, body3 = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={"transcript": "Ceva nu este în regulă.", "clarifications_asked": 3},
         insecure=insecure,
     )
-    check("no question after max clarifications", body3.get("question") is None, str(body3.get("question")))
+    check(
+        "no question after max clarifications",
+        body3.get("question") is None,
+        str(body3.get("question")),
+    )
     check(
         "confidence capped for the dispatcher after 3 questions",
         float((body3.get("fields") or {}).get("confidence", 1)) <= 0.40,
@@ -441,7 +548,9 @@ async def run(args: argparse.Namespace) -> int:
     # 10c ── do not re-ask what the reporter already said ──────────────────
     print("[10c] complete report → no redundant questions")
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "Un copil a luat foc la poarta 4.",
@@ -468,7 +577,9 @@ async def run(args: argparse.Namespace) -> int:
     check("complete report is ready", body.get("ready") is True)
 
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "Un pasager a leșinat lângă poarta 5, nu respiră.",
@@ -491,7 +602,9 @@ async def run(args: argparse.Namespace) -> int:
     # Policy: critical reports are dispatched immediately; never ask "is anyone
     # in danger?" (a burning cat cannot answer it).
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "O pisică a luat foc la sector 2 terminal 7.",
@@ -513,7 +626,9 @@ async def run(args: argparse.Namespace) -> int:
     check("animal fire is ready", body.get("ready") is True)
 
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "O pisică a luat foc în sectorul 2.",
@@ -538,8 +653,10 @@ async def run(args: argparse.Namespace) -> int:
     zone_cases = [
         ("A luat foc un calculator la intrare.", "Intrarea principală"),
         ("Fum la ieșirea principală.", "Ieșirea principală"),
-        ("Scurgere de combustibil în parcarea de scurtă durată.",
-         "Parcare scurtă durată"),
+        (
+            "Scurgere de combustibil în parcarea de scurtă durată.",
+            "Parcare scurtă durată",
+        ),
         ("Bagaj abandonat în parcarea P2.", "Parcare"),
         ("Miros de fum în terminalul de sosiri.", "Terminal Sosiri"),
         ("Un pasager a căzut în zona de îmbarcare.", "Zona de îmbarcare"),
@@ -550,7 +667,9 @@ async def run(args: argparse.Namespace) -> int:
     ]
     for text, expected in zone_cases:
         status, body = http_call(
-            base, token, "/api/analyze",
+            base,
+            token,
+            "/api/analyze",
             method="POST",
             payload={"transcript": text, "clarifications_asked": 0},
             insecure=insecure,
@@ -571,7 +690,9 @@ async def run(args: argparse.Namespace) -> int:
     # 10b ── urgency from what was said (mirrors reporter brain/severity.dart)
     print("[10b] urgency escalation from the transcript")
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "Lava curge în terminalul 3 și se extinde rapid!",
@@ -586,7 +707,9 @@ async def run(args: argparse.Namespace) -> int:
         str(fields.get("urgency")),
     )
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": "Un pasager a leșinat lângă poarta 5, nu respiră.",
@@ -601,7 +724,9 @@ async def run(args: argparse.Namespace) -> int:
         str(fields.get("urgency")),
     )
     status, body = http_call(
-        base, token, "/api/analyze",
+        base,
+        token,
+        "/api/analyze",
         method="POST",
         payload={
             "transcript": (
@@ -650,7 +775,9 @@ async def run(args: argparse.Namespace) -> int:
         f"status={status}",
     )
     if status == 200:
-        check("transcribe returns text", isinstance(body.get("text"), str), str(body)[:80])
+        check(
+            "transcribe returns text", isinstance(body.get("text"), str), str(body)[:80]
+        )
         check("transcribe returns language", isinstance(body.get("language"), str))
         check(
             "transcribe reports provider=faster-whisper",
@@ -659,7 +786,9 @@ async def run(args: argparse.Namespace) -> int:
         )
         check("transcribe reports latency", isinstance(body.get("latency_ms"), int))
     else:
-        print(f"  SKIP  whisper model not ready yet: {str(body.get('detail', ''))[:90]}")
+        print(
+            f"  SKIP  whisper model not ready yet: {str(body.get('detail', ''))[:90]}"
+        )
 
     status, body = http_call(
         base,
@@ -677,7 +806,9 @@ async def run(args: argparse.Namespace) -> int:
 
     # 12 ── reset (leave a clean store for the next run) ────────────────────
     print("[12] dev reset")
-    status, body = http_call(base, token, "/api/dev/reset", method="POST", insecure=insecure)
+    status, body = http_call(
+        base, token, "/api/dev/reset", method="POST", insecure=insecure
+    )
     if status == 200:
         check("store cleared", body.get("tickets_cleared", 0) >= 0)
     else:

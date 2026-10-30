@@ -32,18 +32,20 @@ void main() {
       final engineer = demoAccountByUsername('engineer')!.toSession();
 
       expect(admin.isAdmin, isTrue);
-      expect(admin.seesDepartments(<Department>[Department.maintenance]), isTrue);
+      expect(
+          admin.seesDepartments(<Department>[Department.maintenance]), isTrue);
       expect(admin.seesDepartments(<Department>[Department.terminal]), isTrue);
 
       // Janitor: terminal only.
-      expect(janitor.seesDepartments(<Department>[Department.terminal]), isTrue);
       expect(
-          janitor.seesDepartments(<Department>[Department.maintenance]), isFalse);
+          janitor.seesDepartments(<Department>[Department.terminal]), isTrue);
+      expect(janitor.seesDepartments(<Department>[Department.maintenance]),
+          isFalse);
       expect(janitor.seesDepartments(<Department>[Department.it]), isFalse);
 
       // Engineer: technical departments only.
-      expect(
-          engineer.seesDepartments(<Department>[Department.maintenance]), isTrue);
+      expect(engineer.seesDepartments(<Department>[Department.maintenance]),
+          isTrue);
       expect(engineer.seesDepartments(<Department>[Department.it]), isTrue);
       expect(
           engineer.seesDepartments(<Department>[Department.terminal]), isFalse);

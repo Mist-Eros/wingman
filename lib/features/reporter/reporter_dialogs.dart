@@ -32,8 +32,8 @@ Future<String?> showTypeTextDialog(BuildContext context, Tr tr) {
     builder: (context) => _TextDialog(
       title: tr('Scrie problema', 'Describe the problem'),
       initial: '',
-      hint: tr('Ex.: pată de combustibil la locul 3',
-          'E.g. fuel spill at stand 3'),
+      hint: tr(
+          'Ex.: pată de combustibil la locul 3', 'E.g. fuel spill at stand 3'),
       okLabel: tr('Continuă', 'Continue'),
       cancelLabel: tr('Anulează', 'Cancel'),
       allowEmpty: false,
@@ -160,14 +160,16 @@ class _LocationSheetState extends State<_LocationSheet> {
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               labelText: tr('Unde? (opțional)', 'Where? (optional)'),
-              hintText: tr('Ex.: Poarta 12, Sector 3', 'E.g. Gate 12, Sector 3'),
+              hintText:
+                  tr('Ex.: Poarta 12, Sector 3', 'E.g. Gate 12, Sector 3'),
               prefixIcon: const Icon(Icons.place_outlined),
             ),
             onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            style:
+                FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
             icon: const Icon(Icons.send),
             label: Text(tr('Trimite raportul', 'Send report')),
             onPressed: () => Navigator.of(context).pop(_controller.text.trim()),

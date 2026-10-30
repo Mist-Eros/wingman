@@ -98,7 +98,9 @@ def _load_model() -> Any:
     try:
         from faster_whisper import WhisperModel
     except ImportError as exc:  # pragma: no cover - depends on install
-        _load_error = "faster-whisper is not installed (pip install -r requirements.txt)"
+        _load_error = (
+            "faster-whisper is not installed (pip install -r requirements.txt)"
+        )
         raise RuntimeError(_load_error) from exc
 
     started = time.perf_counter()
@@ -203,4 +205,6 @@ async def transcribe_audio(
             f"{settings.max_audio_bytes} bytes)"
         )
     async with _MODEL_LOCK:  # the CTranslate2 model is not safe for parallel calls
-        return await asyncio.to_thread(_transcribe_sync, audio_bytes, language, mime_type)
+        return await asyncio.to_thread(
+            _transcribe_sync, audio_bytes, language, mime_type
+        )

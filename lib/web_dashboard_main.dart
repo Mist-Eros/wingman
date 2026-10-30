@@ -248,8 +248,7 @@ class _ControlRoomState extends State<ControlRoom> {
         _ => 'Eveniment',
       };
 
-  Ticket? get _selected =>
-      _selectedId == null ? null : _tickets[_selectedId];
+  Ticket? get _selected => _selectedId == null ? null : _tickets[_selectedId];
 
   List<Ticket> get _visibleTickets {
     final all = _tickets.values.toList()
@@ -324,7 +323,8 @@ class _ControlRoomState extends State<ControlRoom> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -364,7 +364,8 @@ class _ControlRoomState extends State<ControlRoom> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Ops.accent.withValues(alpha: 0.5)),
               ),
-              child: const Icon(Icons.flight_takeoff_rounded, color: Ops.accent),
+              child:
+                  const Icon(Icons.flight_takeoff_rounded, color: Ops.accent),
             ),
             const SizedBox(width: 10),
             const Expanded(
@@ -379,9 +380,7 @@ class _ControlRoomState extends State<ControlRoom> {
                           letterSpacing: -0.5)),
                   Text('CONTROL ROOM · live',
                       style: TextStyle(
-                          color: Ops.muted,
-                          fontSize: 10,
-                          letterSpacing: 1.2)),
+                          color: Ops.muted, fontSize: 10, letterSpacing: 1.2)),
                 ],
               ),
             ),
@@ -458,7 +457,8 @@ class _ControlRoomState extends State<ControlRoom> {
           const SizedBox(width: 8),
           Text(
             _connected ? 'WSS conectat' : 'WSS deconectat',
-            style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.w700, fontSize: 12),
           ),
         ],
       ),
@@ -497,9 +497,11 @@ class _ControlRoomState extends State<ControlRoom> {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(label, style: const TextStyle(color: Ops.muted))),
+          Expanded(
+              child: Text(label, style: const TextStyle(color: Ops.muted))),
           Text('$value',
-              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 16)),
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w800, fontSize: 16)),
         ],
       ),
     );
@@ -540,12 +542,14 @@ class _ControlRoomState extends State<ControlRoom> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Ops.red.withValues(alpha: 0.4)),
             ),
-            child: Text(_error!, style: const TextStyle(color: Ops.red, fontSize: 12)),
+            child: Text(_error!,
+                style: const TextStyle(color: Ops.red, fontSize: 12)),
           ),
         if (_error != null) const SizedBox(height: 10),
         Expanded(
           child: _loading && _tickets.isEmpty
-              ? const Center(child: CircularProgressIndicator(color: Ops.accent))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Ops.accent))
               : tickets.isEmpty
                   ? _emptyFeed()
                   : ListView.separated(
@@ -613,11 +617,13 @@ class _ControlRoomState extends State<ControlRoom> {
                         const SizedBox(width: 8),
                         _badge(ticket.urgency.labelRo, urgencyColor),
                         const SizedBox(width: 8),
-                        _badge(ticket.status.labelRo, Ops.status(ticket.status)),
+                        _badge(
+                            ticket.status.labelRo, Ops.status(ticket.status)),
                         const Spacer(),
                         Text(
                           '${ticket.confidence.toStringAsFixed(2)} · ${_ago(ticket.createdAt)}',
-                          style: const TextStyle(color: Ops.muted, fontSize: 11),
+                          style:
+                              const TextStyle(color: Ops.muted, fontSize: 11),
                         ),
                       ],
                     ),
@@ -658,7 +664,8 @@ class _ControlRoomState extends State<ControlRoom> {
               Icon(Icons.radar_rounded, color: Ops.muted, size: 48),
               SizedBox(height: 10),
               Text('Selectează un incident',
-                  style: TextStyle(color: Ops.ink, fontWeight: FontWeight.w600)),
+                  style:
+                      TextStyle(color: Ops.ink, fontWeight: FontWeight.w600)),
               SizedBox(height: 4),
               Text('Detaliile și acțiunile apar aici.',
                   style: TextStyle(color: Ops.muted, fontSize: 12)),
@@ -703,12 +710,15 @@ class _ControlRoomState extends State<ControlRoom> {
             children: <Widget>[
               _badge('Urgență: ${ticket.urgency.labelRo}',
                   Ops.urgency(ticket.urgency)),
-              _badge('Stare: ${ticket.status.labelRo}', Ops.status(ticket.status)),
-              _badge('Încredere ${(ticket.confidence * 100).round()}%', Ops.accent),
+              _badge(
+                  'Stare: ${ticket.status.labelRo}', Ops.status(ticket.status)),
+              _badge('Încredere ${(ticket.confidence * 100).round()}%',
+                  Ops.accent),
             ],
           ),
           const SizedBox(height: 14),
-          _kv('Locație', ticket.location.display.isEmpty ? '—' : ticket.location.display),
+          _kv('Locație',
+              ticket.location.display.isEmpty ? '—' : ticket.location.display),
           _kv('Departamente', ticket.departmentsLabel),
           _kv('Raportat de', ticket.reporterName),
           _kv('Sursă', ticket.source.labelRo),
@@ -716,7 +726,8 @@ class _ControlRoomState extends State<ControlRoom> {
           _kv('Transcriere', ticket.transcript),
           if ((ticket.aiRationale ?? '').isNotEmpty)
             _kv('Raționament AI', ticket.aiRationale!),
-          if (ticket.resolutionNote != null && ticket.resolutionNote!.isNotEmpty)
+          if (ticket.resolutionNote != null &&
+              ticket.resolutionNote!.isNotEmpty)
             _kv('Notă rezolvare', ticket.resolutionNote!),
           const SizedBox(height: 16),
           if (ticket.status == TicketStatus.pendingOverride) ...<Widget>[

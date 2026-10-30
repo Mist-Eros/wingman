@@ -32,7 +32,11 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
             ),
             "reporter_id": "seed-reporter-1",
             "reporter_name": "Andrei P.",
-            "location": {"terminal": "T1", "zone": "Poarta 12", "note": "zona de așteptare"},
+            "location": {
+                "terminal": "T1",
+                "zone": "Poarta 12",
+                "note": "zona de așteptare",
+            },
             "use_ai": True,
         },
     },
@@ -96,7 +100,9 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
 )
 
 
-def _post(base: str, token: str, path: str, payload: dict[str, Any], timeout: float) -> dict[str, Any]:
+def _post(
+    base: str, token: str, path: str, payload: dict[str, Any], timeout: float
+) -> dict[str, Any]:
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         base.rstrip("/") + path,
@@ -129,20 +135,26 @@ def main() -> int:
             result = _post(args.base, args.token, "/api/dev/reset", {}, 15)
             print(f"  store reset: {result}")
         except urllib.error.HTTPError as exc:
-            print(f"  reset skipped: HTTP {exc.code} {exc.read().decode(errors='replace')}")
+            print(
+                f"  reset skipped: HTTP {exc.code} {exc.read().decode(errors='replace')}"
+            )
         except urllib.error.URLError as exc:
             print(f"  cannot reach backend: {exc.reason}")
             return 1
 
     for scenario in SCENARIOS:
         try:
-            result = _post(args.base, args.token, "/api/reports", scenario["body"], args.timeout)
+            result = _post(
+                args.base, args.token, "/api/reports", scenario["body"], args.timeout
+            )
         except urllib.error.HTTPError as exc:
             body = exc.read().decode(errors="replace")
             print(f"  FAILED {scenario['name']}: HTTP {exc.code} {body}")
             return 1
         except urllib.error.URLError as exc:
-            print(f"  FAILED {scenario['name']}: cannot reach {args.base} ({exc.reason})")
+            print(
+                f"  FAILED {scenario['name']}: cannot reach {args.base} ({exc.reason})"
+            )
             return 1
         ticket = result["ticket"]
         print(

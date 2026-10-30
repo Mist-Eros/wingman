@@ -184,8 +184,8 @@ void main() {
       expect(c.question, isNull);
 
       // the server saw the growing transcript and the real question count
-      expect(h.analyzeRequests.map((r) => r.clarificationsAsked),
-          <int>[0, 1, 2]);
+      expect(
+          h.analyzeRequests.map((r) => r.clarificationsAsked), <int>[0, 1, 2]);
       expect(h.analyzeRequests.last.transcript,
           'am o pată de ulei poarta 12 destul de mare');
 
@@ -543,8 +543,8 @@ void main() {
       await tester.tap(find.text('Salvează'));
       await tester.pumpAndSettle();
 
-      expect(h.analyzeRequests.last.transcript,
-          'pată mare de petrol la poarta 3');
+      expect(
+          h.analyzeRequests.last.transcript, 'pată mare de petrol la poarta 3');
       expect(find.widgetWithText(ActionChip, 'petrol'), findsOneWidget);
     });
 
@@ -560,8 +560,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(h.controller.phase, ReporterPhase.listening);
-      expect(find.text('Te ascult… eliberează când ai terminat.'),
-          findsOneWidget);
+      expect(
+          find.text('Te ascult… eliberează când ai terminat.'), findsOneWidget);
 
       // DateTime.now is real time even in testWidgets: wait past minHold.
       await tester.runAsync(

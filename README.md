@@ -1,316 +1,177 @@
-﻿# Wingman — 48h hackathon starter
+﻿# Wingman — airport incident response (demo)
 
-**Wingman** — the airport's extra pair of eyes. Flutter app (Android + iOS) for airport
-incident reporting: staff report by **voice or a button menu**, a **local Ollama model**
-classifies the report into a **closed 14-type taxonomy**, the server assigns **urgency +
-departments** and broadcasts over **WSS** to a dispatcher dashboard and crew phones. Low
-confidence sends the ticket to the dispatcher for a **5-second confirm/deny/reclassify
-window**; crews **join** and **vote to resolve**. Transport is TLS 1.3 with a self-signed CA
-pinned in the app; tokens go to flutter_secure_storage; nothing is stored at rest outside the
-in-memory demo store.
+Staff report an incident by **voice or a button menu**; a **local Ollama model** classifies it
+into a closed 14-type taxonomy; the FastAPI backend assigns **urgency + departments**, broadcasts
+over **WSS** to a dispatcher dashboard and crew phones, and routes **Android notifications only to
+the departments the incident needs**. Low confidence lands in a dispatcher **5-second
+confirm/deny/reclassify window**; crews **join** and **vote** to resolve. Everything runs on the
+laptop — no cloud, TLS with a private pinned CA, in-memory store.
 
-**Name / identifiers:** display name **Wingman** · suggested bundle id `com.wingman.app` ·
-suggested project scaffold `flutter create --org com.wingman --project-name wingman` · set
-`android:label="Wingman"` in `AndroidManifest.xml` and `CFBundleDisplayName = Wingman` in
-`ios/Runner/Info.plist` · the demo CA is called **"Wingman Local CA"**.
-
-This folder is a **working skeleton**, not a finished product: `lib/core/`, `lib/main.dart` and
-`backend/` are real and tested; the three `lib/features/*` folders are **stubs owned by the
-feature teammates** (see [CONTRACTS.md](CONTRACTS.md)).
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **90/90** ·
+`scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
 
-## 1. What is in the box
+## 1. Quick start
 
-| Path | Owner | What it is |
+```powershell
+# 1) backend (TLS :8443) — first run installs Python deps
+cd backend; .\run.ps1
+
+# 2) seed the stage data + prove the API
+cd ..; python backend\seed_demo.py
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 90/90
+
+# 3) phone (Android; APK is built by the script)
+.\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
+adb install -r D:\Hackathon\dist\wingman-tls-release.apk
+
+# 4) desktop control room (Waterfox)
+.\scripts\serve_dashboard.ps1
+
+# 5) one command for every gate
+.\scripts\verify_all.ps1 -Live
+```
+
+Networking, certificates and phone setup: [docs/laptop-setup.md](docs/laptop-setup.md),
+[docs/certs-and-phones.md](docs/certs-and-phones.md), [docs/phone-testing.md](docs/phone-testing.md).
+Rehearsal script: [docs/demo-script.md](docs/demo-script.md).
+
+---
+
+## 2. Demo accounts
+
+Hardcoded, passwords stored as salted SHA-256; the scope decides who gets alerted. **Anyone can
+report** — there is no separate reporter account.
+
+| Account | Password | Scope |
 |---|---|---|
-| `lib/core/incidents/taxonomy.dart` | Lead | **Single source of truth**: enums + the 14 `IncidentType`s + validation |
-| `lib/core/models/ticket.dart` | Lead | `Ticket`, statuses, `ReportDraft`, location, JSON mapping |
-| `lib/core/api/api_client.dart` | Lead | REST + auto-reconnecting WSS client (zero packages, `dart:io`) |
-| `lib/core/state/ticket_board.dart` | Lead | Shared live ticket list (snapshot + WSS merge, sorting, actions) |
-| `lib/core/core_scope.dart` | Lead | DI: `api`, `board`, `session`, `onSignOut` for every screen |
-| `lib/core/models/session.dart` | Lead | Roles (`reporter`/`dispatcher`/`crew`) + demo session |
-| `lib/core/auth/*` | Lead | `TokenStore`; optional flutter_secure_storage implementation |
-| `lib/main.dart` | Lead | Role picker + role-based routes (only integration point) |
-| `lib/features/reporter/` | Friend 1 | **STUB** — conversational report flow |
-| `lib/features/dispatcher/` | Friend 2 | **STUB** — dashboard cards + confirm/deny/override |
-| `lib/features/crew/` | Friend 3 | **STUB** — dispatch notification, join, resolve vote |
-| `backend/app/` | Lead | FastAPI: `/api/reports`, `/api/analyze`, WSS hub, in-memory store, 5 s override timer, vote quorum |
-| `backend/app/ai.py` | Lead | Ollama `/api/chat` call + JSON validation + deterministic keyword fallback |
-| `backend/taxonomy.json` | generated | Backend mirror of the Dart taxonomy (do not hand-edit) |
-| `scripts/gen_certs.ps1` | Lead | CA + server cert with multi-IP SAN, copies CA into the app assets |
-| `scripts/smoke_test.py` | Lead | 37-check end-to-end gate (auth, WSS, override timer, votes, wire keys) |
-| `scripts/sync_taxonomy.py` | Lead | Regenerates/verifies `backend/taxonomy.json` from the Dart file |
-| `scripts/preflight.ps1` | Lead | Pre-demo laptop/network/Ollama/TLS checks |
-| `tool/emit_taxonomy.dart` | Lead | Same generator, pure Dart |
-| `docs/` | Lead | 48h timeline, demo risks, cert / phone runbook |
+| Andy Admin | `admin123` | everything + dispatcher dashboard |
+| Earl Engineer | `engineer123` | maintenance / IT / baggage / airside |
+| John Janitor | `janitor123` | terminal services |
+| Fred Firefighter | `firefighter123` | fire / rescue |
+| Gina Guard | `guard123` | security |
 
 ---
 
-## 2. Architecture
+## 3. Project layout
 
+```text
+Wingman/                         Flutter project (Android + iOS) + Python backend
+├── lib/
+│   ├── main.dart                app bootstrap, routes, session, notifications wiring
+│   ├── core/                    shared contracts (owned by Lead)
+│   │   ├── api/                 REST + WSS client (dart:io, pinned TLS)
+│   │   ├── auth/                demo accounts, session/token stores
+│   │   ├── incidents/           taxonomy — single source of truth (14 types)
+│   │   ├── models/              Ticket, Session, AnalyzeResult, Transcription
+│   │   ├── notifications/       department-scoped local notification policy
+│   │   ├── state/               TicketBoard (snapshot + WSS merge)
+│   │   ├── theme/               Wingman design system (navy airport ops)
+│   │   └── widgets/             time-of-day sky background
+│   ├── features/
+│   │   ├── auth/                login + account chooser
+│   │   ├── dev/                 DevTools (sky preview, health, demo actions)
+│   │   ├── reporter/            voice/typed report flow + local conversation brain
+│   │   ├── dispatcher/          live dashboard, override window, filters
+│   │   └── crew/                scoped queue, join, resolve vote
+│   ├── web_dashboard_main.dart  optional Flutter-web control room (Chromium only)
+│   └── features/crew/crew_preview_main.dart  local preview of the crew UI (no backend)
+├── backend/
+│   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
+│   ├── seed_demo.py             seeds the 5 rehearsal tickets
+│   └── run.ps1 / run_insecure.ps1
+├── assets/certs/ca.crt          public CA bundle pinned by the app
+├── tool/emit_taxonomy.dart      taxonomy generator (backend/taxonomy.json)
+├── scripts/                     certificates, builds, dashboard, gates (see scripts/README.md)
+├── docs/                        project docs (see docs/README.md)
+├── test/                        app contract + live + widget tests
+└── CONTRACTS.md                 frozen wire contracts (Dart ↔ FastAPI)
 ```
- reporter phone (voice / menu)                dispatcher dashboard / tablet
-        │  POST /api/reports                        ▲
-        ▼                                           │ WSS ticket.*
- ┌────────────────────────────┐   ┌─────────────────┴──────────────┐
- │ FastAPI on laptop :8443    │   │  in-memory TicketStore          │
- │  · Pydantic validation     │──▶│  · status machine               │
- │  · Ollama classify (JSON)  │   │  · 5 s override timer           │
- │  · closed-taxonomy check   │   │  · crew join / vote quorum      │
- └──────────────┬─────────────┘   └─────────────────┬──────────────┘
-                │ GET /api/analyze (debug)          │
-                ▼                                   ▼
-        Ollama 127.0.0.1:11434            crew phones (WSS, join, vote)
-        qwen2.5:7b / llama3.1:8b
-
-TLS: private CA (scripts/gen_certs.ps1) → CA bundled in app + installed on phones
-```
-
-One port, one TLS listener: HTTPS REST **and** WSS (`wss://<laptop>:8443/ws`). The backend
-also serves `/`, `/healthz` and `/ca.crt` **without auth**, so a phone browser can prove the
-certificate is installed correctly.
 
 ---
 
-## 3. Hour-0 setup on the laptop (Windows)
+## 4. How it works
 
-```powershell
-# toolchain (skip what you already have)
-winget install --id Git.Git -e
-winget install --id Python.Python.3.12 -e
-winget install --id ShiningLight.OpenSSL.Light -e
-winget install --id Flutter.Flutter -e          # or use your existing Flutter install
-
-# Ollama (once): install, then pull the chosen model
-winget install --id Ollama.Ollama -e
-ollama pull qwen2.5:1.5b
-# alternative: ollama pull llama3.1:8b   → set $env:OLLAMA_MODEL='llama3.1:8b'
-# If the Ollama registry stalls on the venue network (it did for us), build the
-# same model from the official HuggingFace GGUF instead:
-#   .\scripts\prepare_ollama_model.ps1
+```text
+ phone (voice/menu)                         crew phones
+        │ POST /api/reports                       ▲ WSS ticket.* + notifications
+        ▼                                         │
+  FastAPI :8443  ── Ollama qwen2.5:1.5b ──▶ classification + urgency + departments
+        │          ── Whisper (faster-whisper) for STT
+        ▼
+  in-memory store: status machine · 5 s override timer · join · vote quorum
+        │
+        ▼ REST + WSS
+  Waterfox control room (PC)  ── report form · live queue · confirm/deny/reclassify
 ```
 
-Open a **new** terminal after installs, then:
-
-```powershell
-# 1) certificates: creates backend/certs/* and assets/certs/ca.crt
-.\scripts\gen_certs.ps1 -Force
-
-# 2) firewall once (elevated PowerShell)
-New-NetFirewallRule -DisplayName "Wingman 8443" -Direction Inbound -Protocol TCP `
-  -LocalPort 8443 -Action Allow -Profile Private
-
-# 3) backend (installs Python deps on first run, prints phone URLs)
-cd backend
-.\run.ps1
-#   later/again from anywhere:  cd backend; .\run.ps1
-#   demo-only emergency:        .\run_insecure.ps1   (plain HTTP :8080)
-
-# 4) in a second terminal — seed + prove the whole backend
-cd ..
-python backend\seed_demo.py
-python scripts\smoke_test.py            # must print 37 passed · 0 failed
-
-# 5) run the app on a phone (USB debugging; Android needs the Android SDK)
-#    The Flutter project IS this repo (android/, ios/, lib/, test/ are generated)
-cd D:\Hackathon\Wingman
-flutter pub get
-flutter analyze
-flutter test
-flutter run --dart-define=API_BASE=https://<LAPTOP_IP>:8443 --dart-define=API_TOKEN=demo-token
-
-# 6) one-command gate before every merge
-.\scripts\verify_all.ps1
-```
-
-Phone-side CA installation (2 iPhones + 2 Androids): **[docs/certs-and-phones.md](docs/certs-and-phones.md)**
-— but note the app already pins the bundled CA, so the profile is mainly for
-Safari/Chrome verification and system traffic.
+* **AI policy — dispatch first.** The only questions are for a missing **type** or **location**.
+  There is no “is anyone in danger?” or “describe it” question: high-stakes reports go to the
+  dispatcher immediately and can be corrected in the 5-second window.
+* **Locations** are free text and matched against a Craiova airport catalog (Terminal 2,
+  Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
+  belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
+* **Alerts** go only to accounts whose department scope intersects the ticket's primary
+  departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
+  local (no cloud push): keep the phone connected and awake during the demo.
+* **Transport:** one TLS listener for HTTPS + WSS; the app pins `assets/certs/ca.crt`. The
+  Waterfox control room trusts the same CA through a dedicated profile.
 
 ---
 
-## 4. How the app is wired
+## 5. Backend quick reference
 
-* **Roles**: `main.dart` shows a role picker, then routes to
-  `/reporter`, `/dispatcher` or `/crew`. Feature screens get everything through `CoreScope`:
-
-  ```dart
-  final session = CoreScope.sessionOf(context);   // role, userId, displayName
-  final board   = CoreScope.boardOf(context);     // live tickets (ChangeNotifier)
-  final api     = CoreScope.apiOf(context);       // REST + WSS
-  CoreScope.of(context).onSignOut();
-  ```
-
-* **Live data**: `TicketBoard` loads `GET /api/tickets` once and applies every WSS event.
-  Wrap UI in `ListenableBuilder(listenable: CoreScope.boardOf(context), ...)`.
-  Sorted: pending override → urgency → newest. Helpers: `pendingOverrides`,
-  `activeTickets`, `forDepartment(Department.security)`, `confirm/deny/override/join/vote`.
-
-* **Config is compile-time** (no runtime config screen on purpose):
-  `--dart-define=API_BASE=...`, `--dart-define=API_TOKEN=...`,
-  `--dart-define=DEV_INSECURE=true` (dev fallback only).
-
----
-
-## 5. pubspec additions
-
-`pubspec_additions.yaml` in the repo root has the snippets. Minimum for the app to build and
-speak TLS:
-
-```yaml
-flutter:
-  assets:
-    - assets/certs/ca.crt
-```
-
-Optional, when their features land:
-`flutter_secure_storage` (token persistence — see `lib/core/auth/secure_token_store.dart`) and
-a speech-to-text package for the reporter voice flow (Friend 1's call; keep the recorded
-transcript as the fallback path for the demo).
-
-After `gen_certs.ps1` runs, **commit `assets/certs/ca.crt`** (public cert) but **never
-`ca.key` / `server.key`** — see `.gitignore`.
-
----
-
-## 6. Backend quick reference
-
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/api/reports` | Bearer | Create ticket (voice transcript or menu `hint_code`) |
-| POST | `/api/analyze` | Bearer | Conversational turn: `fields` + `missing` + `question` (reporter flow) |
-| POST | `/api/transcribe` | Bearer | Voice → text (local faster-whisper; base64 JSON) |
-| GET | `/api/tickets[?status=]` | Bearer | List (newest first) |
-| GET | `/api/tickets/{id}` | Bearer | One ticket |
-| POST | `/api/tickets/{id}/confirm` | Bearer | Dispatcher confirms (ends the 5 s window) |
-| POST | `/api/tickets/{id}/deny` | Bearer | Dispatcher rejects, with reason |
-| POST | `/api/tickets/{id}/override` | Bearer | Reclassify to another taxonomy code |
-| POST | `/api/tickets/{id}/join` | Bearer | Crew joins (dispatched → in_progress) |
-| POST | `/api/tickets/{id}/vote` | Bearer | Approve resolution (quorum 2 by default) |
-| POST | `/api/dev/reset` | Bearer | Clear store between rehearsals |
-| GET | `/api/health`, `/api/taxonomy` | Bearer | Diagnostics / catalog |
-| GET | `/healthz`, `/`, `/ca.crt` | public | Phone certificate verification |
-| WS | `/ws?token=` | token | Broadcast: `hello`, `ticket.created`, `ticket.updated`, `ticket.resolved`, `ping` |
-
-Full field-level contract (JSON keys, statuses, errors): **[CONTRACTS.md](CONTRACTS.md)**.
-
-### Desktop control room (real-time ops view)
-
-```powershell
-.\scripts\serve_dashboard.ps1        # opens the live control room in Waterfox
-.\scripts\serve_dashboard.ps1 -Flutter   # optional: CanvasKit build for Chromium/Edge
-```
-
-The default dashboard is a **zero-dependency HTML page** (`scripts/dashboard/`) opened from
-disk (`file://`) in **Waterfox** with a dedicated demo profile. It talks to the same backend as
-the phones: REST snapshot + **live WSS** events, urgency counters, ticket cards, department and
-location details, and Confirmă / Respinge / Reclasifică actions. The script imports our private
-CA into the current-user trust store and enables `security.enterprise_roots.enabled`, so
-HTTPS/WSS are trusted without any ignore-certificate flags. `-Flutter` builds the optional
-Flutter web variant (`lib/web_dashboard_main.dart`) and serves it over HTTP for Chromium.
-
-**DevTools (in the app):** on the login screen tap the wrench icon (top-right) to preview all
-six time-of-day looks (Zori / Dimineață / Amiază / După-amiază / Apus / Noapte), see live
-backend health (Ollama, STT, WSS, tickets), trigger a forced 5-second override ticket, reset the
-store, and inspect the demo-account scopes. The sky itself follows the phone clock; for a
-deterministic build use `--dart-define=SKY_PERIOD=night` (`dawn`, `morning`, `midday`,
-`afternoon`, `sunset`).
-
-**Demo accounts** (hardcoded, passwords stored as salted SHA-256; scope decides alerts):
-`admin/admin123` (Andy Admin — everything + dispatcher), `engineer/engineer123` (Earl Engineer —
-maintenance/IT/baggage/airside), `janitor/janitor123` (John Janitor — terminal only),
-`firefighter/firefighter123` (Fred Firefighter — fire/rescue), `guard/guard123` (Gina Guard —
-security). The separate "reporter" account was removed: **anyone can report** from any account.
-Back from a role screen returns to the login screen (no more app exit).
-
-### Reporting & alerting (who reports, who gets pinged)
-
-**Anyone can report.** The crew and dispatcher screens have a **Raportează** action (campaign
-icon / overflow menu), and the PC dashboard has **＋ Raportează** (or press **N**; **Ctrl+Enter**
-submits). There is no separate reporter role.
-
-**Only the involved departments get notified.** A ticket alerts an account when the ticket's
-**primary departments** intersect that account's scope:
-
-| Incident (taxonomy) | Primary departments | Alerts |
+| Method | Path | Purpose |
 |---|---|---|
-| Fuel / liquid leak `SF-SPILL` | maintenance + terminal | **Earl Engineer AND John Janitor** |
-| Fire / smoke `SF-FIRE` | fire_rescue + security | **Fred Firefighter AND Gina Guard** |
-| Unattended bag `SC-BAG` | security | Gina Guard only |
-| Belt fault `MT-BELT` | baggage + maintenance | Earl Engineer |
+| POST | `/api/reports` | Create ticket (voice transcript / menu hint code) |
+| POST | `/api/analyze` | Conversational turn: fields + missing + question |
+| POST | `/api/transcribe` | Audio → text (local faster-whisper) |
+| GET | `/api/tickets[?status=]`, `/api/tickets/{id}` | List / read |
+| POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions (5 s window) |
+| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 2) |
+| POST | `/api/dev/reset` | Clear the in-memory store |
+| GET | `/api/health`, `/api/taxonomy`, `/healthz`, `/ca.crt` | Diagnostics / public checks |
+| WS | `/ws?token=` | `hello`, `ticket.created/updated/resolved`, `ping` |
 
-**The AI extracts everything it can before asking.** `„o femeie a luat foc la poarta 2"` is
-classified as SF-FIRE/critical with location *Poarta 2* and people-at-risk **true** — the app
-goes straight to the verification card with **no follow-up questions**. Questions only appear
-for information that is genuinely missing (e.g. no place mentioned). The server owns the
-conversation; the app's local brain only fills gaps when the server is unreachable.
-
-**Craiova airport zones:** locations are free text and the extractor knows the airport layout —
-**intrarea/ieșirea principală**, Terminal 1/2, **Terminal Sosiri / Terminal Plecări**, Check-in,
-Control securitate, Vamă, Zona de îmbarcare, Poarta 1…N, Bandă de bagaje 1…N, Parcare (P1/P2,
-scurtă/lungă durată, taxi), Platforma CRA, Stand 1…8, Pistă 09/27, Turn de control, Terminal
-Cargo, Hangar. The PC dashboard report form has a single “Zonă / locație” field (no dropdowns, no quick chips) and the server extracts the zone from the text when it is left empty. Full catalog and map
-sources: **[docs/airport-zones.md](docs/airport-zones.md)**.
-
-Alerts are real Android notifications (high-importance channel, sound + vibration) showing
-`🚨 <code> · <label>` and `<location> · <departments>`. Notifications are local (no cloud push):
-the phone must stay connected to the laptop backend while the demo runs — keep the app open on
-the crew screen and the phone awake. The permission prompt appears on the first sign-in of an
-alerting account; it can also be granted with
-`adb shell pm grant com.wingman.wingman android.permission.POST_NOTIFICATIONS`.
+Field-level contract: [CONTRACTS.md](CONTRACTS.md). Wire parity is enforced by
+`scripts/check_wire_parity.py`.
 
 ---
 
-## 7. Gates (run before every merge)
+## 6. DevTools & looks
+
+Login → **wrench icon** (top-right): preview all six time-of-day looks (Zori / Dimineață /
+Amiază / După-amiază / Apus / Noapte), live backend health (Ollama/STT/WSS/tickets), trigger a
+forced 5-second override ticket, reset the store, inspect account scopes.
+
+Deterministic build for photos: `--dart-define=SKY_PERIOD=night` (also `dawn`, `morning`,
+`midday`, `afternoon`, `sunset`).
+
+---
+
+## 7. Gates
 
 ```powershell
-.\scripts\verify_all.ps1                   # everything below in one command
+.\scripts\verify_all.ps1 -Live     # analyze + tests + parity + taxonomy + smoke + live
 ```
 
-```powershell
-python scripts\sync_taxonomy.py            # taxonomy.dart ↔ backend/taxonomy.json
-python scripts\check_wire_parity.py        # Dart JSON mapping ↔ FastAPI wire (offline)
-flutter analyze
-flutter test                               # core contract tests (taxonomy/wire/session)
-$env:WINGMAN_LIVE="1"; flutter test test\live_backend_test.dart
-                                           # LIVE: real Dart client ↔ TLS backend (REST+WSS)
-python scripts\smoke_test.py --ca backend\certs\ca.crt   # backend must pass 37/37
-```
-
-One command for all of it: `.\scripts\verify_all.ps1 -Live` (backend must be running).
-
-The smoke test also asserts that the backend ticket JSON keys **exactly** match what
-`Ticket.fromJson` reads — that is the single most effective integration gate.
+Individual commands and troubleshooting are in [docs/laptop-setup.md](docs/laptop-setup.md) and
+[docs/phone-testing.md](docs/phone-testing.md). The curated demo screenshots live **outside the
+repo** at `D:\Hackathon\Screenshots`.
 
 ---
 
-## 8. Demo flow (6 minutes)
+## 8. Documentation
 
-1. Pick **Raportor** on iPhone 1 → speak the smoke/fire scenario or tap SF-FIRE in the menu.
-2. Dispatcher screen (tablet/iPhone 2) shows the new card; a forced low-confidence report
-   (voice) opens the **5-second countdown** → confirm or reclassify.
-3. Crew phones get the dispatch → **Preia** → **Rezolvat** votes; card flips to resolved.
-4. Close with the architecture slide: closed taxonomy prevents hallucinated codes;
-   TLS + pinned CA; 5 s human-in-the-loop; deterministic fallback if the AI fails.
+Full index: **[docs/README.md](docs/README.md)**. Most useful now:
 
-Rehearsal runbook and fallbacks: **[docs/demo-risks.md](docs/demo-risks.md)**.
-Schedule: **[docs/48h-timeline.md](docs/48h-timeline.md)**. Team rules:
-**[CONTRACTS.md](CONTRACTS.md)**.
-
----
-
-## 9. Troubleshooting (top hits)
-
-| Symptom | Fix |
+| Doc | Contents |
 |---|---|
-| App: `TLS handshake failed` | IP not in cert SAN, or CA asset missing. Re-run `gen_certs.ps1 -Force`, `flutter pub get`, rebuild. |
-| App: `Cannot reach https://...` | Phone on different Wi-Fi / AP isolation / Windows firewall on Public profile / backend not running. |
-| Dispatcher empty | `python backend\seed_demo.py`; check WSS banner on the role screen. |
-| `ollama` warnings in `/api/health` | `ollama serve`, then `ollama pull <model>`; backend auto-warms on startup. |
-| Port 8443 in use | Stop the old uvicorn, or change port in `backend\run.ps1` **and** the app's `API_BASE`. |
-| Python is the Microsoft Store stub | Install real Python 3.12 (`winget`), open a new terminal, rerun `run.ps1`. |
-| Phone-side CA profile installs but the app still fails | Expected on Android 7+ (apps don't trust user CAs), and possible on iOS. The app pins the bundled CA instead — rebuild after `gen_certs.ps1`, and make sure `assets/certs/ca.crt` exists and is declared in `pubspec.yaml`. |
-| `flutter run` fails: unable to find `assets/certs/ca.crt` | Run `.\scripts\gen_certs.ps1 -Force` first (it creates the asset), then `flutter pub get`. |
-| Manual PowerShell `POST /api/reports` returns 400/422 with Romanian text | Windows PowerShell 5.1 mangles UTF-8 bodies and quotes. Use `python backend\seed_demo.py`, `scripts\smoke_test.py`, or `curl.exe --data-binary "@body.json"`. The API accepts UTF-8 JSON (verified with the smoke test). |
+| [docs/demo-script.md](docs/demo-script.md) | 3-minute rehearsal script + fallbacks |
+| [docs/airport-zones.md](docs/airport-zones.md) | Craiova zone catalog (map sources) |
+| [docs/design-tokens.md](docs/design-tokens.md) | Design system / theme tokens |
+| [docs/reporter.md](docs/reporter.md) | Reporter flow, local brain, STT integration |
+| [CONTRACTS.md](CONTRACTS.md) | Frozen Dart ↔ FastAPI wire contracts |
+| [scripts/README.md](scripts/README.md) | Every automation script, what it does |
 

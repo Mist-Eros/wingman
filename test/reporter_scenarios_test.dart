@@ -75,7 +75,8 @@ const List<Scenario> scenarios = <Scenario>[
       code: 'SF-FIRE', urgency: C, place: 'Poarta 9'),
 
   // spills: the urgency depends on WHAT and WHERE, not only on the type
-  Scenario('Pată mică de apă în hol', code: 'SF-SPILL', urgency: M, place: 'Hol'),
+  Scenario('Pată mică de apă în hol',
+      code: 'SF-SPILL', urgency: M, place: 'Hol'),
   Scenario('Cafea vărsată lângă poarta 12',
       code: 'SF-SPILL', urgency: M, place: 'Poarta 12'),
   Scenario('Puddle of coffee near gate A',
@@ -123,12 +124,13 @@ const List<Scenario> scenarios = <Scenario>[
       code: 'SC-BAG', urgency: H, place: 'Terminal Plecări'),
   Scenario('Cineva a sărit gardul lângă pista 2',
       code: 'SC-ACCESS', urgency: C, place: 'Pista 2'),
-  Scenario('Pasager pe platformă', code: 'SC-ACCESS', urgency: C, place: 'Platformă'),
+  Scenario('Pasager pe platformă',
+      code: 'SC-ACCESS', urgency: C, place: 'Platformă'),
   Scenario('Drone over the terminal',
       code: 'SC-ACCESS', urgency: C, place: 'Terminal'),
-  Scenario('Cuțit găsit în bagajul de mână',
-      code: 'SC-ITEM', urgency: H),
-  Scenario('Bomb threat at gate 3', code: 'SC-ITEM', urgency: C, place: 'Gate 3'),
+  Scenario('Cuțit găsit în bagajul de mână', code: 'SC-ITEM', urgency: H),
+  Scenario('Bomb threat at gate 3',
+      code: 'SC-ITEM', urgency: C, place: 'Gate 3'),
   Scenario('Doi bărbați se bat în terminalul 1',
       code: 'SC-BEHAV', urgency: H, place: 'Terminal 1'),
   Scenario('Drunk man shouting at gate 3',
@@ -143,10 +145,8 @@ const List<Scenario> scenarios = <Scenario>[
       code: 'MT-BELT', urgency: H),
   Scenario('Escalatorul este stricat la nivelul 2',
       code: 'MT-ESC', urgency: M, place: 'Nivel 2'),
-  Scenario('Elevator stuck with people inside',
-      code: 'MT-ESC', urgency: H),
-  Scenario('Cineva a căzut pe scările rulante',
-      code: 'MT-ESC', urgency: H),
+  Scenario('Elevator stuck with people inside', code: 'MT-ESC', urgency: H),
+  Scenario('Cineva a căzut pe scările rulante', code: 'MT-ESC', urgency: H),
   Scenario('Pasarela de îmbarcare de la poarta 8 nu se mișcă',
       code: 'MT-JBRIDGE', urgency: H, place: 'Poarta 8'),
   Scenario('Ușa automată nu se deschide la intrarea B',
@@ -192,12 +192,11 @@ void main() {
         expect(fields.incidentCode, s.code, reason: 'type of "${s.said}"');
         expect(fields.urgency, s.urgency,
             reason: 'urgency of "${s.said}": ${fields.rationale}');
-        expect(fields.location, s.place ?? '',
-            reason: 'place of "${s.said}"');
+        expect(fields.location, s.place ?? '', reason: 'place of "${s.said}"');
         if (s.category != null) {
-          final category = IncidentTaxonomy.byCode(fields.incidentCode ?? '')
-                  ?.category ??
-              (fields.labelRo == s.category!.labelRo ? s.category : null);
+          final category =
+              IncidentTaxonomy.byCode(fields.incidentCode ?? '')?.category ??
+                  (fields.labelRo == s.category!.labelRo ? s.category : null);
           expect(category, s.category);
         }
       });
@@ -264,8 +263,7 @@ void main() {
       final base = urgencyOf('coadă la controlul de securitate').level;
       expect(urgencyOf('coadă la controlul de securitate, urgent').level,
           base + 1);
-      expect(
-          urgencyOf('coadă la controlul de securitate, se mărește').level,
+      expect(urgencyOf('coadă la controlul de securitate, se mărește').level,
           base + 1);
     });
 
@@ -275,7 +273,8 @@ void main() {
       final fields = ConversationBrain()
           .assess(
             turns: <BrainTurn>[
-              BrainTurn(slot: null, text: 'scurgere de combustibil lângă avion'),
+              BrainTurn(
+                  slot: null, text: 'scurgere de combustibil lângă avion'),
             ],
             server: server,
           )
@@ -321,7 +320,9 @@ void main() {
     });
 
     test('a type the reporter stated is trusted', () {
-      expect(confidenceOf('ceva nu e în regulă la poarta 3', answerType: 'scurgere'),
+      expect(
+          confidenceOf('ceva nu e în regulă la poarta 3',
+              answerType: 'scurgere'),
           greaterThanOrEqualTo(0.75));
     });
 

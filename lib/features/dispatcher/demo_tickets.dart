@@ -24,7 +24,8 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
     String? decidedBy,
   }) {
     final type = IncidentTaxonomy.all.firstWhere((t) => t.code == code);
-    final created = createdAt ?? n.subtract(Duration(minutes: id.hashCode.abs() % 18 + 1));
+    final created =
+        createdAt ?? n.subtract(Duration(minutes: id.hashCode.abs() % 18 + 1));
     return Ticket(
       id: id,
       incidentCode: type.code,

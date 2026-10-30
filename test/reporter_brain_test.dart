@@ -49,13 +49,16 @@ class Conversation {
 void main() {
   group('understanding what was said', () {
     test('type from Romanian, with and without diacritics', () {
-      expect(understand('Am o pată de ulei lângă avion').type?.code, 'SF-SPILL');
-      expect(understand('am o pata de ulei langa avion').type?.code, 'SF-SPILL');
+      expect(
+          understand('Am o pată de ulei lângă avion').type?.code, 'SF-SPILL');
+      expect(
+          understand('am o pata de ulei langa avion').type?.code, 'SF-SPILL');
       expect(understand('Este fum în terminal').type?.code, 'SF-FIRE');
       expect(understand('Bagaj abandonat la intrare').type?.code, 'SC-BAG');
       expect(understand('Banda de bagaje s-a oprit').type?.code, 'MT-BELT');
       expect(understand('Liftul este blocat').type?.code, 'MT-ESC');
-      expect(understand('Pasarela de îmbarcare nu merge').type?.code, 'MT-JBRIDGE');
+      expect(understand('Pasarela de îmbarcare nu merge').type?.code,
+          'MT-JBRIDGE');
     });
 
     test('type from English', () {
@@ -140,7 +143,8 @@ void main() {
 
     test('fire: asks where, then dispatches (no people question)', () {
       final c = Conversation('Este fum');
-      expect(c.run(<String>['terminal 2', 'nu e nimeni']), <String>['location']);
+      expect(
+          c.run(<String>['terminal 2', 'nu e nimeni']), <String>['location']);
       expect(c.last.next, isNull);
       expect(c.last.result.fields.incidentCode, 'SF-FIRE');
     });
@@ -202,7 +206,8 @@ void main() {
         AnalyzeResult(
           fields: AnalyzeFields(
             incidentCode: code,
-            labelRo: code == null ? null : IncidentTaxonomy.byCode(code)?.labelRo,
+            labelRo:
+                code == null ? null : IncidentTaxonomy.byCode(code)?.labelRo,
             location: location,
             urgency: Urgency.critical,
             confidence: 0.91,
@@ -225,8 +230,8 @@ void main() {
 
     test('if the server cannot classify but the words are clear, no question',
         () {
-      final c = Conversation('pată mare de ulei la poarta 12',
-          server: serverKnows());
+      final c =
+          Conversation('pată mare de ulei la poarta 12', server: serverKnows());
       expect(c.run(const <String>[]), isEmpty);
       expect(c.last.result.fields.incidentCode, 'SF-SPILL');
     });

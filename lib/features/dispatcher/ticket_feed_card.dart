@@ -50,8 +50,10 @@ class TicketCardBody extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: <Widget>[
-            _InfoPill(icon: Icons.place_outlined, label: ticket.location.display),
-            _InfoPill(icon: Icons.groups_outlined, label: ticket.departmentsLabel),
+            _InfoPill(
+                icon: Icons.place_outlined, label: ticket.location.display),
+            _InfoPill(
+                icon: Icons.groups_outlined, label: ticket.departmentsLabel),
             if (standby.isNotEmpty)
               _InfoPill(
                 icon: Icons.notifications_paused_outlined,
@@ -215,12 +217,15 @@ class TicketFeedCard extends StatelessWidget {
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: <Widget>[
                                   _UrgencyBadge(urgency: ticket.urgency),
-                                  _ConfidenceChip(confidence: ticket.confidence),
+                                  _ConfidenceChip(
+                                      confidence: ticket.confidence),
                                   _StatusChip(status: ticket.status),
                                   Text(
                                     _ageLabel(ticket.ageSeconds()),
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: style.onFill.withValues(alpha: 0.65),
+                                    style:
+                                        theme.textTheme.labelMedium?.copyWith(
+                                      color:
+                                          style.onFill.withValues(alpha: 0.65),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -237,12 +242,16 @@ class TicketFeedCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: density == DispatcherDensity.compact ? 8 : 12),
+                        SizedBox(
+                            height:
+                                density == DispatcherDensity.compact ? 8 : 12),
                         TicketCardBody(
                           ticket: ticket,
                           density: density,
                         ),
-                        SizedBox(height: density == DispatcherDensity.compact ? 8 : 12),
+                        SizedBox(
+                            height:
+                                density == DispatcherDensity.compact ? 8 : 12),
                         Row(
                           children: <Widget>[
                             Icon(
@@ -308,7 +317,8 @@ class TicketFeedCard extends StatelessWidget {
                               if (onDeny != null)
                                 OutlinedButton.icon(
                                   onPressed: busy ? null : onDeny,
-                                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                                  icon: const Icon(Icons.cancel_outlined,
+                                      size: 18),
                                   label: const Text('Respinge'),
                                 ),
                               if (onReclassify != null)

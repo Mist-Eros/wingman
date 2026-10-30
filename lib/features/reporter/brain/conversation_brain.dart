@@ -36,7 +36,8 @@ class BrainTurn {
 }
 
 class PlannedQuestion {
-  const PlannedQuestion({required this.slot, required this.ro, required this.en});
+  const PlannedQuestion(
+      {required this.slot, required this.ro, required this.en});
 
   /// 'type' | 'location' | 'size' | 'people' | 'count' | 'server'
   final String slot;
@@ -117,11 +118,10 @@ class ConversationBrain {
 
     // ── type ────────────────────────────────────────────────────────────────
     final serverCode = server?.fields.incidentCode;
-    final IncidentType? type = (hintCode != null
-            ? IncidentTaxonomy.byCode(hintCode)
-            : null) ??
-        (serverCode != null ? IncidentTaxonomy.byCode(serverCode) : null) ??
-        heard.type;
+    final IncidentType? type =
+        (hintCode != null ? IncidentTaxonomy.byCode(hintCode) : null) ??
+            (serverCode != null ? IncidentTaxonomy.byCode(serverCode) : null) ??
+            heard.type;
     final category = type?.category ?? heard.category;
     final typeAnswer = _answerOf(turns, 'type');
 
@@ -323,7 +323,8 @@ class ConversationBrain {
 
   /// Maps the server's Romanian question to the matching planned question, so
   /// the app asks exactly what the server wants and nothing more.
-  PlannedQuestion? _plannedFromServer(AnalyzeResult server, IncidentType? type) {
+  PlannedQuestion? _plannedFromServer(
+      AnalyzeResult server, IncidentType? type) {
     final question = server.question;
     if (question == null || question.isEmpty) return null;
     if (server.asksForLocation) return _locationQuestion();
@@ -428,7 +429,9 @@ class ConversationBrain {
         return heard.count ?? (answer == null ? null : _shorten(answer));
       case 'people':
         return heard.people ??
-            (answer == null ? null : (yesNoFromAnswer(answer) ?? _shorten(answer)));
+            (answer == null
+                ? null
+                : (yesNoFromAnswer(answer) ?? _shorten(answer)));
     }
     return null;
   }

@@ -104,7 +104,8 @@ class AnalyzeFields {
       peopleAtRisk: value['people_at_risk'] is bool
           ? value['people_at_risk'] as bool
           : null,
-      urgency: Urgency.tryFromWire(value['urgency'] as String?) ?? Urgency.medium,
+      urgency:
+          Urgency.tryFromWire(value['urgency'] as String?) ?? Urgency.medium,
       confidence: _double(value['confidence']),
       aiSource: _aiSource(value['ai_source']),
       rationale: _stringOrNull(value['rationale']),
@@ -156,7 +157,8 @@ class AnalyzeResult {
     final missingRaw = json['missing'];
     final missing = <String>[
       if (missingRaw is List)
-        for (final item in missingRaw) if (item is String) item,
+        for (final item in missingRaw)
+          if (item is String) item,
     ];
     return AnalyzeResult(
       fields: AnalyzeFields.fromJson(json['fields']),
@@ -165,8 +167,9 @@ class AnalyzeResult {
       clarificationsAsked: _int(json['clarifications_asked']),
       maxClarifications: _int(json['max_clarifications'], fallback: 3),
       ready: json['ready'] == true || _stringOrNull(json['question']) == null,
-      taxonomyVersion:
-          json['taxonomy_version'] is int ? json['taxonomy_version'] as int : null,
+      taxonomyVersion: json['taxonomy_version'] is int
+          ? json['taxonomy_version'] as int
+          : null,
     );
   }
 }
