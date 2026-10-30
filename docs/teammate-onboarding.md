@@ -6,10 +6,10 @@ Best for 3 people + merge protocol. On the demo laptop:
 
 ```powershell
 # 1) create an empty private repo on github.com (no README, no .gitignore)
-#    e.g. https://github.com/<you>/wingman
+#    e.g. https://github.com/Mist-Eros/wingman
 
 cd D:\Hackathon\Wingman
-git remote add origin https://github.com/<you>/wingman.git
+git remote add origin https://github.com/Mist-Eros/wingman.git
 git push -u origin main
 # 2) GitHub → Settings → Collaborators → add the 3 teammates (write access)
 ```
@@ -17,7 +17,7 @@ git push -u origin main
 Teammates:
 
 ```powershell
-git clone https://github.com/<you>/wingman.git
+git clone https://github.com/Mist-Eros/wingman.git
 cd wingman
 flutter pub get
 flutter analyze
@@ -42,7 +42,7 @@ Send `D:\Hackathon\Wingman.bundle`. Teammates clone from it and can later switch
 ```powershell
 git clone Wingman.bundle Wingman
 cd Wingman
-git remote remove origin        # later: git remote add origin <github-url>
+git remote remove origin        # later: git remote add origin https://github.com/Mist-Eros/wingman
 flutter pub get && flutter analyze && flutter test
 ```
 
@@ -92,7 +92,7 @@ iOS builds need macOS/Xcode — currently out of the critical path (cloud Mac la
 
 ## 7. Message to paste in the group chat
 
-> Salut! Repo-ul: **`<github-url>`** (sau `Wingman.bundle` dacă nu ai încă git).
+> Salut! Repo-ul: **`https://github.com/Mist-Eros/wingman`** (sau `Wingman.bundle` dacă nu ai încă git).
 > Înainte de cod: citește `CONTRACTS.md` §1–§7. Reguli scurte:
 > • lucrezi doar în `lib/features/<rolul tău>/`; nu atingi `lib/core/`, `lib/main.dart`, `backend/`;
 > • branch propriu (`feat/reporter` / `feat/dispatcher` / `feat/crew`), PR doar în ferestrele de integrare;
