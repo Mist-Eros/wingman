@@ -58,6 +58,9 @@ String _firstToken(String raw) {
   return trimmed.split(RegExp(r'\s+')).first;
 }
 
+String _ticketsLabel(int count) =>
+    count == 1 ? '1 tichet' : '$count tichete';
+
 /// Validated base URL, or the documented default when the define is unusable.
 /// Never let a bad `--dart-define` crash the demo with a FormatException.
 String _sanitizeApiBase(String raw) {
@@ -233,6 +236,7 @@ class _AirportAppState extends State<AirportApp> {
   Widget _roleSelect() => RoleSelectScreen(
         onRoleSelected: _selectRole,
         initialName: _session?.displayName ?? '',
+        restoredSession: _session,
       );
 }
 
@@ -243,6 +247,7 @@ class RoleSelectScreen extends StatefulWidget {
     super.key,
     required this.onRoleSelected,
     this.initialName = '',
+    this.restoredSession,
   });
 
   /// Created by `main.dart`; hands the chosen demo session back to the router.
@@ -250,6 +255,11 @@ class RoleSelectScreen extends StatefulWidget {
 
   /// Pre-fills the name field after a restart (display name only).
   final String initialName;
+
+  /// Session restored from secure storage. Reused when the same role is picked
+  /// again so the stable user id (crew-XXXX / dispatcher-XXXX) survives an app
+  /// restart — otherwise a joined ticket would look unjoined.
+  final Session? restoredSession;
 
   @override
   State<RoleSelectScreen> createState() => _RoleSelectScreenState();
@@ -271,9 +281,14 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
   }
 
   void _pick(UserRole role) {
-    widget.onRoleSelected(
-      Session.demo(role, displayName: _nameController.text),
-    );
+    final name = _nameController.text.trim();
+    final restored = widget.restoredSession;
+    final session = (restored != null && restored.role == role)
+        ? restored.copyWith(
+            displayName: name.isEmpty ? restored.displayName : name,
+          )
+        : Session.demo(role, displayName: name);
+    widget.onRoleSelected(session);
   }
 
   @override
@@ -395,7 +410,7 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
                         Expanded(
                           child: Text(
                             online
-                                ? 'Server conectat · ${board.tickets.length} tichete'
+                                ? 'Server conectat · ${_ticketsLabel(board.tickets.length)}'
                                 : 'Server offline — verifică IP-ul, Wi-Fi-ul și firewall-ul',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: online

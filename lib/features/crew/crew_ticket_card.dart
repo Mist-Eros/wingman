@@ -208,8 +208,7 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                             icon: Icons.groups_outlined,
                             text: joinedCount == 0
                                 ? 'Nimeni nu a preluat încă'
-                                : '$joinedCount '
-                                    '${joinedCount == 1 ? 'membru' : 'membri'} alăturați',
+                                : '$joinedCount ${joinedCount == 1 ? 'membru alăturat' : 'membri alăturați'}',
                           ),
                           const SizedBox(height: 6),
                           _MetaRow(
@@ -279,8 +278,6 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                                               _joining ? 'Se preia…' : 'Preia',
                                             ),
                                             style: FilledButton.styleFrom(
-                                              backgroundColor: _accent,
-                                              foregroundColor: Colors.white,
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                 vertical: 13,
@@ -481,8 +478,6 @@ class _DispatchPanel extends StatelessWidget {
                           : 'Rezolvat',
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -507,8 +502,6 @@ class _DispatchPanel extends StatelessWidget {
                     : const Icon(Icons.handshake_outlined),
                 label: Text(joining ? 'Se preia…' : 'Preia'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
