@@ -198,13 +198,24 @@ Full field-level contract (JSON keys, statuses, errors): **[CONTRACTS.md](CONTRA
 ### Desktop control room (real-time ops view)
 
 ```powershell
-.\scripts\serve_dashboard.ps1        # builds lib/web_dashboard_main.dart, serves it, opens Edge
+.\scripts\serve_dashboard.ps1        # opens the live control room in Waterfox
+.\scripts\serve_dashboard.ps1 -Flutter   # optional: CanvasKit build for Chromium/Edge
 ```
 
-The dashboard is a Flutter **web** target in this repo (no Visual Studio needed) that talks to
-the same backend as the phones: REST snapshot + WSS live events, urgency counters, department
-strip, and Confirmă/Respinge/Reclasifică actions. Edge is opened with
-`--ignore-certificate-errors` because the demo backend uses our self-signed CA.
+The default dashboard is a **zero-dependency HTML page** (`scripts/dashboard/`) opened from
+disk (`file://`) in **Waterfox** with a dedicated demo profile. It talks to the same backend as
+the phones: REST snapshot + **live WSS** events, urgency counters, ticket cards, department and
+location details, and Confirmă / Respinge / Reclasifică actions. The script imports our private
+CA into the current-user trust store and enables `security.enterprise_roots.enabled`, so
+HTTPS/WSS are trusted without any ignore-certificate flags. `-Flutter` builds the optional
+Flutter web variant (`lib/web_dashboard_main.dart`) and serves it over HTTP for Chromium.
+
+**DevTools (in the app):** on the login screen tap the wrench icon (top-right) to preview all
+six time-of-day looks (Zori / Dimineață / Amiază / După-amiază / Apus / Noapte), see live
+backend health (Ollama, STT, WSS, tickets), trigger a forced 5-second override ticket, reset the
+store, and inspect the demo-account scopes. The sky itself follows the phone clock; for a
+deterministic build use `--dart-define=SKY_PERIOD=night` (`dawn`, `morning`, `midday`,
+`afternoon`, `sunset`).
 
 **Demo accounts** (hardcoded, passwords stored as salted SHA-256; scope decides alerts):
 `admin/admin123` (everything), `engineer/engineer123` (maintenance/IT/baggage/airside),

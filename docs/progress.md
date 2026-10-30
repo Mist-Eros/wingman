@@ -51,6 +51,10 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Voice path verified end-to-end**: real spoken WAV fixture → `ApiClient.transcribe` over pinned TLS → local Whisper → `/api/analyze` → `SF-FIRE` | `test/fixtures/spoken_report.wav`, live test in `test/live_backend_test.dart` (**live 8/8**) |
 | **Full gate run**: `scripts\verify_all.ps1 -Live` → **ALL GATES PASSED** (analyze clean, 146 app tests, live 8/8, smoke 59/59 strict TLS, wire parity, taxonomy sync) | verify_all output |
 | **Demo APKs refreshed** (TLS + emergency HTTP, 51.1 MB each) against `192.168.0.170`; TLS build installed on the S24 and connected | `D:\Hackathon\dist\wingman-tls-release.apk`, `wingman-insecure-release.apk` |
+| **Time-of-day skies**: six adaptive looks (Zori / Dimineață / Amiază / După-amiază / Apus / Noapte) chosen from the clock, stars + crescent moon at night, solid-white clouds, `--dart-define=SKY_PERIOD=…` for deterministic demo builds | `lib/core/widgets/sky_background.dart`, `test/sky_period_test.dart` |
+| **DevTools screen**: wrench icon on login → preview all six looks, live server health (Ollama/STT/WSS/tickets), force a 5-second override ticket, reset store, account-scope matrix | `lib/features/dev/dev_tools_screen.dart` |
+| **Desktop control room in Waterfox**: zero-dependency HTML dashboard (no CanvasKit/WebGL), trusted via private CA + dedicated Waterfox profile, opened from disk; `-Flutter` variant for Chromium | `scripts/serve_dashboard.ps1`, `scripts/dashboard/` |
+| **Progress gallery**: 49 screenshots organised into `Hackathon\ProgressPics\Steep_01…09` (per-milestone folders + README) | `D:\Hackathon\ProgressPics\` |
 
 ## In progress ⏳
 

@@ -19,6 +19,7 @@ import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/theme/wingman_theme.dart';
 import '../../core/widgets/sky_background.dart';
+import '../dev/dev_tools_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({
@@ -67,6 +68,9 @@ class LoginScreen extends StatelessWidget {
                       fontSize: 13,
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w600,
+                      shadows: <Shadow>[
+                        Shadow(color: Colors.black38, blurRadius: 8),
+                      ],
                     ),
                   ),
                   const SizedBox(height: WingmanSpacing.md),
@@ -128,25 +132,47 @@ class _Header extends StatelessWidget {
               ),
             ),
             const SizedBox(width: WingmanSpacing.md),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
+                  const Text(
                     'Wingman',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
+                      shadows: <Shadow>[
+                        Shadow(color: Colors.black38, blurRadius: 12),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Airport incident response · demo',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                    'Airport incident response · demo · '
+                    '${SkyPeriod.current().labelRo}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      shadows: <Shadow>[
+                        Shadow(color: Colors.black38, blurRadius: 8),
+                      ],
+                    ),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'DevTools · aspect, server, acțiuni demo',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DevToolsScreen(),
+                ),
+              ),
+              icon: const Icon(
+                Icons.developer_mode_rounded,
+                color: Colors.white70,
               ),
             ),
           ],
@@ -179,6 +205,9 @@ class _Header extends StatelessWidget {
                       : const Color(0xFFFFDAD6),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  shadows: const <Shadow>[
+                    Shadow(color: Colors.black26, blurRadius: 6),
+                  ],
                 ),
               ),
             ],

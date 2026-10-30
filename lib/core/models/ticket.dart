@@ -473,6 +473,7 @@ class ReportDraft {
     this.location = const IncidentLocation(),
     this.hintCode,
     this.useAi = true,
+    this.forceOverride = false,
   });
 
   final ReportSource source;
@@ -487,6 +488,11 @@ class ReportDraft {
   /// Force the AI even when [hintCode] is set (used by the "verify" toggle).
   final bool useAi;
 
+  /// DEV/DEMO ONLY (DevTools + rehearsals): forces the server to cap
+  /// confidence and take the 5-second dispatcher override path. The normal
+  /// reporter flow never sets it.
+  final bool forceOverride;
+
   Map<String, dynamic> toJson() => <String, dynamic>{
         'source': source.wire,
         'transcript': transcript,
@@ -495,6 +501,9 @@ class ReportDraft {
         'location': location.toJson(),
         'hint_code': hintCode,
         'use_ai': useAi,
+        // Only serialized when enabled so the normal wire body stays byte-for-
+        // byte identical to the frozen contract.
+        if (forceOverride) 'force_override': true,
       };
 }
 

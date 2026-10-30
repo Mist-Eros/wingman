@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wingman · Control Room</title>
+<style>
+  :root {
+    --bg:#081120; --panel:#0e1a2b; --card:#132238; --line:#22324a;
+    --ink:#e8f0fa; --muted:#8fa3bd; --accent:#5ba7ff;
+    --red:#ff6b6b; --orange:#ffa94d; --yellow:#ffd43b; --green:#3dd68c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
+  .app { display: grid; grid-template-columns: 300px 1fr 400px; gap: 14px;
+         height: 100vh; padding: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line);
+           border-radius: 14px; }
+  /* ── sidebar ── */
+  .sidebar { display: flex; flex-direction: column; gap: 12px; }
+  .sidebar .panel { padding: 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo { width: 46px; height: 46px; border-radius: 12px;
+    background: rgba(91,167,255,.16); border: 1px solid rgba(91,167,255,.5);
+    display: grid; place-items: center; font-size: 22px; }
+  .brand h1 { font-size: 22px; margin: 0; letter-spacing: -.5px; }
+  .brand .sub { font-size: 10px; letter-spacing: 1.2px; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+  .pill.ok { color: var(--green); background: rgba(61,214,140,.12);
+             border: 1px solid rgba(61,214,140,.5); }
+  .pill.bad { color: var(--red); background: rgba(255,107,107,.12);
+              border: 1px solid rgba(255,107,107,.5); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+  .label { font-size: 10px; letter-spacing: 1.1px; color: var(--muted);
+           text-transform: uppercase; margin-bottom: 8px; }
+  .stat { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .stat .n { margin-left: auto; font-size: 16px; font-weight: 800; }
+  .stat .name { color: var(--muted); }
+  .kv { display: flex; justify-content: space-between; gap: 10px;
+        font-size: 12px; padding: 3px 0; }
+  .kv span:first-child { color: var(--muted); }
+  .btn { border: 1px solid var(--line); background: transparent; color: var(--ink);
+         padding: 9px 12px; border-radius: 10px; cursor: pointer;
+         font-weight: 700; font-size: 12px; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #061a30; border-color: var(--accent); }
+  .btn.danger { color: var(--red); border-color: rgba(255,107,107,.5); }
+  .btn.grow { flex: 1; }
+  .row { display: flex; gap: 8px; }
+  .event { font-size: 12px; color: var(--ink); }
+  .tiny { font-size: 10px; color: var(--muted); }
+  /* ── feed ── */
+  .feed { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .feed-head { display: flex; align-items: center; gap: 10px; padding: 2px 4px; }
+  .feed-head h2 { margin: 0; font-size: 24px; letter-spacing: -.4px; }
+  .count { background: rgba(91,167,255,.16); color: var(--accent);
+           border: 1px solid rgba(91,167,255,.5); border-radius: 999px;
+           padding: 2px 10px; font-weight: 800; font-size: 12px; }
+  .chip { border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+          border-radius: 999px; padding: 6px 12px; font-size: 12px;
+          font-weight: 700; cursor: pointer; }
+  .chip.on { background: rgba(91,167,255,.2); border-color: var(--accent);
+             color: var(--accent); }
+  .list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+          padding-right: 4px; }
+  .ticket { display: flex; gap: 12px; background: var(--card);
+            border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+            cursor: pointer; }
+  .ticket.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .ticket .bar { width: 4px; border-radius: 4px; align-self: stretch; }
+  .ticket .main { flex: 1; min-width: 0; }
+  .ticket .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge { border-radius: 999px; padding: 3px 8px; font-size: 11px;
+           font-weight: 700; border: 1px solid currentColor; }
+  .ticket h3 { margin: 8px 0 4px; font-size: 16px; }
+  .ticket .meta { color: var(--muted); font-size: 12px; }
+  .ticket .when { margin-left: auto; color: var(--muted); font-size: 11px; }
+  .empty { margin: auto; text-align: center; color: var(--muted); }
+  .empty .big { font-size: 48px; opacity: .6; }
+  /* ── detail ── */
+  .detail { padding: 16px; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 10px; }
+  .detail h3 { margin: 4px 0 0; font-size: 20px; }
+  .detail .code { font-weight: 800; font-size: 18px; letter-spacing: .4px; }
+  .detail .k { font-size: 9px; letter-spacing: 1.1px; color: var(--muted);
+               text-transform: uppercase; margin-top: 8px; }
+  .detail .v { font-size: 13px; }
+  .detail .spacer { flex: 1; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+           background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+           padding: 10px 16px; font-size: 13px; display: none; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6);
+              display: none; place-items: center; }
+  .modal { width: 480px; max-height: 70vh; background: var(--panel);
+           border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+           display: flex; flex-direction: column; gap: 8px; }
+  .modal h3 { margin: 0 0 4px; }
+  .tax { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .tax button { text-align: left; display: flex; justify-content: space-between;
+                background: var(--card); border: 1px solid var(--line);
+                color: var(--ink); border-radius: 10px; padding: 8px 10px;
+                cursor: pointer; font-size: 12px; }
+  .tax button:hover { border-color: var(--accent); }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-thumb { background: #22324a; border-radius: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <div class="panel">
+      <div class="brand">
+        <div class="logo">✈</div>
+        <div>
+          <h1>Wingman</h1>
+          <div class="sub">CONTROL ROOM · LIVE</div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <span id="pill" class="pill bad"><span class="dot"></span><span id="pillText">conectare…</span></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="label">Urgență (coadă activă)</div>
+      <div class="stat"><span class="dot" style="color:var(--red)"></span><span class="name">Critică</span><span class="n" id="c-critical">0</span></div>
+      <div class="stat"><span class="dot" style="color:var(--orange)"></span><span class="name">Ridicată</span><span class="n" id="c-high">0</span></div>
+      <div class="stat"><span class="dot" style="color:var(--yellow)"></span><span class="name">Medie</span><span class="n" id="c-medium">0</span></div>
+      <div class="stat"><span class="dot" style="color:var(--green)"></span><span class="name">Scăzută</span><span class="n" id="c-low">0</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="label">Server</div>
+      <div class="kv"><span>Tichete</span><span id="total">0</span></div>
+      <div class="kv"><span>API</span><span id="apiLabel" class="tiny">—</span></div>
+      <div style="margin-top:10px"><button class="btn" style="width:100%" onclick="loadTickets(true)">↻ Reîncarcă</button></div>
+    </div>
+
+    <div class="panel" style="margin-top:auto">
+      <div class="label">Ultimul eveniment</div>
+      <div class="event" id="lastEvent">Aștept evenimente live…</div>
+      <div class="tiny" style="margin-top:8px">Demo local · WSS live · fără cloud</div>
+    </div>
+  </aside>
+
+  <!-- feed -->
+  <main class="feed">
+    <div class="feed-head">
+      <h2>Coadă incidente</h2>
+      <span class="count" id="queueCount">0</span>
+      <span style="flex:1"></span>
+      <button id="filterBtn" class="chip on" onclick="toggleFilter()">Doar active</button>
+    </div>
+    <div class="list" id="list"></div>
+  </main>
+
+  <!-- detail -->
+  <aside class="panel detail" id="detail">
+    <div class="empty">
+      <div class="big">🎯</div>
+      <div style="margin-top:8px;font-weight:700;color:var(--ink)">Selectează un incident</div>
+      <div style="margin-top:4px">Detaliile și acțiunile apar aici.</div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Reclasifică incidentul</h3>
+    <div class="tiny" id="modalSub"></div>
+    <div class="tax" id="taxList"></div>
+    <button class="btn" style="margin-top:8px" onclick="closeModal()">Anulează</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Generated at serve time by scripts/serve_dashboard.ps1 → config.js
+const CFG = window.WINGMAN_CONFIG || { api: 'https://192.168.0.170:8443', token: 'demo-token' };
+const URGENCY_COLOR = { critical: '#ff6b6b', high: '#ffa94d', medium: '#ffd43b', low: '#3dd68c' };
+const STATUS_COLOR = {
+  pending_override: '#ffa94d', dispatched: '#5ba7ff', in_progress: '#ffd43b',
+  resolved: '#3dd68c', denied: '#8fa3bd'
+};
+let tickets = new Map();
+let selected = null;
+let onlyActive = true;
+let ws = null;
+let wsRetry = null;
+let taxonomy = [];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function apiUrl(path) { return CFG.api.replace(/\/$/, '') + path; }
+function headers() { return { 'Authorization': 'Bearer ' + CFG.token, 'Content-Type': 'application/json' }; }
+
+function toast(text) {
+  const el = $('toast'); el.textContent = text; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 3500);
+}
+
+function setConnection(ok, text) {
+  const pill = $('pill');
+  pill.className = 'pill ' + (ok ? 'ok' : 'bad');
+  $('pillText').textContent = text || (ok ? 'WSS conectat' : 'WSS deconectat');
+  document.querySelector('#pill .dot').style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+
+async function request(path, options = {}) {
+  const res = await fetch(apiUrl(path), { ...options, headers: headers() });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error('HTTP ' + res.status + (body.detail ? ': ' + body.detail : ''));
+  return body;
+}
+
+async function loadTickets(notify = false) {
+  try {
+    const data = await request('/api/tickets');
+    const list = data.tickets || [];
+    tickets = new Map(list.map(t => [t.id, t]));
+    render();
+    if (notify) toast('Listă reîncărcată · ' + list.length + ' tichete');
+  } catch (err) {
+    toast('Nu pot încărca tichetele: ' + err.message);
+  }
+}
+
+function connectWs() {
+  const base = CFG.api.replace(/^https/, 'wss').replace(/^http/, 'ws');
+  try {
+    ws = new WebSocket(base + '/ws?token=' + encodeURIComponent(CFG.token));
+  } catch (err) { setConnection(false, 'WSS: ' + err.message); return; }
+  ws.onopen = () => setConnection(true);
+  ws.onclose = () => { setConnection(false); wsRetry = setTimeout(connectWs, 3000); };
+  ws.onerror = () => setConnection(false);
+  ws.onmessage = (event) => {
+    let msg;
+    try { msg = JSON.parse(event.data); } catch { return; }
+    if (msg.type === 'hello') { setConnection(true); $('lastEvent').textContent = 'Conectat la fluxul live'; return; }
+    if (msg.ticket) {
+      tickets.set(msg.ticket.id, msg.ticket);
+      const labels = { ticket_created: 'Tichet nou', ticket_updated: 'Actualizare', ticket_resolved: 'Rezolvat' };
+      $('lastEvent').textContent = (labels[msg.type] || msg.type) + ' · ' + msg.ticket.incident_code + ' · ' + msg.ticket.status;
+      if (selected === msg.ticket.id) selected = msg.ticket.id;
+      render();
+    }
+  };
+}
+
+function isActive(t) { return ['pending_override', 'dispatched', 'in_progress'].includes(t.status); }
+
+function visibleTickets() {
+  return [...tickets.values()]
+    .filter(t => !onlyActive || isActive(t))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function ago(iso) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'acum ' + s + 's';
+  if (s < 3600) return 'acum ' + Math.floor(s / 60) + 'm';
+  return 'acum ' + Math.floor(s / 3600) + 'h';
+}
+
+function badge(text, color) {
+  return '<span class="badge" style="color:' + color + ';border-color:' + color +
+         ';background:rgba(255,255,255,.03)">' + esc(text) + '</span>';
+}
+
+function render() {
+  const list = visibleTickets();
+  $('queueCount').textContent = list.length;
+  $('total').textContent = tickets.size;
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  for (const t of tickets.values()) if (isActive(t)) counts[t.urgency] = (counts[t.urgency] || 0) + 1;
+  $('c-critical').textContent = counts.critical;
+  $('c-high').textContent = counts.high;
+  $('c-medium').textContent = counts.medium;
+  $('c-low').textContent = counts.low;
+
+  const box = $('list');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty"><div class="big">🛬</div><div style="margin-top:10px;font-weight:700;color:var(--ink)">Niciun incident activ</div><div style="margin-top:4px">Pornește un raport din aplicația de pe telefon.</div></div>';
+  } else {
+    box.innerHTML = list.map(t => {
+      const uc = URGENCY_COLOR[t.urgency] || '#5ba7ff';
+      const sc = STATUS_COLOR[t.status] || '#8fa3bd';
+      const depts = (t.primary_departments || []).join(' · ');
+      const loc = t.location ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ') : '';
+      return '<div class="ticket' + (selected === t.id ? ' sel' : '') + '" onclick="selectTicket(\'' + t.id + '\')">' +
+        '<div class="bar" style="background:' + uc + '"></div>' +
+        '<div class="main"><div class="top">' + badge(t.incident_code, uc) + badge(t.urgency, uc) + badge(t.status, sc) +
+        '<span class="when">' + (t.confidence ?? 0).toFixed(2) + ' · ' + ago(t.created_at) + '</span></div>' +
+        '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
+        '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' + esc(depts || '—') + '</div></div></div>';
+    }).join('');
+  }
+  renderDetail();
+}
+
+function selectTicket(id) { selected = id; render(); }
+
+function renderDetail() {
+  const t = [...tickets.values()].find(x => x.id === selected);
+  const d = $('detail');
+  if (!t) {
+    d.innerHTML = '<div class="empty"><div class="big">🎯</div><div style="margin-top:8px;font-weight:700;color:var(--ink)">Selectează un incident</div><div style="margin-top:4px">Detaliile și acțiunile apar aici.</div></div>';
+    return;
+  }
+  const uc = URGENCY_COLOR[t.urgency] || '#5ba7ff';
+  const sc = STATUS_COLOR[t.status] || '#8fa3bd';
+  const loc = t.location ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ') : '—';
+  const kv = (k, v) => '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v || '—') + '</div>';
+  let actions = '';
+  if (t.status === 'pending_override') {
+    actions = '<div class="row"><button class="btn primary grow" onclick="act(\'confirm\',\'' + t.id + '\')">✓ Confirmă</button>' +
+              '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
+  } else if (isActive(t)) {
+    actions = '<div class="row"><button class="btn grow" onclick="openModal(\'' + t.id + '\')">⇄ Reclasifică</button>' +
+              '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
+  } else if (t.status === 'resolved') {
+    actions = '<div class="v" style="color:var(--green)">✓ Rezolvat</div>';
+  }
+  d.innerHTML =
+    '<div class="code" style="color:' + uc + '">' + esc(t.incident_code) + '</div>' +
+    '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
+    '<div class="row" style="flex-wrap:wrap">' + badge(t.urgency, uc) + badge(t.status, sc) +
+    badge('Încredere ' + Math.round((t.confidence ?? 0) * 100) + '%', '#5ba7ff') + '</div>' +
+    kv('Locație', loc) + kv('Departamente', (t.primary_departments || []).join(' · ')) +
+    kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
+    kv('Transcriere', t.transcript) + kv('Raționament AI', t.ai_rationale) +
+    (t.resolution_note ? kv('Notă rezolvare', t.resolution_note) : '') +
+    '<div class="spacer"></div>' + actions;
+}
+
+async function act(kind, id) {
+  try {
+    const path = kind === 'confirm' ? '/api/tickets/' + id + '/confirm'
+               : kind === 'deny' ? '/api/tickets/' + id + '/deny'
+               : '/api/tickets/' + id + '/override';
+    const body = kind === 'confirm' ? { dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin' }
+               : kind === 'deny' ? { dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin', reason: 'fals pozitiv' }
+               : { incident_code: kind, dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin' };
+    const data = await request(path, { method: 'POST', body: JSON.stringify(body) });
+    if (data.ticket) tickets.set(data.ticket.id, data.ticket);
+    render();
+    toast('Actualizat · ' + (data.ticket ? data.ticket.incident_code + ' · ' + data.ticket.status : 'ok'));
+  } catch (err) { toast('Acțiunea a eșuat: ' + err.message); }
+}
+
+async function loadTaxonomy() {
+  try {
+    const data = await request('/api/taxonomy');
+    taxonomy = data.types || data.taxonomy || [];
+  } catch { taxonomy = []; }
+}
+
+function openModal(id) {
+  selected = id;
+  const t = tickets.get(id);
+  $('modalSub').textContent = t ? t.incident_code + ' · ' + (t.label_ro || '') : '';
+  const list = $('taxList');
+  list.innerHTML = taxonomy.map(type => {
+    const code = type.code;
+    const label = type.label_ro || type.label || code;
+    const urgency = type.urgency || '';
+    return '<button onclick="reclassify(\'' + code + '\')"><span>' + esc(code) + ' · ' + esc(label) +
+           '</span><span style="color:' + (URGENCY_COLOR[urgency] || '#8fa3bd') + '">' + esc(urgency) + '</span></button>';
+  }).join('');
+  $('modalBg').style.display = 'grid';
+}
+function closeModal() { $('modalBg').style.display = 'none'; }
+async function reclassify(code) { closeModal(); await act(code, selected); }
+
+function toggleFilter() {
+  onlyActive = !onlyActive;
+  const btn = $('filterBtn');
+  btn.classList.toggle('on', onlyActive);
+  btn.textContent = onlyActive ? 'Doar active' : 'Toate';
+  render();
+}
+
+// keyboard: R = reload, Esc = close modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key.toLowerCase() === 'r' && !e.ctrlKey) loadTickets(true);
+});
+
+$('apiLabel').textContent = CFG.api;
+$('apiLabel').title = CFG.api;
+loadTaxonomy();
+loadTickets();
+connectWs();
+setInterval(() => loadTickets(false), 20000);
+</script>
+</body>
+</html>

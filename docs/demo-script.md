@@ -19,9 +19,15 @@
    (Rita Reporter). Sign in on the phones with the right scope for the story.
 5. Phones: install `D:\Hackathon\dist\wingman-tls-release.apk` on 2-3 devices, open the app,
    confirm **„Server conectat"** on each. Keep charger connected, **Stay awake** ON.
-6. **Desktop control room**: `.\scripts\serve_dashboard.ps1` → Edge opens fullscreen with the
-   live dashboard (same store as the phones: REST snapshot + WSS live, confirm/deny/reclassify).
-7. Emergency APK also installed: `wingman-insecure-release.apk` + `backend\run_insecure.ps1`.
+6. **Desktop control room**: `.\scripts\serve_dashboard.ps1` → **Waterfox** opens with the live
+   dashboard (same store as the phones: REST snapshot + WSS live, confirm/deny/reclassify).
+   Waterfox is launched with the dedicated demo profile so our CA is trusted automatically.
+7. **DevTools** (for Q&A / photos): on the login screen tap the **wrench icon** (top-right) to
+   preview every time-of-day sky look, see live Ollama/STT/WSS health, fire a forced 5-second
+   override ticket, reset the store, or check the account scopes.
+8. **Progress screenshots**: `D:\Hackathon\ProgressPics\Steep_01…09` — one folder per milestone
+   (toolchain → crew → dispatcher → reporter → design → accounts → dashboard → skies → final).
+9. Emergency APK also installed: `wingman-insecure-release.apk` + `backend\run_insecure.ps1`.
 
 ## The 3 minutes
 
