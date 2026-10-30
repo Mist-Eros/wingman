@@ -63,6 +63,20 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         },
     },
     {
+        "name": "voice · spill in terminal (janitor)",
+        "body": {
+            "source": "voice",
+            "transcript": (
+                "S-a vărsat un lichid pe jos lângă poarta 3, în terminalul 1, "
+                "e alunecos și lumea trece pe lângă."
+            ),
+            "reporter_id": "seed-reporter-5",
+            "reporter_name": "Andrei P.",
+            "location": {"terminal": "T1", "zone": "Poarta 3"},
+            "use_ai": True,
+        },
+    },
+    {
         "name": "voice · forced override (demo)",
         "body": {
             "source": "voice",

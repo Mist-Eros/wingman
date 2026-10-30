@@ -162,7 +162,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Echipaj'), findsOneWidget);
-    expect(find.text('Echipaj Test'), findsOneWidget);
+    expect(find.textContaining('Echipaj Test'), findsOneWidget);
     expect(find.text('WSS: conectat'), findsOneWidget);
     expect(find.text('Nicio intervenție alocată'), findsOneWidget);
     expect(find.text('Preia'), findsNothing);

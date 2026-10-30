@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/core_scope.dart';
+import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import 'crew_ticket_card.dart';
@@ -28,11 +29,20 @@ class _CrewScreenState extends State<CrewScreen> {
   final Map<String, TicketStatus> _seenStatus = <String, TicketStatus>{};
   TicketBoard? _board;
 
-  List<Ticket> _crewQueue(Iterable<Ticket> tickets) => tickets
+  /// Active incidents the signed-in account is allowed to see. Department scope
+  /// comes from the demo account (janitor → terminal only, engineer → technical
+  /// departments, admin → everything).
+  List<Ticket> _crewQueue(Iterable<Ticket> tickets, Session session) => tickets
       .where(
         (Ticket ticket) =>
             ticket.status == TicketStatus.dispatched ||
             ticket.status == TicketStatus.inProgress,
+      )
+      .where(
+        // Primary departments = "this incident requires me now". Standby
+        // departments are shown on the card but don't alert every crew.
+        (Ticket ticket) =>
+            session.seesDepartments(ticket.primaryDepartments),
       )
       .toList(growable: false);
 
@@ -112,7 +122,7 @@ class _CrewScreenState extends State<CrewScreen> {
               ),
             ),
             Text(
-              session.displayName,
+              '${session.displayName} · ${session.scopeLabel}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
@@ -150,7 +160,7 @@ class _CrewScreenState extends State<CrewScreen> {
         child: ListenableBuilder(
           listenable: board,
           builder: (BuildContext context, Widget? _) {
-            final queue = _crewQueue(board.tickets);
+            final queue = _crewQueue(board.tickets, session);
 
             return Column(
               children: <Widget>[
