@@ -37,14 +37,20 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Server mirrors the reporter urgency brain**: fire/toxic/life → critical, size/flags escalate, medical → OP-OTHER triage + `Department.medical` standby | `backend/app/ai.py::apply_transcript_urgency`, taxonomy v1 re-synced |
 | Kotlin incremental cache fix after interrupted build | `android/gradle.properties` (+ clean rebuild: 1.2 min) |
 | Android bring-up fixes: release INTERNET permission, targetSdk 35 for Android 16 LAN policy, build-script dart-define bug, `kApiBase` sanitizer | `android/app/src/main/AndroidManifest.xml`, `build.gradle.kts`, `lib/main.dart` |
+| **Design system v1** (Material 3 navy airport-ops theme, semantic urgency/status palette, component themes, spacing/radius scale) | `lib/core/theme/wingman_theme.dart`, `docs/design-tokens.md` |
+| **Design applied**: role picker (brand mark + status pill), reporter (navy mic), crew (primary „Preia"), dispatcher appbar restyle | screenshots on phone RFCX60EYMEY |
+| **Bug fixes verified on phone**: dispatcher live-by-default, compact appbar, SafeArea for bottom actions (Confirmă/Respinge/Reclasifică reachable), Reclasifică → backend SF-FOD `decided_by` set | `lib/features/dispatcher/dispatcher_screen.dart`, `backend` log `POST /override 200` |
+| **Session persistence**: saved session + secure token store; re-picking the same role keeps the crew/dispatcher id, so a joined ticket stays joined after app restart | `lib/core/auth/session_store.dart`, `lib/main.dart` |
+| Friendly error messages (no raw SocketException on screen) + pluralization fixes | `lib/core/state/ticket_board.dart`, `lib/main.dart`, crew card |
+| Rehearsal assets: `TEAM.md`, `docs/demo-script.md` (3-min flow + fallbacks), seed script verified | repo root, `backend/seed_demo.py` |
 
 ## In progress ⏳
 
 | Item | Owner | Notes |
 |---|---|---|
-| Phone install + first boot | **user** | plug Android with USB debugging → `.\scripts\phone_run.ps1`; hotspot must be on (`.\scripts\hotspot_on.ps1`) |
-| F1 voice integration | F1 + Lead | `/api/transcribe` live + `docs/whisper-contract.md`. Waiting for their `CONTRACT_REQUEST.md` to confirm field names / multipart-vs-base64; app-side recorder still to be added by F1 |
-| Backlog: location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; implement after H36 if stable |
+| Demo rehearsal on 2-3 phones | **user + Lead** | seed data, run the 3-min script, time it; fallbacks listed in `docs/demo-script.md` |
+| Voice on the real microphone | **user** | hold the mic and say „Este fum lângă poarta 12"; typed path already verified end-to-end |
+| Location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; implement only after the demo flow is stable |
 
 ## Next (H0–H4 remaining)
 
