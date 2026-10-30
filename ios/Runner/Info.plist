@@ -24,6 +24,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Wingman uses the microphone so you can report an incident by voice.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Wingman attaches your approximate position to an incident report.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
