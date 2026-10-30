@@ -22,11 +22,16 @@ function Write-Step([string]$Message) {
 # ── defaults (override from the shell if needed; see .env.example) ───────────
 if (-not $env:API_TOKEN)        { $env:API_TOKEN = 'demo-token' }
 if (-not $env:OLLAMA_URL)       { $env:OLLAMA_URL = 'http://127.0.0.1:11434' }
-if (-not $env:OLLAMA_MODEL)     { $env:OLLAMA_MODEL = 'qwen2.5:7b' }
+# 1.5b = fast on the demo laptop (CPU or the RTX 4060); qwen2.5:7b if you have time to pull it.
+if (-not $env:OLLAMA_MODEL)     { $env:OLLAMA_MODEL = 'qwen2.5:1.5b' }
 if (-not $env:CONFIDENCE_THRESHOLD)   { $env:CONFIDENCE_THRESHOLD = '0.65' }
 if (-not $env:OVERRIDE_WINDOW_SECONDS) { $env:OVERRIDE_WINDOW_SECONDS = '5' }
 if (-not $env:RESOLVE_QUORUM)   { $env:RESOLVE_QUORUM = '2' }
 if (-not $env:ENABLE_DEV_RESET) { $env:ENABLE_DEV_RESET = '1' }
+# Voice reporter flow: local faster-whisper (first call downloads the model).
+if (-not $env:WHISPER_MODEL)        { $env:WHISPER_MODEL = 'small' }
+if (-not $env:WHISPER_DEVICE)       { $env:WHISPER_DEVICE = 'cpu' }
+if (-not $env:WHISPER_COMPUTE_TYPE) { $env:WHISPER_COMPUTE_TYPE = 'int8' }
 
 # ── python ───────────────────────────────────────────────────────────────────
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
