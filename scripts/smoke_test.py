@@ -438,6 +438,56 @@ async def run(args: argparse.Namespace) -> int:
     )
     check("ready is true when the server stops asking", body3.get("ready") is True)
 
+    # 10c ── do not re-ask what the reporter already said ──────────────────
+    print("[10c] complete report → no redundant questions")
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "Un copil a luat foc la poarta 4.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "person caught fire implies people_at_risk",
+        fields.get("people_at_risk") is True,
+        str(fields.get("people_at_risk")),
+    )
+    check(
+        "location in the sentence is not asked again",
+        "location" not in (body.get("missing") or []),
+        str(body.get("missing")),
+    )
+    check(
+        "no question when the report is already complete",
+        body.get("question") is None,
+        str(body.get("question")),
+    )
+    check("complete report is ready", body.get("ready") is True)
+
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "Un pasager a leșinat lângă poarta 5, nu respiră.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "collapsed passenger implies people_at_risk",
+        fields.get("people_at_risk") is True,
+        str(fields.get("people_at_risk")),
+    )
+    check(
+        "unresponsive passenger: no danger question",
+        body.get("question") is None,
+        str(body.get("question")),
+    )
+
     # 10b ── urgency from what was said (mirrors reporter brain/severity.dart)
     print("[10b] urgency escalation from the transcript")
     status, body = http_call(

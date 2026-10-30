@@ -159,7 +159,8 @@ Errors are `{"detail": "human readable"}` with status `400` (bad input/code), `4
   "reporter_name": "Andrei P.",
   "location": {"terminal": "T1", "zone": "Poarta 12", "lat": null, "lng": null, "note": null},
   "hint_code": null,
-  "use_ai": true
+  "use_ai": true,
+  "force_override": false
 }
 ```
 
@@ -167,6 +168,10 @@ Errors are `{"detail": "human readable"}` with status `400` (bad input/code), `4
 * Menu flow: `source: "menu"`, `hintCode` = the tapped code, `use_ai: false` (instant, no AI
   latency) or `true` if you want AI verification.
 * `hint_code` not in the taxonomy ⇒ `400`.
+* `force_override: true` is the **DevTools/rehearsal** switch: it forces the low-confidence path so
+  the 5-second dispatcher override window can be demonstrated deterministically. The normal
+  reporter flow never sets it (`ReportDraft.forceOverride` defaults to false and the key is omitted
+  from the JSON when false).
 * The response may take **20–30 s on a cold model** — disable the button, show a spinner,
   never fire two reports from one tap.
 

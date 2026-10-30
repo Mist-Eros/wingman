@@ -856,6 +856,21 @@ _PEOPLE_AT_RISK_FALSE: tuple[str, ...] = (
     "gol",
 )
 
+# Person + harm phrase: "un copil a luat foc", "pasagerul a leșinat",
+# "femeia este rănită". The reporter already said someone is in danger, so the
+# assistant must NOT ask "Este cineva în pericol?" again — that was the demo bug
+# where "un copil a luat foc la poarta 4" still got the danger question.
+_PERSON_HARM_RE = re.compile(
+    r"\b(?:copil(?:ul|ii)?|băiat(?:ul)?|baiat(?:ul)?|fat[aă]|femeie|femeia|"
+    r"bărbat(?:ul)?|barbat(?:ul)?|persoan[aă]|pasager(?:ul|i)?|"
+    r"angajat(?:ul|i)?|victim[aă]|pacient(?:ul|i)?|cineva|om(?:ul)?|oameni)\b"
+    r"[^.!?]{0,70}?"
+    r"\b(?:a\s+luat\s+foc|au\s+luat\s+foc|luat\s+foc|în\s+flăcări|in\s+flacari|"
+    r"ars|arse|rănit|ranit|căzut|cazut|le[șs]in(?:at|ă)?|sânger|sanger|"
+    r"în\s+pericol|in\s+pericol|evacuat|atacat)\b",
+    re.IGNORECASE,
+)
+
 
 _LOCATION_TRAILING_STOPWORDS: tuple[str, ...] = (
     "și", "si", "sau", "dacă", "daca", "când", "cand", "unde", "care",
@@ -893,10 +908,14 @@ def detect_people_at_risk(transcript: str) -> bool | None:
     """True/False when the transcript states it, None when unknown.
 
     Negations are checked first ("nimeni nu este rănit" must be False).
+    Person-harm phrasings ("un copil a luat foc", "pasagerul a leșinat") are
+    True even without the word "rănit"/"pericol".
     """
     text = (transcript or "").lower()
     if any(word in text for word in _PEOPLE_AT_RISK_FALSE):
         return False
+    if _PERSON_HARM_RE.search(text):
+        return True
     if any(word in text for word in _PEOPLE_AT_RISK_TRUE):
         return True
     return None

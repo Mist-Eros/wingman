@@ -66,8 +66,6 @@ def python_ticket_keys(source: str) -> tuple[set[str], set[str]]:
 def python_report_fields(source: str) -> set[str]:
     section = source.split("class ReportIn(", 1)[-1].split("class AnalyzeIn", 1)[0]
     fields = set(re.findall(r"^\s{4}([a-z_]+):\s", section, re.M))
-    # Backend-only demo switch (never sent by the mobile app).
-    fields.discard("force_override")
     return fields
 
 
