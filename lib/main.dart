@@ -37,18 +37,43 @@ import 'features/crew/crew_screen.dart';
 import 'features/dispatcher/dispatcher_screen.dart';
 import 'features/reporter/reporter_screen.dart';
 
-/// Laptop LAN address + port serving HTTPS/WSS. Overridden per build:
-///   --dart-define=API_BASE=https://192.168.1.50:8443
-const String kApiBase = String.fromEnvironment(
+/// Raw values straight from `--dart-define`. A broken build can merge several
+/// define flags into one value, so these are sanitized before use.
+const String _kApiBaseRaw = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'https://wingman.local:8443',
 );
 
-/// Demo bearer token; must match `API_TOKEN` on the backend.
-const String kApiToken = String.fromEnvironment(
+const String _kApiTokenRaw = String.fromEnvironment(
   'API_TOKEN',
   defaultValue: 'demo-token',
 );
+
+String _firstToken(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return '';
+  return trimmed.split(RegExp(r'\s+')).first;
+}
+
+/// Validated base URL, or the documented default when the define is unusable.
+/// Never let a bad `--dart-define` crash the demo with a FormatException.
+String _sanitizeApiBase(String raw) {
+  final candidate = _firstToken(raw);
+  final uri = Uri.tryParse(candidate);
+  final valid = uri != null &&
+      (uri.isScheme('http') || uri.isScheme('https')) &&
+      uri.host.isNotEmpty;
+  return valid ? candidate : 'https://wingman.local:8443';
+}
+
+/// Laptop LAN address + port serving HTTPS/WSS. Overridden per build:
+///   --dart-define=API_BASE=https://192.168.1.50:8443
+final String kApiBase = _sanitizeApiBase(_kApiBaseRaw);
+
+/// Demo bearer token; must match `API_TOKEN` on the backend.
+final String kApiToken = _firstToken(_kApiTokenRaw).isEmpty
+    ? 'demo-token'
+    : _firstToken(_kApiTokenRaw);
 
 /// DEV ONLY. Accepts any TLS certificate. Keep false for the judged demo.
 const bool kDevInsecure = bool.fromEnvironment(

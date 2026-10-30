@@ -23,7 +23,13 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Kept at 35 on purpose: Android 16 (API 36) enforces the new local-network
+        // permission, which blocks LAN sockets on phones like the S24 Ultra with
+        // "EPERM (Operation not permitted)". The demo talks to a laptop over the
+        // LAN, so we stay one API below the enforcement and ship the INTERNET
+        // permission in the main manifest. Move to 36 when we add a runtime
+        // ACCESS_LOCAL_NETWORK request (see docs/backlog.md).
+        targetSdk = 35
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`

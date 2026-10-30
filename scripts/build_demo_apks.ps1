@@ -62,14 +62,14 @@ function Save-Build([string]$name, [string[]]$dartDefines) {
 }
 
 $tlsApk = Save-Build "wingman-tls-$mode.apk" @(
-    '--dart-define=API_BASE=https://' + $ApiHost + ':8443',
-    '--dart-define=API_TOKEN=' + $Token
+    ("--dart-define=API_BASE=https://{0}:8443" -f $ApiHost),
+    ("--dart-define=API_TOKEN={0}" -f $Token)
 )
 
 $insecureApk = Save-Build "wingman-insecure-$mode.apk" @(
-    '--dart-define=API_BASE=http://' + $ApiHost + ':8080',
+    ("--dart-define=API_BASE=http://{0}:8080" -f $ApiHost),
     '--dart-define=DEV_INSECURE=true',
-    '--dart-define=API_TOKEN=' + $Token
+    ("--dart-define=API_TOKEN={0}" -f $Token)
 )
 
 Write-Host ''
