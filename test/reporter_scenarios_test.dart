@@ -228,10 +228,9 @@ void main() {
           contains('fire or explosion hazard'));
     });
 
-    test('it then asks if anyone is in danger — not the type, not the size',
-        () {
-      final next = lava().next;
-      expect(next?.slot, 'people');
+    test('it does not ask about people in danger — dispatch immediately', () {
+      expect(lava().next, isNull);
+      expect(lava().result.fields.incidentCode, 'SF-FIRE');
     });
   });
 

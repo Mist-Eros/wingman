@@ -1,4 +1,4 @@
-﻿# Build progress — live checklist
+# Build progress — live checklist
 
 Updated: 2026-10-30 (H0 session). Tick items as they land.
 
@@ -64,6 +64,7 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **S24 Ultra fit**: compact login (all 5 accounts + resume card fit), shortened reporter title, notification test on 1080×2340 | screenshots `D:\Hackathon\Screenshots\01_Login_and_Roles` |
 | **Plane silhouette** redrawn as a real top-down airliner (fuselage, swept wings, tailplane, engines); crescent moon via transparent cutout | `lib/core/widgets/sky_background.dart` |
 | **Conversational AI fix — no redundant questions**: person-harm phrasings („un copil a luat foc", „pasagerul a leșinat") now imply `people_at_risk=true`, and an already-given location is never asked again. `Un copil a luat foc la poarta 4` → SF-FIRE/critical/Poarta 4, **ready immediately, no questions**. Smoke **65/65** | `backend/app/ai.py`, `scripts/smoke_test.py` [10c], parity fix for `force_override` |
+| **Dispatch-first policy — no blocking questions**: the “is anyone in danger?” question is removed entirely; high/critical reports are routed to the right departments immediately and the dispatcher confirms/denies in the 5-second window. Sector locations are extracted (`sectorul 2`, `terminal 7`). Verified on-device: `o pisica a luat foc la sector 2 terminal 7` → SF-FIRE/critical/Terminal 7 → **straight to verification, zero questions**. Smoke **70/70** | `backend/app/ai.py`, `lib/features/reporter/brain/conversation_brain.dart`, `scripts/smoke_test.py` [10c] |
 
 ## In progress ⏳
 

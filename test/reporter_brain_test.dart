@@ -138,11 +138,11 @@ void main() {
       expect(c.last.details['size'], 'cât o masă');
     });
 
-    test('fire: asks where, then whether anyone is in danger', () {
+    test('fire: asks where, then dispatches (no people question)', () {
       final c = Conversation('Este fum');
-      expect(c.run(<String>['terminal 2', 'nu e nimeni']),
-          <String>['location', 'people']);
-      expect(c.last.details['people'], 'Nu');
+      expect(c.run(<String>['terminal 2', 'nu e nimeni']), <String>['location']);
+      expect(c.last.next, isNull);
+      expect(c.last.result.fields.incidentCode, 'SF-FIRE');
     });
 
     test('a bag needs no extra details', () {

@@ -65,14 +65,16 @@ class Assessment {
 }
 
 /// Follow-up details worth asking, per incident type.
+///
+/// Deliberately no "people in danger" slot: a critical incident is dispatched
+/// immediately (firefighters/security/etc. get it) and the dispatcher decides.
+/// Blocking a report to ask "is anyone hurt?" is bad in an emergency — that was
+/// the "o pisică a luat foc" bug (a burning cat, and the app asked about
+/// injured people). Size/count stay for the low-stakes offline path.
 const Map<String, List<String>> kDetailSlots = <String, List<String>>{
   'SF-SPILL': <String>['size'],
   'SF-FOD': <String>['size'],
-  'SF-FIRE': <String>['people'],
   'SC-ACCESS': <String>['count'],
-  'SC-BEHAV': <String>['people'],
-  'MT-ESC': <String>['people'],
-  'MT-JBRIDGE': <String>['people'],
 };
 
 /// Romanian label (it goes to dispatchers) and English label of a slot.
@@ -326,9 +328,10 @@ class ConversationBrain {
     if (question == null || question.isEmpty) return null;
     if (server.asksForLocation) return _locationQuestion();
     if (server.asksForType) return _typeQuestion();
-    if (normalizeText(question).contains('pericol')) {
-      return _detailQuestion('people', type);
-    }
+    // Policy: never block an urgent report on "is anyone in danger?" — the
+    // incident is dispatched anyway and the dispatcher can reclassify/deny in
+    // the 5-second window. (Cats/dogs/objects cannot answer it either.)
+    if (normalizeText(question).contains('pericol')) return null;
     return _unmappedServerQuestion(server) ??
         PlannedQuestion(slot: 'server', ro: question, en: question);
   }

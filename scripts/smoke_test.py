@@ -488,6 +488,51 @@ async def run(args: argparse.Namespace) -> int:
         str(body.get("question")),
     )
 
+    # Policy: critical reports are dispatched immediately; never ask "is anyone
+    # in danger?" (a burning cat cannot answer it).
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "O pisică a luat foc la sector 2 terminal 7.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "animal fire: location extracted",
+        "terminal 7" in str(fields.get("location", "")).lower(),
+        str(fields.get("location")),
+    )
+    check(
+        "animal fire: dispatched with no question",
+        body.get("question") is None,
+        str(body.get("question")),
+    )
+    check("animal fire is ready", body.get("ready") is True)
+
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "O pisică a luat foc în sectorul 2.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "sector-only location extracted",
+        "sector 2" in str(fields.get("location", "")).lower(),
+        str(fields.get("location")),
+    )
+    check(
+        "sector-only report: no question",
+        body.get("question") is None,
+        str(body.get("question")),
+    )
+
     # 10b ── urgency from what was said (mirrors reporter brain/severity.dart)
     print("[10b] urgency escalation from the transcript")
     status, body = http_call(

@@ -75,13 +75,15 @@ void main() {
     expect(assessment.next, isNull);
   });
 
-  test('server asking for people → app asks the people question', () {
+  test('server asking for people → app does NOT block, it dispatches', () {
+    // Policy: critical reports go out immediately; "is anyone hurt?" is never
+    // asked (a burning cat cannot answer it either).
     final brain = ConversationBrain();
     final assessment = brain.assess(
       turns: const <BrainTurn>[BrainTurn(slot: null, text: spoken)],
       server: _serverAsksPeople(),
     );
-    expect(assessment.next?.slot, 'people');
+    expect(assessment.next, isNull);
   });
 
   test('server asking for location → app asks the location question', () {
@@ -100,17 +102,19 @@ void main() {
       server: null, // server unreachable → local fallback
     );
     expect(assessment.result.fields.location, 'Poarta 2');
-    expect(assessment.details['people'], 'Da');
+    expect(assessment.result.fields.peopleAtRisk, isTrue);
     expect(assessment.next, isNull);
   });
 
   test('offline without a place still asks for the place', () {
     final brain = ConversationBrain();
     final assessment = brain.assess(
-      turns: const <BrainTurn>[BrainTurn(slot: null, text: 'o femeie a luat foc')],
+      turns: const <BrainTurn>[
+        BrainTurn(slot: null, text: 'o femeie a luat foc'),
+      ],
       server: null,
     );
     expect(assessment.next?.slot, 'location');
-    expect(assessment.details['people'], 'Da');
+    expect(assessment.result.fields.peopleAtRisk, isTrue);
   });
 }

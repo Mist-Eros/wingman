@@ -784,6 +784,9 @@ def apply_transcript_urgency(
 #
 # Hard rules (agreed with F1):
 #   • at most MAX_CLARIFICATIONS questions, then classify anyway;
+#   • only ask for missing ROUTING information (type / location); never block a
+#     critical report on "is anyone in danger?" — dispatch first, dispatcher
+#     confirms/reclassifies in the 5-second window;
 #   • when it stops while still incomplete/low-confidence, confidence is capped
 #     at 0.40 so the ticket always lands in the dispatcher 5-second window;
 #   • the button menu is always a valid fallback (hint_code path, no questions).
@@ -796,11 +799,11 @@ QUESTION_TYPE = (
 )
 QUESTION_LOCATION = "Unde se întâmplă exact? (terminal, poartă sau zonă)"
 QUESTION_DETAIL = "Poți descrie pe scurt ce vezi sau ce s-a întâmplat?"
-QUESTION_PEOPLE = "Este cineva în pericol în acest moment?"
 
 _LOCATION_PATTERNS: tuple[tuple[str, str], ...] = (
     (r"\bterminal(?:ul)?\s*([a-z0-9]+)", "Terminal {0}"),
     (r"\b(t\d)\b", "{0}"),
+    (r"\bsector(?:ul)?\s*([a-z0-9]+)", "Sector {0}"),
     (r"\bpoart[aă]?\s*(?:nr\.?\s*)?([a-z0-9]+)", "Poarta {0}"),
     (r"\bgate\s*([a-z0-9]+)", "Gate {0}"),
     (r"\bband[aă]?\s*(?:de\s*bagaje\s*)?(?:nr\.?\s*)?([a-z0-9]+)", "Banda {0}"),
@@ -928,16 +931,26 @@ def next_question(
     people_at_risk: bool | None,
     asked: int,
 ) -> str | None:
+    """Only ask what is needed to route the report.
+
+    Policy (demo feedback): never block a report on "is anyone in danger?".
+    A critical incident is sent to the required departments immediately and the
+    dispatcher can confirm/deny/reclassify in the 5-second override window; a
+    burning cat cannot answer "is someone injured" anyway. We only ask for a
+    missing type or location (needed to route it), and never ask a "describe it"
+    detail question for a critical incident.
+    """
     if asked >= MAX_CLARIFICATIONS:
         return None
     if "incident_code" in missing:
         return QUESTION_TYPE
     if "location" in missing:
         return QUESTION_LOCATION
+    if urgency in ("high", "critical"):
+        # High-stakes reports go out now; volume/size details can wait.
+        return None
     if confidence < settings.confidence_threshold:
         return QUESTION_DETAIL
-    if people_at_risk is None and urgency in ("high", "critical"):
-        return QUESTION_PEOPLE
     return None
 
 

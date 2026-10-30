@@ -288,15 +288,13 @@ void main() {
       expect(h.controller.details['size'], 'about two meters');
     });
 
-    test('fire: asks about people in danger and files the answer', () async {
+    test('fire: goes straight to confirmation, no people question', () async {
       final h = Harness();
       await h.speak('este fum la terminal 2');
-      expect(h.question, contains('cineva în pericol'));
-      await h.speak('nu, nu e nimeni');
+      expect(h.question, isNull);
       expect(h.controller.phase, ReporterPhase.confirming);
-      expect(h.controller.details, <String, String>{'people': 'Nu'});
       await h.controller.submit();
-      expect(h.reports.single.location.note, 'Persoane în pericol: Nu');
+      expect(h.reports.single.transcript, contains('fum'));
     });
 
     test('typed text goes through the same pipeline', () async {
