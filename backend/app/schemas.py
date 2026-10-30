@@ -1,0 +1,86 @@
+"""Request bodies. Field names match the Dart client byte-for-byte; unknown
+
+fields are rejected (`extra="forbid"`) so a frontend/backend contract drift
+fails loudly during integration instead of silently losing data.
+"""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+UrgencyLiteral = Literal["low", "medium", "high", "critical"]
+SourceLiteral = Literal["voice", "menu"]
+
+
+class LocationIn(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    terminal: str = ""
+    zone: str = ""
+    lat: float | None = None
+    lng: float | None = None
+    note: str | None = None
+
+
+class ReportIn(BaseModel):
+    """POST /api/reports — mirrors Dart `ReportDraft.toJson()`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: SourceLiteral = "voice"
+    transcript: str = Field(min_length=1, max_length=4000)
+    reporter_id: str = Field(default="anon", max_length=120)
+    reporter_name: str = Field(default="Anonim", max_length=120)
+    location: LocationIn = Field(default_factory=LocationIn)
+
+    # Menu flow: the reporter picked a type. Server trusts it unless use_ai.
+    hint_code: str | None = Field(default=None, max_length=40)
+    use_ai: bool = True
+
+    # DEMO-ONLY: forces the low-confidence path so the 5-second dispatcher
+    # override window can be triggered deterministically during rehearsal and
+    # during the judged demo. The mobile app never sends this field.
+    force_override: bool = False
+
+
+class AnalyzeIn(BaseModel):
+    """POST /api/analyze — classification only, no ticket (prompt tuning)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    transcript: str = Field(min_length=1, max_length=4000)
+    location: LocationIn = Field(default_factory=LocationIn)
+    hint_code: str | None = Field(default=None, max_length=40)
+
+
+class DispatcherActionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    dispatcher_id: str | None = Field(default=None, max_length=120)
+    dispatcher_name: str | None = Field(default=None, max_length=120)
+
+
+class DenyIn(DispatcherActionIn):
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class OverrideIn(DispatcherActionIn):
+    incident_code: str = Field(min_length=2, max_length=40)
+    urgency: UrgencyLiteral | None = None
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class JoinIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    crew_id: str = Field(min_length=1, max_length=120)
+    crew_name: str | None = Field(default=None, max_length=120)
+
+
+class VoteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    crew_id: str = Field(min_length=1, max_length=120)
+    approve: bool = True

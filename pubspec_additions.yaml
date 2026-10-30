@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+# pubspec_additions.yaml  —  SNIPPETS ONLY, do not copy this file as pubspec.
+#
+# The app needs exactly one addition to build and speak TLS: the CA asset.
+# Everything else is optional and depends on what each feature lands.
+# ---------------------------------------------------------------------------
+
+# 1) REQUIRED — inside the existing `flutter:` section
+flutter:
+  assets:
+    - assets/certs/ca.crt
+
+# 2) OPTIONAL — token persistence (see lib/core/auth/secure_token_store.dart).
+#    Not needed at hour 0: main.dart uses MemoryTokenStore + --dart-define=API_TOKEN.
+dependencies:
+  flutter_secure_storage: ^9.2.4
+
+  # 3) OPTIONAL — Friend 1's voice flow. Keep a text input fallback regardless
+  #    (mic permissions and noisy halls are demo risks).
+  # speech_to_text: ^7.0.0

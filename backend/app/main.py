@@ -1,0 +1,448 @@
+"""FastAPI entrypoint: REST + WSS on one TLS listener.
+
+    backend> .\\run.ps1                 # https://0.0.0.0:8443 + wss://.../ws
+    backend> .\\run_insecure.ps1        # http://0.0.0.0:8080 (demo emergency)
+
+Auth: every /api/* request and the /ws socket need
+`Authorization: Bearer <API_TOKEN>` (default demo-token). `/`, `/healthz` and
+`/ca.crt` are public on purpose (phone certificate checks).
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+from contextlib import asynccontextmanager
+from dataclasses import replace
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+
+from . import schemas
+from .ai import KEYWORD_RULES, OllamaClient, analyze_report
+from .config import BASE_DIR, settings
+from .store import Conflict, Hub, NotFound, TicketStore, utc_now
+from .taxonomy import get_taxonomy
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+)
+logger = logging.getLogger("airport.api")
+
+CERTS_DIR = BASE_DIR / "certs"
+
+taxonomy = get_taxonomy()
+hub = Hub()
+store = TicketStore(taxonomy, hub, settings)
+ollama = OllamaClient(
+    settings.ollama_url, settings.ollama_model, settings.ollama_timeout_seconds
+)
+
+
+# ── auth ──────────────────────────────────────────────────────────────────────
+def _extract_token(authorization: str | None, token: str | None) -> str | None:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    return token
+
+
+async def require_token(
+    authorization: str | None = Header(default=None),
+    token: str | None = Query(default=None),
+) -> None:
+    expected = settings.api_token
+    if not expected:
+        return
+    if _extract_token(authorization, token) != expected:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing API token. Send 'Authorization: Bearer <API_TOKEN>'.",
+        )
+
+
+# ── heartbeat ─────────────────────────────────────────────────────────────────
+async def _heartbeat_loop() -> None:
+    while True:
+        await asyncio.sleep(20)
+        try:
+            await hub.broadcast("ping", {})
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - heartbeat must never kill the app
+            logger.exception("Heartbeat broadcast failed")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(
+        "Taxonomy v%s · %s incident types · generated_from=%s",
+        taxonomy.version,
+        len(taxonomy.types),
+        taxonomy.generated_from or "?",
+    )
+    unknown_codes = [
+        code for code, _keywords in KEYWORD_RULES if taxonomy.by_code(code) is None
+    ]
+    if unknown_codes:
+        logger.warning(
+            "Fallback classifier references codes missing from the taxonomy: %s "
+            "(update KEYWORD_RULES in app/ai.py)",
+            ", ".join(unknown_codes),
+        )
+    logger.info(
+        "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f "
+        "OVERRIDE_WINDOW=%.1fs RESOLVE_QUORUM=%s",
+        settings.ollama_url,
+        settings.ollama_model,
+        settings.confidence_threshold,
+        settings.override_window_seconds,
+        settings.resolve_quorum,
+    )
+
+    warmup_task = asyncio.create_task(ollama.warmup(), name="ollama-warmup")
+    heartbeat_task = asyncio.create_task(_heartbeat_loop(), name="ws-heartbeat")
+    try:
+        yield
+    finally:
+        for task in (warmup_task, heartbeat_task):
+            task.cancel()
+        await asyncio.gather(warmup_task, heartbeat_task, return_exceptions=True)
+        await ollama.close()
+
+
+app = FastAPI(
+    title="Wingman API",
+    version="0.1.0",
+    lifespan=lifespan,
+    description=(
+        "Closed-taxonomy incident reporting: voice/menu report → Ollama "
+        "classification → WSS broadcast → dispatcher override → crew vote."
+    ),
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+api = APIRouter(prefix="/api", dependencies=[Depends(require_token)])
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+def _to_http(exc: Exception) -> HTTPException:
+    if isinstance(exc, NotFound):
+        return HTTPException(status_code=404, detail=str(exc))
+    if isinstance(exc, Conflict):
+        return HTTPException(status_code=409, detail=str(exc))
+    if isinstance(exc, KeyError):
+        detail = exc.args[0] if exc.args else str(exc)
+        return HTTPException(status_code=400, detail=str(detail))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=400, detail=str(exc))
+    logger.exception("Unhandled error", exc_info=exc)
+    return HTTPException(status_code=500, detail="Internal server error")
+
+
+def _location_label(location: dict) -> str:
+    parts = [
+        str(location.get("terminal") or "").strip(),
+        str(location.get("zone") or "").strip(),
+        str(location.get("note") or "").strip(),
+    ]
+    label = " · ".join(part for part in parts if part)
+    return label or "locație nespecificată"
+
+
+# ── public endpoints (phone certificate checks) ───────────────────────────────
+@app.get("/healthz", include_in_schema=False)
+async def healthz() -> dict:
+    return {
+        "status": "ok",
+        "service": "wingman-api",
+        "time": utc_now(),
+        "taxonomy_version": taxonomy.version,
+        "tickets": store.count,
+        "ws_clients": hub.count,
+    }
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def status_page() -> str:
+    return f"""<!doctype html>
+<html lang="ro"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wingman API</title></head>
+<body style="font-family:system-ui;padding:24px;line-height:1.5">
+<h1>Wingman API pornit ✔</h1>
+<p>Taxonomia v{taxonomy.version} · {len(taxonomy.types)} tipuri de incident · {store.count} tichete live.</p>
+<p>Dacă vezi această pagină în Safari/Chrome <b>fără avertisment TLS</b>, profilul CA este instalat corect pe acest device.</p>
+<p><a href="/ca.crt">descarcă certificatul CA</a> · <a href="/healthz">/healthz</a> · <a href="/docs">/docs</a></p>
+</body></html>"""
+
+
+@app.get("/ca.crt", include_in_schema=False)
+async def download_ca():
+    """Convenience for phone setup: download the CA over the LAN."""
+    path: Path = CERTS_DIR / "ca.crt"
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="certs/ca.crt missing — run scripts/gen_certs.ps1 on the laptop",
+        )
+    return FileResponse(
+        path,
+        media_type="application/x-x509-ca-cert",
+        filename="ca.crt",
+    )
+
+
+# ── REST ──────────────────────────────────────────────────────────────────────
+@api.get("/health")
+async def health() -> dict:
+    return {
+        "status": "ok",
+        "service": "wingman-api",
+        "time": utc_now(),
+        "taxonomy_version": taxonomy.version,
+        "incident_types": len(taxonomy.types),
+        "tickets": store.count,
+        "ws_clients": hub.count,
+        "override_window_seconds": settings.override_window_seconds,
+        "confidence_threshold": settings.confidence_threshold,
+        "resolve_quorum": settings.resolve_quorum,
+        "ollama": {
+            "url": settings.ollama_url,
+            "model": settings.ollama_model,
+            "reachable": ollama.reachable,
+            "last_ok": ollama.last_ok,
+            "last_error": ollama.last_error,
+            "last_latency_ms": ollama.last_latency_ms,
+            "available_models": ollama.available_models,
+        },
+    }
+
+
+@api.get("/taxonomy")
+async def taxonomy_endpoint() -> dict:
+    return taxonomy.as_dict()
+
+
+@api.post("/analyze")
+async def analyze(body: schemas.AnalyzeIn) -> dict:
+    """Classification only (no ticket). Use it to tune the prompt fast."""
+    location = body.location.model_dump()
+    try:
+        classification = await analyze_report(
+            ollama,
+            taxonomy,
+            body.transcript,
+            _location_label(location),
+            body.hint_code,
+            True,
+        )
+    except (ValueError, KeyError) as exc:
+        raise _to_http(exc) from exc
+    return {
+        "classification": classification.to_wire(),
+        "taxonomy_version": taxonomy.version,
+    }
+
+
+@api.post("/reports", status_code=201)
+async def create_report(report: schemas.ReportIn) -> dict:
+    location = report.location.model_dump()
+    try:
+        classification = await analyze_report(
+            ollama,
+            taxonomy,
+            report.transcript,
+            _location_label(location),
+            report.hint_code,
+            report.use_ai,
+        )
+        if report.force_override:
+            # Demo switch: guarantee the dispatcher 5-second window is shown.
+            classification = replace(
+                classification,
+                confidence=min(classification.confidence, 0.40),
+                rationale=(
+                    classification.rationale + " [demo: low confidence override]"
+                ).strip(),
+            )
+        ticket = await store.create(
+            source=report.source,
+            transcript=report.transcript.strip(),
+            reporter_id=report.reporter_id or "anon",
+            reporter_name=report.reporter_name or "Anonim",
+            location=location,
+            classification=classification,
+        )
+    except (ValueError, KeyError) as exc:
+        raise _to_http(exc) from exc
+    logger.info(
+        "Report → %s (%s, confidence %.2f, %s) by %s",
+        ticket["incident_code"],
+        ticket["status"],
+        ticket["confidence"],
+        ticket["ai_source"],
+        ticket["reporter_name"],
+    )
+    return {"ticket": ticket}
+
+
+@api.get("/tickets")
+async def list_tickets(status: str | None = Query(default=None)) -> dict:
+    try:
+        tickets = await store.list_tickets(status)
+    except ValueError as exc:
+        raise _to_http(exc) from exc
+    return {"tickets": tickets, "count": len(tickets)}
+
+
+@api.get("/tickets/{ticket_id}")
+async def get_ticket(ticket_id: str) -> dict:
+    try:
+        ticket = await store.get(ticket_id)
+    except NotFound as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/confirm")
+async def confirm_ticket(
+    ticket_id: str,
+    body: schemas.DispatcherActionIn | None = None,
+) -> dict:
+    action = body or schemas.DispatcherActionIn()
+    try:
+        ticket = await store.confirm(
+            ticket_id, action.dispatcher_id, action.dispatcher_name
+        )
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/deny")
+async def deny_ticket(
+    ticket_id: str,
+    body: schemas.DenyIn | None = None,
+) -> dict:
+    action = body or schemas.DenyIn()
+    try:
+        ticket = await store.deny(
+            ticket_id,
+            action.reason,
+            action.dispatcher_id,
+            action.dispatcher_name,
+        )
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/override")
+async def override_ticket(
+    ticket_id: str,
+    body: schemas.OverrideIn,
+) -> dict:
+    try:
+        ticket = await store.override(
+            ticket_id,
+            incident_code=body.incident_code,
+            urgency=body.urgency,
+            reason=body.reason,
+            dispatcher_id=body.dispatcher_id,
+            dispatcher_name=body.dispatcher_name,
+        )
+    except (NotFound, Conflict, KeyError) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/join")
+async def join_ticket(ticket_id: str, body: schemas.JoinIn) -> dict:
+    try:
+        ticket = await store.join(ticket_id, body.crew_id, body.crew_name)
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/vote")
+async def vote_ticket(ticket_id: str, body: schemas.VoteIn) -> dict:
+    try:
+        ticket = await store.vote(ticket_id, body.crew_id, body.approve)
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/dev/reset")
+async def dev_reset() -> dict:
+    if not settings.allow_dev_reset:
+        raise HTTPException(
+            status_code=404, detail="Dev reset disabled (ENABLE_DEV_RESET=0)"
+        )
+    removed = await store.reset()
+    logger.info("Dev reset: cleared %s tickets", removed)
+    return {"ok": True, "tickets_cleared": removed}
+
+
+app.include_router(api)
+
+
+# ── WSS ───────────────────────────────────────────────────────────────────────
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    token: str | None = Query(default=None),
+) -> None:
+    expected = settings.api_token
+    provided = _extract_token(websocket.headers.get("authorization"), token)
+    if expected and provided != expected:
+        # Reject the handshake before accepting.
+        await websocket.close(code=4401, reason="Invalid API token")
+        return
+
+    await websocket.accept()
+    await hub.register(websocket)
+    logger.info("WSS client connected (%s total)", hub.count)
+    try:
+        await websocket.send_json(
+            {
+                "type": "hello",
+                "ts": utc_now(),
+                "data": {
+                    "server": "wingman-api",
+                    "taxonomy_version": taxonomy.version,
+                    "incident_types": len(taxonomy.types),
+                    "override_window_seconds": settings.override_window_seconds,
+                },
+            }
+        )
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(payload, dict) and payload.get("type") == "ping":
+                await websocket.send_json({"type": "pong", "ts": utc_now(), "data": {}})
+    except WebSocketDisconnect:
+        pass
+    except RuntimeError:
+        # Starlette raises RuntimeError if the client vanished mid-receive.
+        pass
+    except Exception:  # noqa: BLE001
+        logger.exception("WSS loop error")
+    finally:
+        await hub.unregister(websocket)
+        logger.info("WSS client disconnected (%s total)", hub.count)

@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------------------
+# .gitignore — this repo contains BOTH the Flutter app and the backend.
+# NEVER commit private keys. `assets/certs/ca.crt` IS committed on purpose (it
+# is a public certificate) so every teammate's build trusts the same CA.
+# ---------------------------------------------------------------------------
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+*.g.dart.tmp
+
+# Build outputs / binaries
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pydeps/
+.pyshim/
+.tmp/
+tmp*/
+*.log
+
+# Secrets: private keys and CSR/config for the demo CA.
+# Regenerate with scripts/gen_certs.ps1 on each machine that runs the backend.
+backend/certs/
+!backend/certs/.gitkeep
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local demo artifacts
+video-backup/
+*.mp4

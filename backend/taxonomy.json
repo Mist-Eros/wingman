@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "generated_from": "lib/core/incidents/taxonomy.dart",
+  "categories": [
+    {
+      "wire": "safety_fire",
+      "label_ro": "Siguranță și incendiu"
+    },
+    {
+      "wire": "security",
+      "label_ro": "Securitate"
+    },
+    {
+      "wire": "maintenance",
+      "label_ro": "Mentenanță"
+    },
+    {
+      "wire": "operations",
+      "label_ro": "Operațiuni"
+    }
+  ],
+  "types": [
+    {
+      "code": "SF-FIRE",
+      "label_ro": "Foc sau fum în terminal",
+      "category": "safety_fire",
+      "urgency": "critical",
+      "primary_departments": [
+        "fire_rescue",
+        "security"
+      ],
+      "standby_departments": [
+        "operations",
+        "maintenance"
+      ]
+    },
+    {
+      "code": "SF-FOD",
+      "label_ro": "Corp străin pe platformă sau cale de rulare",
+      "category": "safety_fire",
+      "urgency": "critical",
+      "primary_departments": [
+        "airside",
+        "operations"
+      ],
+      "standby_departments": [
+        "maintenance",
+        "security"
+      ]
+    },
+    {
+      "code": "SF-SPILL",
+      "label_ro": "Scurgere de lichid cu pericol de alunecare",
+      "category": "safety_fire",
+      "urgency": "medium",
+      "primary_departments": [
+        "maintenance",
+        "terminal"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "SF-EQUIP",
+      "label_ro": "Echipament de stingere defect sau lipsă",
+      "category": "safety_fire",
+      "urgency": "high",
+      "primary_departments": [
+        "fire_rescue",
+        "maintenance"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "SC-BAG",
+      "label_ro": "Bagaj nesupravegheat sau abandonat",
+      "category": "security",
+      "urgency": "high",
+      "primary_departments": [
+        "security"
+      ],
+      "standby_departments": [
+        "operations",
+        "terminal"
+      ]
+    },
+    {
+      "code": "SC-ACCESS",
+      "label_ro": "Acces neautorizat în zonă restricționată",
+      "category": "security",
+      "urgency": "critical",
+      "primary_departments": [
+        "security",
+        "airside"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "SC-ITEM",
+      "label_ro": "Obiect interzis identificat la control",
+      "category": "security",
+      "urgency": "high",
+      "primary_departments": [
+        "security"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "SC-BEHAV",
+      "label_ro": "Comportament suspect sau altercație",
+      "category": "security",
+      "urgency": "high",
+      "primary_departments": [
+        "security"
+      ],
+      "standby_departments": [
+        "medical",
+        "operations"
+      ]
+    },
+    {
+      "code": "MT-BELT",
+      "label_ro": "Defecțiune bandă transportoare bagaje",
+      "category": "maintenance",
+      "urgency": "high",
+      "primary_departments": [
+        "baggage",
+        "maintenance"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "MT-ESC",
+      "label_ro": "Defecțiune escalator sau lift",
+      "category": "maintenance",
+      "urgency": "medium",
+      "primary_departments": [
+        "maintenance",
+        "terminal"
+      ],
+      "standby_departments": [
+        "operations"
+      ]
+    },
+    {
+      "code": "MT-JBRIDGE",
+      "label_ro": "Defecțiune pasarelă de îmbarcare",
+      "category": "maintenance",
+      "urgency": "high",
+      "primary_departments": [
+        "maintenance",
+        "operations"
+      ],
+      "standby_departments": [
+        "airside"
+      ]
+    },
+    {
+      "code": "OP-QUEUE",
+      "label_ro": "Aglomerare la controlul de securitate",
+      "category": "operations",
+      "urgency": "medium",
+      "primary_departments": [
+        "security",
+        "operations"
+      ],
+      "standby_departments": [
+        "terminal"
+      ]
+    },
+    {
+      "code": "OP-IT",
+      "label_ro": "Cădere sistem IT pentru check-in",
+      "category": "operations",
+      "urgency": "high",
+      "primary_departments": [
+        "it",
+        "operations"
+      ],
+      "standby_departments": [
+        "maintenance"
+      ]
+    },
+    {
+      "code": "OP-OTHER",
+      "label_ro": "Alt incident nespecificat (triaj dispecer)",
+      "category": "operations",
+      "urgency": "low",
+      "primary_departments": [
+        "operations"
+      ],
+      "standby_departments": [
+        "security",
+        "maintenance"
+      ]
+    }
+  ]
+}
