@@ -470,6 +470,24 @@ async def run(args: argparse.Namespace) -> int:
         fields.get("urgency") == "critical",
         str(fields.get("urgency")),
     )
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": (
+                "Am găsit un bagaj fără proprietar lângă banda de bagaje 3, "
+                "nimeni nu știe al cui este."
+            ),
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "unattended bag beats the belt-fault keyword",
+        fields.get("incident_code") == "SC-BAG",
+        str(fields.get("incident_code")),
+    )
 
     # 11 ── speech-to-text (voice reporter flow) ────────────────────────────
     print("[11] /api/transcribe (audio -> text, local faster-whisper)")

@@ -583,6 +583,12 @@ _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 
+_UNATTENDED_BAG_SIGNALS: tuple[str, ...] = (
+    "fără proprietar", "fara proprietar", "nesupravegheat", "abandonat",
+    "nimeni nu știe al cui", "nimeni nu stie al cui", "proprietar necunoscut",
+)
+
+
 def apply_classification_guards(
     taxonomy: Taxonomy, transcript: str, classification: Classification
 ) -> Classification:
@@ -600,6 +606,35 @@ def apply_classification_guards(
             confidence=0.55,
             rationale=(
                 classification.rationale + " [catch-all: verificare dispecer]"
+            ).strip()[:200],
+        )
+
+    # "bagaj lângă banda de bagaje" is a LOCATION, not a belt fault. When the
+    # report says the bag is unattended/ownerless, SC-BAG must win over the
+    # mechanical MT-BELT guard (both words appear in the same sentence).
+    if (
+        classification.incident_code != "SC-BAG"
+        and classification.incident_code
+        in {"MT-BELT", "SC-BEHAV", "SC-ITEM", "OP-OTHER", "OP-QUEUE"}
+        and any(phrase in text for phrase in _UNATTENDED_BAG_SIGNALS)
+    ):
+        bag_type = taxonomy.by_code("SC-BAG")
+        urgency = classification.urgency
+        if bag_type is not None and URGENCY_LEVELS.index(
+            bag_type.urgency
+        ) > URGENCY_LEVELS.index(urgency):
+            urgency = bag_type.urgency
+        logger.info(
+            "keyword guard: %s -> SC-BAG (unattended bag phrase)",
+            classification.incident_code,
+        )
+        classification = replace(
+            classification,
+            incident_code="SC-BAG",
+            urgency=urgency,
+            confidence=max(min(classification.confidence, 0.95), 0.85),
+            rationale=(
+                classification.rationale + " [bagaj nesupravegheat]"
             ).strip()[:200],
         )
 

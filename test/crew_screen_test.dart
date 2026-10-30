@@ -201,7 +201,7 @@ void main() {
     expect(board.find('ticket-1')!.isJoinedBy('crew-1'), isTrue);
     expect(find.text('Preia'), findsNothing);
     expect(find.text('Rezolvat'), findsWidgets);
-    expect(find.textContaining('1 membru alăturați'), findsOneWidget);
+    expect(find.textContaining('1 membru alăturat'), findsOneWidget);
   });
 
   testWidgets('two votes reach quorum and show resolved snackbar', (tester) async {
