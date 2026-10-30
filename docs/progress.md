@@ -48,13 +48,16 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Aerospace design**: animated sky gradient + drifting clouds + plane silhouette login, account cards with scope/password, mobile-friendly layout | `lib/core/widgets/sky_background.dart`, login screen |
 | **Back button fixed**: role screens are pushed over login, Android back returns to the account chooser instead of exiting | `lib/main.dart` (`pushNamed`, `popUntil`) — verified on device |
 | **Desktop control room (real-time)**: Flutter web dashboard in Edge — WSS live queue, urgency counters, departments, Confirmă/Respinge/Reclasifică | `lib/web_dashboard_main.dart`, `scripts/serve_dashboard.ps1` (no Visual Studio needed) |
+| **Voice path verified end-to-end**: real spoken WAV fixture → `ApiClient.transcribe` over pinned TLS → local Whisper → `/api/analyze` → `SF-FIRE` | `test/fixtures/spoken_report.wav`, live test in `test/live_backend_test.dart` (**live 8/8**) |
+| **Full gate run**: `scripts\verify_all.ps1 -Live` → **ALL GATES PASSED** (analyze clean, 146 app tests, live 8/8, smoke 59/59 strict TLS, wire parity, taxonomy sync) | verify_all output |
+| **Demo APKs refreshed** (TLS + emergency HTTP, 51.1 MB each) against `192.168.0.170`; TLS build installed on the S24 and connected | `D:\Hackathon\dist\wingman-tls-release.apk`, `wingman-insecure-release.apk` |
 
 ## In progress ⏳
 
 | Item | Owner | Notes |
 |---|---|---|
 | Demo rehearsal on 2-3 phones + desktop | **user + Lead** | sign in as Rita/Earl/John/Andy per `docs/demo-script.md`, run the 3-min flow, time it |
-| Voice on the real microphone | **user** | hold the mic on the reporter account and say „Este fum lângă poarta 12" |
+| Physical microphone check (human step) | **user** | hold the mic on Rita's reporter screen and speak; the code path is verified by the live WAV test, this only confirms the device mic |
 | Desktop dashboard polish | Lead | add ticket age/live feed highlights if time permits |
 | Location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; after the demo flow is stable |
 

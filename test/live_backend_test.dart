@@ -239,6 +239,35 @@ void main() {
     expect(afterMax.fields.confidence, lessThanOrEqualTo(0.40));
   }, skip: _live ? false : _skipReason);
 
+  test('voice path: real speech WAV -> transcribe -> classification', () async {
+    // This is the client-side voice pipeline used by the reporter screen:
+    // recorded bytes -> ApiClient.transcribe (pinned TLS) -> local Whisper ->
+    // text -> /api/analyze -> closed-taxonomy classification. The fixture is a
+    // real spoken sentence synthesized on the laptop (see demo-script.md).
+    final wav = File('test/fixtures/spoken_report.wav');
+    expect(wav.existsSync(), isTrue,
+        reason: 'missing fixture test/fixtures/spoken_report.wav');
+
+    final result = await api.transcribe(
+      wav.readAsBytesSync(),
+      mimeType: 'audio/wav',
+      language: 'en',
+      timeout: const Duration(seconds: 120),
+    );
+    expect(result.text, isNotEmpty);
+    expect(result.isEmpty, isFalse);
+    expect(result.provider, 'faster-whisper');
+    final lower = result.text.toLowerCase();
+    expect(lower.contains('smoke') || lower.contains('gate'), isTrue,
+        reason: 'unexpected transcription: "${result.text}"');
+
+    final conversation = await api.analyze(
+      AnalyzeRequest(transcript: result.text),
+    );
+    expect(conversation.fields.incidentCode, 'SF-FIRE');
+    expect(conversation.fields.confidence, greaterThan(0.5));
+  }, skip: _live ? false : _skipReason);
+
   test('dev reset leaves a clean store', () async {
     await api.devReset();
     final tickets = await api.listTickets();
