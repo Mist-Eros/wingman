@@ -7,6 +7,8 @@ analyzer:
     - .dart_tool/**
     - android/**
     - ios/**
+    - web/**
+    - windows/**
   errors:
     unused_import: warning
     avoid_print: ignore

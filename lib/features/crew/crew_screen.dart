@@ -173,8 +173,16 @@ class _CrewScreenState extends State<CrewScreen> {
                               key: ValueKey<String>(ticket.id),
                               ticket: ticket,
                               crewId: session.userId,
-                              crewName: session.displayName,
-                              board: board,
+                              onJoin: () => board.join(
+                                ticket.id,
+                                crewId: session.userId,
+                                crewName: session.displayName,
+                              ),
+                              onVote: () => board.vote(
+                                ticket.id,
+                                crewId: session.userId,
+                              ),
+                              lastActionError: () => board.lastActionError,
                             );
                           },
                         ),
