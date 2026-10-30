@@ -19,6 +19,7 @@
 [CmdletBinding()]
 param(
     [switch]$SkipBackend,
+    [switch]$Live,
     [string]$ApiBase = 'https://127.0.0.1:8443',
     [string]$Token = 'demo-token'
 )
@@ -54,6 +55,14 @@ Invoke-Gate 'taxonomy parity (Dart <-> backend json)' { & $python 'scripts\sync_
 Invoke-Gate 'wire parity (Dart <-> FastAPI)' { & $python 'scripts\check_wire_parity.py' --quiet }
 Invoke-Gate 'flutter analyze' { & flutter analyze }
 Invoke-Gate 'flutter test' { & flutter test }
+
+if ($Live) {
+    $env:WINGMAN_LIVE = '1'
+    Invoke-Gate 'flutter test (live Dart client against TLS backend)' {
+        & flutter test 'test\live_backend_test.dart'
+    }
+    Remove-Item Env:WINGMAN_LIVE -ErrorAction SilentlyContinue
+}
 
 if (-not $SkipBackend) {
     $ca = Join-Path $repo 'backend\certs\ca.crt'

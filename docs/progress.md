@@ -15,6 +15,7 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Backend smoke test 37/37 with strict CA validation** | `python scripts\smoke_test.py --ca backend\certs\ca.crt` |
 | Dart compiles: **flutter analyze → No issues found** | `flutter analyze` |
 | Core contract tests **13/13** | `flutter test` |
+| **Live Dart client ↔ TLS backend test 6/6** (CA pinning, WSS, full flow) | `$env:WINGMAN_LIVE='1'; flutter test test\live_backend_test.dart` |
 | Firewall rule "Wingman 8443" (inbound, any profile, TCP 8443) | `Get-NetFirewallRule` |
 | Wi-Fi network profile set to **Private** | `Get-NetConnectionProfile` |
 | Taxonomy authored (14 types / 4 categories, OP-OTHER catch-all) + backend JSON generated | `lib/core/incidents/taxonomy.dart`, `backend/taxonomy.json` |
@@ -25,10 +26,10 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 
 | Item | Owner | Notes |
 |---|---|---|
-| Ollama install + `qwen2.5:7b` pull (~4.7 GB) | background job | then verify `/api/analyze` returns `ai_source: ollama` |
-| JDK 17 + Android SDK (`platform-tools`, `android-35`, `build-tools;35.0.0`) | background job | required for APK builds |
+| Ollama install + model pull | background job | guest Wi-Fi ≈ 0.6 MB/s → OllamaSetup.exe 1.6 GB (~40 min) then `qwen2.5:1.5b` (~1 GB, ~25 min); then verify `/api/analyze` returns `ai_source: ollama` |
+| Android SDK done; **APK build** | background job | Gradle 9.3.1 + first-build dependencies downloading on the same slow link |
 | Phone ↔ laptop reachability on `HACKATHON-GUEST` | **user** | open `https://10.10.28.37:8443/` in the phone browser |
-| First APK build + install on a physical Android | Lead | after SDK finishes: `.\scripts\build_demo_apks.ps1` |
+| First APK install + app boot | Lead | after the build finishes: `flutter build apk --debug` → `adb install` |
 
 ## Next (H0–H4 remaining)
 

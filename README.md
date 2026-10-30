@@ -204,8 +204,12 @@ python scripts\sync_taxonomy.py            # taxonomy.dart ↔ backend/taxonomy.
 python scripts\check_wire_parity.py        # Dart JSON mapping ↔ FastAPI wire (offline)
 flutter analyze
 flutter test                               # core contract tests (taxonomy/wire/session)
+$env:WINGMAN_LIVE="1"; flutter test test\live_backend_test.dart
+                                           # LIVE: real Dart client ↔ TLS backend (REST+WSS)
 python scripts\smoke_test.py --ca backend\certs\ca.crt   # backend must pass 37/37
 ```
+
+One command for all of it: `.\scripts\verify_all.ps1 -Live` (backend must be running).
 
 The smoke test also asserts that the backend ticket JSON keys **exactly** match what
 `Ticket.fromJson` reads — that is the single most effective integration gate.
