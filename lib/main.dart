@@ -33,6 +33,7 @@ import 'core/core_scope.dart';
 import 'core/incidents/taxonomy.dart';
 import 'core/models/session.dart';
 import 'core/state/ticket_board.dart';
+import 'core/theme/wingman_theme.dart';
 import 'features/crew/crew_screen.dart';
 import 'features/dispatcher/dispatcher_screen.dart';
 import 'features/reporter/reporter_screen.dart';
@@ -188,11 +189,9 @@ class _AirportAppState extends State<AirportApp> {
         title: 'Wingman',
         debugShowCheckedModeBanner: false,
         navigatorKey: _navigatorKey,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF0B5FFF),
-          brightness: Brightness.light,
-        ),
+        theme: WingmanTheme.light(),
+        darkTheme: WingmanTheme.dark(),
+        themeMode: ThemeMode.light,
         initialRoute: '/',
         routes: <String, WidgetBuilder>{
           '/': (context) => _roleSelect(),
@@ -252,33 +251,66 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
           builder: (context, _) {
             final online = board.connected;
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(
+                WingmanSpacing.page,
+                WingmanSpacing.xl,
+                WingmanSpacing.page,
+                WingmanSpacing.xxl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const SizedBox(height: 24),
-                  Text(
-                    'Wingman',
-                    style: theme.textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: WingmanColors.navy,
+                          borderRadius:
+                              BorderRadius.circular(WingmanRadius.md),
+                        ),
+                        child: const Icon(
+                          Icons.flight_takeoff_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: WingmanSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              'Wingman',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                color: WingmanColors.navy,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Raportare incidente · dispecerat · echipaje',
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: WingmanColors.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Raportare incidente · dispecerat · echipaje',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: WingmanSpacing.xl),
                   TextField(
                     controller: _nameController,
                     textInputAction: TextInputAction.done,
                     decoration: const InputDecoration(
                       labelText: 'Nume (opțional)',
                       hintText: 'ex. Andrei P.',
-                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person_outline_rounded),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: WingmanSpacing.lg),
                   _RoleCard(
                     icon: Icons.record_voice_over_outlined,
                     title: UserRole.reporter.labelRo,
@@ -299,26 +331,47 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
                     subtitle: 'Preia, votează rezolvarea',
                     onTap: () => _pick(UserRole.crew),
                   ),
-                  const SizedBox(height: 28),
-                  Row(
-                    children: <Widget>[
-                      Icon(
-                        online ? Icons.wifi : Icons.wifi_off,
-                        size: 16,
-                        color: online ? Colors.green.shade700 : Colors.red,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
+                  const SizedBox(height: WingmanSpacing.xl),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: WingmanSpacing.md,
+                      vertical: WingmanSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: online
+                          ? WingmanColors.liveFill
+                          : WingmanColors.criticalFill,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
                           online
-                              ? 'Server conectat · ${board.tickets.length} tichete'
-                              : 'Server offline — verifică IP-ul, Wi-Fi-ul și firewall-ul',
-                          style: theme.textTheme.bodySmall,
+                              ? Icons.wifi_rounded
+                              : Icons.wifi_off_rounded,
+                          size: 16,
+                          color: online
+                              ? WingmanColors.live
+                              : WingmanColors.critical,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: WingmanSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            online
+                                ? 'Server conectat · ${board.tickets.length} tichete'
+                                : 'Server offline — verifică IP-ul, Wi-Fi-ul și firewall-ul',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: online
+                                  ? WingmanColors.live
+                                  : WingmanColors.critical,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: WingmanSpacing.md),
                   SelectableText(
                     'API: $kApiBase',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -364,16 +417,29 @@ class _RoleCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: ListTile(
         onTap: onTap,
-        leading: Icon(icon, size: 28),
+        leading: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: WingmanColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(WingmanRadius.sm),
+          ),
+          child: Icon(icon, size: 24, color: WingmanColors.navy),
+        ),
         title: Text(
           title,
           style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        subtitle: Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(color: WingmanColors.muted),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: WingmanColors.muted),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: WingmanSpacing.md,
+          vertical: WingmanSpacing.sm,
+        ),
       ),
     );
   }
