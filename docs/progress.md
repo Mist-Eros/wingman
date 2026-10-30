@@ -33,6 +33,9 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **All gates green with live AI**: smoke 56/56, live Dart 7/7, `flutter analyze` clean, 18 offline tests | `scripts/smoke_test.py`, `flutter test` |
 | **First real phone end-to-end**: Samsung S24 Ultra (Android 16) — release APK, pinned TLS, WSS connected, live ticket appeared instantly | screenshot/bring-up on 2026-10-30; `adb -s RFCX60EYMEY` |
 | **Crew feature merged & verified on phone**: Echipaj list, Preia (join), Rezolvat (vote), 2/2 quorum -> resolved live over WSS | lib/features/crew/, phone RFCX60EYMEY |
+| **Reporter feature merged & verified on phone** (typed path): „fum lângă poarta 12" → SF-FIRE critical 95%, follow-up question, confirmation, `POST /api/reports 201`, departments Pompieri/Securitate | `lib/features/reporter/`, 141 tests, smoke 58/58 |
+| **Server mirrors the reporter urgency brain**: fire/toxic/life → critical, size/flags escalate, medical → OP-OTHER triage + `Department.medical` standby | `backend/app/ai.py::apply_transcript_urgency`, taxonomy v1 re-synced |
+| Kotlin incremental cache fix after interrupted build | `android/gradle.properties` (+ clean rebuild: 1.2 min) |
 | Android bring-up fixes: release INTERNET permission, targetSdk 35 for Android 16 LAN policy, build-script dart-define bug, `kApiBase` sanitizer | `android/app/src/main/AndroidManifest.xml`, `build.gradle.kts`, `lib/main.dart` |
 
 ## In progress ⏳

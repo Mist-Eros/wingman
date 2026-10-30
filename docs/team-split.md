@@ -20,9 +20,9 @@ feature folder and ask for contract changes instead of hacking around them.
 
 | Owner | Status | Evidence |
 |---|---|---|
-| Lead | ✅ done: contracts, backend, AI, STT, TLS, APKs, phone bring-up, gates | `smoke 56/56`, live Dart 7/7, phone shows „Server conectat" |
-| Friend 3 | ✅ merged + verified on phone: „Preia" → join, „Rezolvat" → vote, quorum 2 → resolved over WSS | branch `feat/crew` (`0440163`), 3 files / 738 lines |
-| Friend 1 | ⏳ not pushed yet | only stub `reporter_screen.dart` in `main` |
+| Lead | ✅ done: contracts, backend, AI, STT, TLS, APKs, phone bring-up, gates | `smoke 58/58`, live Dart 7/7, phone shows „Server conectat" |
+| Friend 3 | ✅ merged + verified on phone: „Preia" → join, „Rezolvat" → vote, quorum 2 → resolved over WSS; Chrome preview harness + widget tests | branches `feat/crew` (`0440163`, `5de1d6a`) |
+| Friend 1 | ✅ merged + verified on phone: type-to-report path creates a real ticket (SF-FIRE 95% critical), follow-up question, confirmation with tappable words | branch `feat/reporter` (`5b7e2c9`), 24 files / 5k lines, 3 test files |
 | Friend 2 | ⏳ not pushed yet | only stub `dispatcher_screen.dart` in `main` |
 | Design | ⏳ not started | shell is default Material 3 |
 
