@@ -496,7 +496,9 @@ async def analyze_report(
         raise
     except Exception as exc:  # noqa: BLE001 - fallback is the whole point
         logger.warning("Ollama classify failed: %s", exc)
-        return fallback_classify(taxonomy, transcript, hint_code)
+        return apply_transcript_urgency(
+            taxonomy, transcript, fallback_classify(taxonomy, transcript, hint_code)
+        )
 
     try:
         parsed = parse_json_object(raw.get("content"))
@@ -522,10 +524,15 @@ async def analyze_report(
             classification = apply_classification_guards(
                 taxonomy, transcript, classification
             )
+            classification = apply_transcript_urgency(
+                taxonomy, transcript, classification
+            )
         return classification
     except (ValueError, KeyError) as exc:
         logger.warning("Ollama returned unusable classification: %s", exc)
-        return fallback_classify(taxonomy, transcript, hint_code)
+        return apply_transcript_urgency(
+            taxonomy, transcript, fallback_classify(taxonomy, transcript, hint_code)
+        )
 
 
 # Unambiguous Romanian triggers. A 1.5B model occasionally confuses smoke with
@@ -629,7 +636,104 @@ def apply_classification_guards(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONVERSATIONAL /analyze — contract used by the reporter flow (lib/core/)
+# Urgency from WHAT WAS SAID (requested by F1 in NOTES_FOR_LEAD.md)
+#
+# The reporter app already computes urgency from the transcript in
+# `lib/features/reporter/brain/severity.dart`. The server mirrors the same
+# signals so the created ticket matches what the phone shows: raise only,
+# never lower; fire/explosion/gas/lava, toxic substances and a life at risk
+# are always critical.
+# ─────────────────────────────────────────────────────────────────────────────
+_CRITICAL_SIGNALS: tuple[str, ...] = (
+    "fum", "foc", "incendiu", "exploz", "gaz", "lavă", "lava", "toxic",
+    "otrav", "otrăv", "radioactiv", "substanță periculoasă",
+    "substanta periculoasa", "nu respiră", "nu respira", "inconștient",
+    "inconstient", "leșin", "lesin", "infarct", "hemoragie", "sânger",
+    "sanger", "ameninț", "amenint", "sinucid", "criză", "criza",
+    "în pericol", "in pericol",
+)
+# Each group found in the text raises the urgency by one level (capped at critical).
+_ADD_ONE_GROUPS: tuple[tuple[str, ...], ...] = (
+    ("inflamabil", "combustibil", "benzină", "benzina", "motorină", "motorina",
+     "scânte", "scante"),
+    ("se extinde", "se răspândește", "se raspandeste", "degajare", "degajări"),
+    ("pistă", "pista", "platformă", "platforma", "avion", "aeroport"),
+    ("a căzut", "a cazut", "căzut", "cazut", "alunecat", "împiedicat", "impiedicat"),
+    ("urgent", "repede", "ajutor", "imediat"),
+)
+# Size words only escalate spill/FOD/fire reports (as in F1's severity.dart).
+_SIZE_CODES = {"SF-SPILL", "SF-FOD", "SF-FIRE"}
+_SIZE_WORDS = ("mare", "uriaș", "urias", "uriașă", "uriasa", "catastrofal", "dezastru")
+# Medical reports have no dedicated type yet: triage them to OP-OTHER (which
+# now lists Department.medical as standby) and make them critical.
+_MEDICAL_SIGNALS: tuple[str, ...] = (
+    "leșin", "lesin", "inconștient", "inconstient", "nu respiră", "nu respira",
+    "infarct", "dureri în piept", "dureri in piept", "hemoragie", "sânger",
+    "sanger", "ambulanță", "ambulanta", "doctor", "medical", "rănit grav",
+    "ranit grav", "comă", "coma",
+)
+_MEDICAL_OVERRIABLE = {"OP-OTHER", "OP-QUEUE", "OP-IT", "SC-BEHAV"}
+
+_URGENCY_LEVELS: tuple[str, ...] = ("low", "medium", "high", "critical")
+
+
+def apply_transcript_urgency(
+    taxonomy: Taxonomy, transcript: str, classification: Classification
+) -> Classification:
+    """Escalate urgency from the transcript, mirroring the reporter brain."""
+    text = (transcript or "").lower()
+
+    def level(name: str) -> int:
+        return _URGENCY_LEVELS.index(name) if name in _URGENCY_LEVELS else 1
+
+    target = level(classification.urgency)
+    incident_type = taxonomy.by_code(classification.incident_code)
+    if incident_type is not None:
+        target = max(target, level(incident_type.urgency))
+
+    medical = any(word in text for word in _MEDICAL_SIGNALS)
+    if medical and classification.incident_code in _MEDICAL_OVERRIABLE:
+        classification = replace(
+            classification,
+            incident_code="OP-OTHER",
+            confidence=max(min(classification.confidence, 0.95), 0.80),
+            rationale=(
+                classification.rationale + " [medical: triaj dispecer]"
+            ).strip()[:200],
+        )
+        target = max(target, level("critical"))
+
+    if any(word in text for word in _CRITICAL_SIGNALS):
+        target = 3
+    else:
+        for group in _ADD_ONE_GROUPS:
+            if any(word in text for word in group):
+                target = min(3, target + 1)
+        if (
+            classification.incident_code in _SIZE_CODES
+            and any(word in text for word in _SIZE_WORDS)
+        ):
+            target = min(3, target + 1)
+
+    if detect_people_at_risk(transcript) is True:
+        target = max(target, level("high"))
+
+    if target == level(classification.urgency):
+        return classification
+    urgency = _URGENCY_LEVELS[target]
+    logger.info(
+        "urgency from transcript: %s -> %s (%r)",
+        classification.urgency,
+        urgency,
+        transcript[:60],
+    )
+    return replace(
+        classification,
+        urgency=urgency,
+        rationale=(
+            classification.rationale + f" [urgență din teren: {urgency}]"
+        ).strip()[:200],
+    )
 #
 # The app asks one question per turn, speaks it, appends the answer to the
 # transcript and posts again with `clarifications_asked + 1`. The server keeps

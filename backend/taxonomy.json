@@ -200,7 +200,8 @@
       ],
       "standby_departments": [
         "security",
-        "maintenance"
+        "maintenance",
+        "medical"
       ]
     }
   ]

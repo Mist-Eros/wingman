@@ -417,6 +417,9 @@ class IncidentTaxonomy {
       standbyDepartments: <Department>[
         Department.security,
         Department.maintenance,
+        // Medical triage: faint / not breathing / chest pain land here until a
+        // dedicated medical type exists (see docs/backlog.md + NOTES_FOR_LEAD).
+        Department.medical,
       ],
     ),
   ];

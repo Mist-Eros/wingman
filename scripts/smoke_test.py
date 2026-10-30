@@ -438,6 +438,39 @@ async def run(args: argparse.Namespace) -> int:
     )
     check("ready is true when the server stops asking", body3.get("ready") is True)
 
+    # 10b ── urgency from what was said (mirrors reporter brain/severity.dart)
+    print("[10b] urgency escalation from the transcript")
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "Lava curge în terminalul 3 și se extinde rapid!",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "lava spill escalated to critical",
+        fields.get("urgency") == "critical",
+        str(fields.get("urgency")),
+    )
+    status, body = http_call(
+        base, token, "/api/analyze",
+        method="POST",
+        payload={
+            "transcript": "Un pasager a leșinat lângă poarta 5, nu respiră.",
+            "clarifications_asked": 0,
+        },
+        insecure=insecure,
+    )
+    fields = body.get("fields") or {}
+    check(
+        "medical triage is critical",
+        fields.get("urgency") == "critical",
+        str(fields.get("urgency")),
+    )
+
     # 11 ── speech-to-text (voice reporter flow) ────────────────────────────
     print("[11] /api/transcribe (audio -> text, local faster-whisper)")
     import base64 as _b64
