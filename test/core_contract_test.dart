@@ -9,6 +9,7 @@ import 'package:wingman/core/incidents/taxonomy.dart';
 import 'package:wingman/core/models/analyze_result.dart';
 import 'package:wingman/core/models/session.dart';
 import 'package:wingman/core/models/ticket.dart';
+import 'package:wingman/core/models/transcription_result.dart';
 
 Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
       'id': '4b1f0c2e-1111-2222-3333-444455556666',
@@ -270,6 +271,38 @@ void main() {
         'known_incident_code',
       });
       expect(request.toJson()['clarifications_asked'], 2);
+    });
+  });
+
+  group('TranscriptionResult wire contract (voice reporter flow)', () {
+    test('parses a faster-whisper response', () {
+      final result = TranscriptionResult.fromJson(const <String, dynamic>{
+        'text': 'este fum lângă poarta 12',
+        'language': 'ro',
+        'language_probability': 0.97,
+        'duration_ms': 2400,
+        'model': 'small',
+        'provider': 'faster-whisper',
+        'latency_ms': 1800,
+      });
+      expect(result.text, 'este fum lângă poarta 12');
+      expect(result.language, 'ro');
+      expect(result.languageProbability, 0.97);
+      expect(result.durationMs, 2400);
+      expect(result.model, 'small');
+      expect(result.provider, 'faster-whisper');
+      expect(result.latencyMs, 1800);
+      expect(result.isEmpty, isFalse);
+    });
+
+    test('tolerates empty speech and missing fields', () {
+      final result = TranscriptionResult.fromJson(const <String, dynamic>{
+        'text': '',
+        'language': 'ro',
+      });
+      expect(result.isEmpty, isTrue);
+      expect(result.durationMs, 0);
+      expect(result.provider, 'faster-whisper');
     });
   });
 

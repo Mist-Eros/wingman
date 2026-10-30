@@ -244,6 +244,54 @@ Rules (server-enforced, tested):
 Implementation: `backend/app/ai.py::analyze_conversation` (deterministic slot questions; the
 model only classifies). Tests: smoke test section 10 + `test/live_backend_test.dart`.
 
+### POST `/api/transcribe` — voice → text (F1)
+
+The mic hop for the voice reporter flow. Runs **local faster-whisper** on the laptop: no cloud,
+no API key, the audio never leaves the LAN. Returns plain text which the app then sends to
+`/api/analyze` (conversation) or `/api/reports` (submission) exactly as if typed.
+
+Request (JSON — this is what the Flutter client sends):
+
+```json
+{
+  "audio_base64": "<m4a/wav/mp3 bytes, base64>",
+  "mime_type": "audio/mp4",
+  "language": "ro"
+}
+```
+
+`language` is optional (omit it, or send `"auto"`, to let Whisper detect). Max audio size
+25 MB (`MAX_AUDIO_BYTES`). Response:
+
+```json
+{
+  "text": "este fum lângă poarta 12",
+  "language": "ro",
+  "language_probability": 0.97,
+  "duration_ms": 2400,
+  "model": "small",
+  "provider": "faster-whisper",
+  "latency_ms": 1800
+}
+```
+
+Rules:
+
+* Empty speech (VAD trims silence) → `text: ""` with HTTP 200. The app should say
+  "nu am auzit bine, mai încearcă" and let the user re-record or fall back to the menu.
+* `400` for invalid base64 / oversized audio; `503` when the model is not installed yet
+  (menus keep working).
+* Model/latency are configurable: `WHISPER_MODEL=tiny|base|small|medium`,
+  `WHISPER_DEVICE=cpu|cuda`, `WHISPER_COMPUTE_TYPE=int8|float16`. Default `small`/int8 on CPU.
+* Optional multipart variant `POST /api/transcribe/upload` (`file` part) for curl/automation;
+  the Flutter app uses the JSON route.
+* Dart: `api.transcribe(bytes, mimeType: 'audio/mp4', language: 'ro')` →
+  `TranscriptionResult` (`text`, `language`, `latencyMs`, `isEmpty`).
+
+Implementation: `backend/app/stt.py` + `backend/app/main.py` (`/transcribe`). Tests: smoke
+test section 11. PyAV ≥ 19 compatibility shim lives in `stt.py` (`av.open` dropped a kwarg
+faster-whisper still passes).
+
 ---
 
 ## 7. WSS contract

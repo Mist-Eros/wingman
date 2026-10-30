@@ -438,8 +438,64 @@ async def run(args: argparse.Namespace) -> int:
     )
     check("ready is true when the server stops asking", body3.get("ready") is True)
 
-    # 11 ── reset (leave a clean store for the next run) ────────────────────
-    print("[11] dev reset")
+    # 11 ── speech-to-text (voice reporter flow) ────────────────────────────
+    print("[11] /api/transcribe (audio -> text, local faster-whisper)")
+    import base64 as _b64
+    import io as _io
+    import wave as _wave
+
+    wav_buffer = _io.BytesIO()
+    with _wave.open(wav_buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(16000)
+        wav_file.writeframes(b"\x00\x00" * 3200)  # 0.2 s of silence
+    audio_b64 = _b64.b64encode(wav_buffer.getvalue()).decode("ascii")
+    status, body = http_call(
+        base,
+        token,
+        "/api/transcribe",
+        method="POST",
+        payload={
+            "audio_base64": audio_b64,
+            "mime_type": "audio/wav",
+            "language": "ro",
+        },
+        insecure=insecure,
+    )
+    check(
+        "transcribe accepts audio (200, or 503 until the model is downloaded)",
+        status in (200, 503),
+        f"status={status}",
+    )
+    if status == 200:
+        check("transcribe returns text", isinstance(body.get("text"), str), str(body)[:80])
+        check("transcribe returns language", isinstance(body.get("language"), str))
+        check(
+            "transcribe reports provider=faster-whisper",
+            body.get("provider") == "faster-whisper",
+            str(body.get("provider")),
+        )
+        check("transcribe reports latency", isinstance(body.get("latency_ms"), int))
+    else:
+        print(f"  SKIP  whisper model not ready yet: {str(body.get('detail', ''))[:90]}")
+
+    status, body = http_call(
+        base,
+        token,
+        "/api/transcribe",
+        method="POST",
+        payload={"audio_base64": "$$$not-base64$$$", "mime_type": "audio/wav"},
+        insecure=insecure,
+    )
+    check(
+        "invalid audio_base64 rejected (400/422)",
+        status in (400, 422),
+        f"status={status}",
+    )
+
+    # 12 ── reset (leave a clean store for the next run) ────────────────────
+    print("[12] dev reset")
     status, body = http_call(base, token, "/api/dev/reset", method="POST", insecure=insecure)
     if status == 200:
         check("store cleared", body.get("tickets_cleared", 0) >= 0)

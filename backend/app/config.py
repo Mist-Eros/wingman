@@ -58,6 +58,12 @@ class Settings:
     # Crew resolution
     resolve_quorum: int
 
+    # Speech-to-text (voice reporter flow, local faster-whisper)
+    whisper_model: str
+    whisper_device: str
+    whisper_compute_type: str
+    max_audio_bytes: int
+
     # Dev conveniences
     allow_dev_reset: bool
     taxonomy_path: Path
@@ -72,6 +78,10 @@ def load_settings() -> Settings:
         confidence_threshold=_env_float("CONFIDENCE_THRESHOLD", 0.65),
         override_window_seconds=_env_float("OVERRIDE_WINDOW_SECONDS", 5.0),
         resolve_quorum=max(1, _env_int("RESOLVE_QUORUM", 2)),
+        whisper_model=_env_str("WHISPER_MODEL", "small"),
+        whisper_device=_env_str("WHISPER_DEVICE", "cpu"),
+        whisper_compute_type=_env_str("WHISPER_COMPUTE_TYPE", "int8"),
+        max_audio_bytes=max(1_000_000, _env_int("MAX_AUDIO_BYTES", 25 * 1024 * 1024)),
         allow_dev_reset=_env_bool("ENABLE_DEV_RESET", True),
         taxonomy_path=Path(
             _env_str("TAXONOMY_PATH", str(BASE_DIR / "taxonomy.json"))

@@ -63,6 +63,23 @@ class AnalyzeIn(BaseModel):
     known_incident_code: str | None = Field(default=None, max_length=40)
 
 
+class TranscribeIn(BaseModel):
+    """POST /api/transcribe — audio -> text for the voice reporter flow.
+
+    JSON + base64 because the Flutter client (dart:io only) has no multipart
+    encoder; the 25 MB cap is enforced server-side. The returned text is fed to
+    `/api/analyze` (conversation) or `/api/reports` (submission) unchanged.
+
+    `language` is optional; omit it (or send "auto") to let Whisper detect.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    audio_base64: str = Field(min_length=8)
+    mime_type: str = Field(default="audio/mp4", max_length=100)
+    language: str | None = Field(default=None, min_length=2, max_length=8)
+
+
 class DispatcherActionIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

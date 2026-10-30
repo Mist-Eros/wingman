@@ -11,6 +11,9 @@ Auth: every /api/* request and the /ws socket need
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
+import importlib.util
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -24,6 +27,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from . import schemas
 from .ai import KEYWORD_RULES, OllamaClient, analyze_conversation, analyze_report
 from .config import BASE_DIR, settings
+from .stt import stt_available, stt_error, transcribe_audio
 from .store import Conflict, Hub, NotFound, TicketStore, utc_now
 from .taxonomy import get_taxonomy
 
@@ -34,6 +38,10 @@ logging.basicConfig(
 logger = logging.getLogger("airport.api")
 
 CERTS_DIR = BASE_DIR / "certs"
+
+# Multipart support is optional (python-multipart): the Flutter app uses the
+# JSON/base64 variant, the upload route is a convenience for curl/automation.
+_MULTIPART_AVAILABLE = importlib.util.find_spec("multipart") is not None
 
 taxonomy = get_taxonomy()
 hub = Hub()
@@ -226,6 +234,14 @@ async def health() -> dict:
             "last_latency_ms": ollama.last_latency_ms,
             "available_models": ollama.available_models,
         },
+        "stt": {
+            "provider": "faster-whisper",
+            "model": settings.whisper_model,
+            "device": settings.whisper_device,
+            "available": stt_available(),
+            "error": stt_error(),
+            "max_audio_bytes": settings.max_audio_bytes,
+        },
     }
 
 
@@ -261,6 +277,60 @@ async def analyze(body: schemas.AnalyzeIn) -> dict:
     payload = state.to_wire()
     payload["taxonomy_version"] = taxonomy.version
     return payload
+
+
+@api.post("/transcribe")
+async def transcribe(body: schemas.TranscribeIn) -> dict:
+    """Audio -> text for the voice reporter flow (local faster-whisper).
+
+    The app records a clip, posts it here, then sends the returned text to
+    `/api/analyze` or `/api/reports` exactly as if the user had typed it.
+    Failure modes are explicit: 400 for bad/oversized audio, 503 when the
+    Whisper package or model is not installed (menus keep working).
+    """
+    try:
+        audio = base64.b64decode(body.audio_base64, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(
+            status_code=400, detail="audio_base64 is not valid base64"
+        ) from exc
+    language = body.language if body.language not in (None, "", "auto") else None
+    try:
+        result = await transcribe_audio(audio, language, body.mime_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    logger.info(
+        "Transcribed %d audio bytes -> %d chars (%s, %d ms)",
+        len(audio),
+        len(result.text),
+        result.language or "?",
+        result.latency_ms,
+    )
+    return result.to_wire()
+
+
+if _MULTIPART_AVAILABLE:
+    from fastapi import File, Form, UploadFile  # noqa: E402  (optional route)
+
+    @api.post("/transcribe/upload")
+    async def transcribe_upload(
+        file: UploadFile = File(...),
+        language: str | None = Form(default=None),
+    ) -> dict:
+        """Multipart variant of `/api/transcribe` (curl, scripts, other clients)."""
+        raw = await file.read()
+        language_value = language if language not in (None, "", "auto") else None
+        try:
+            result = await transcribe_audio(
+                raw, language_value, file.content_type or "audio/mp4"
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return result.to_wire()
 
 
 @api.post("/reports", status_code=201)

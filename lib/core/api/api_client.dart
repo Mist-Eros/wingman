@@ -25,6 +25,7 @@ import 'dart:io';
 import '../incidents/taxonomy.dart';
 import '../models/analyze_result.dart';
 import '../models/ticket.dart';
+import '../models/transcription_result.dart';
 
 /// Server-enforced override window for low-confidence classifications.
 const int kOverrideWindowSeconds = 5;
@@ -273,6 +274,34 @@ class ApiClient {
       timeout: const Duration(seconds: 45),
     );
     return AnalyzeResult.fromJson(json);
+  }
+
+  /// Speech-to-text for the voice reporter flow (server runs local Whisper).
+  ///
+  /// [audioBytes] is the recorded clip; [mimeType] must match the container
+  /// (`audio/mp4` for m4a, `audio/wav`, `audio/mpeg`, ...). Pass [language]
+  /// only to force one — omit it to let Whisper auto-detect.
+  ///
+  /// The returned text is then fed unchanged to [analyze] or [report].
+  /// Throws [ApiException]: 400 for bad/oversized audio, 503 when the model is
+  /// not installed server-side (the menu flow keeps working).
+  Future<TranscriptionResult> transcribe(
+    List<int> audioBytes, {
+    String mimeType = 'audio/mp4',
+    String? language,
+    Duration timeout = const Duration(seconds: 90),
+  }) async {
+    final json = await _send(
+      'POST',
+      '/api/transcribe',
+      body: <String, dynamic>{
+        'audio_base64': base64Encode(audioBytes),
+        'mime_type': mimeType,
+        if (language != null && language.isNotEmpty) 'language': language,
+      },
+      timeout: timeout,
+    );
+    return TranscriptionResult.fromJson(json);
   }
 
   /// Clears the in-memory store (demo rehearsals). Server may 404 if disabled.
