@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
-import '../../core/state/ticket_board.dart';
 
 /// One dispatched / in-progress ticket with Preia + Rezolvat actions.
 class CrewTicketCard extends StatefulWidget {
@@ -10,14 +9,16 @@ class CrewTicketCard extends StatefulWidget {
     super.key,
     required this.ticket,
     required this.crewId,
-    required this.crewName,
-    required this.board,
+    required this.onJoin,
+    required this.onVote,
+    this.lastActionError,
   });
 
   final Ticket ticket;
   final String crewId;
-  final String crewName;
-  final TicketBoard board;
+  final Future<bool> Function() onJoin;
+  final Future<bool> Function() onVote;
+  final String? Function()? lastActionError;
 
   @override
   State<CrewTicketCard> createState() => _CrewTicketCardState();
@@ -62,32 +63,29 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
   Future<void> _onJoin() async {
     if (_joined || _busy) return;
     setState(() => _joining = true);
-    final ok = await widget.board.join(
-      _ticket.id,
-      crewId: widget.crewId,
-      crewName: widget.crewName,
-    );
+    final ok = await widget.onJoin();
     if (!mounted) return;
     setState(() {
       _joining = false;
       if (ok) _expanded = true;
     });
     if (!ok) {
-      _showError(widget.board.lastActionError ?? 'Nu am putut prelua intervenția.');
+      _showError(
+        widget.lastActionError?.call() ?? 'Nu am putut prelua intervenția.',
+      );
     }
   }
 
   Future<void> _onVote() async {
     if (!_joined || _voted || _busy) return;
     setState(() => _voting = true);
-    final ok = await widget.board.vote(
-      _ticket.id,
-      crewId: widget.crewId,
-    );
+    final ok = await widget.onVote();
     if (!mounted) return;
     setState(() => _voting = false);
     if (!ok) {
-      _showError(widget.board.lastActionError ?? 'Votul nu a putut fi înregistrat.');
+      _showError(
+        widget.lastActionError?.call() ?? 'Votul nu a putut fi înregistrat.',
+      );
     }
   }
 
