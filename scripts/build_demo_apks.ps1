@@ -17,7 +17,7 @@
 param(
     [string]$ApiHost = '',
     [string]$Token = 'demo-token',
-    [switch]$Debug
+    [switch]$DebugBuild
 )
 
 $ErrorActionPreference = 'Stop'
@@ -43,7 +43,7 @@ Write-Host "Laptop IP for the APKs: $ApiHost" -ForegroundColor Cyan
 $flutter = Get-Command flutter -ErrorAction SilentlyContinue
 if (-not $flutter) { throw "flutter not on PATH. Add C:\dev\flutter\bin to PATH (or run in a new terminal)." }
 
-$mode = if ($Debug) { 'debug' } else { 'release' }
+$mode = if ($DebugBuild) { 'debug' } else { 'release' }
 $dist = Join-Path $repo '..\dist'
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
