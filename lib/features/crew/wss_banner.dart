@@ -8,26 +8,43 @@ class WssBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = connected
-        ? const Color(0xFF1B7F4E)
-        : const Color(0xFFB3261E);
-    final bg = connected
-        ? const Color(0xFFE8F5EE)
-        : const Color(0xFFFCE8E6);
+    final color =
+        connected ? const Color(0xFF0F7A4F) : const Color(0xFFB3261E);
+    final bg =
+        connected ? const Color(0xFFE6F4EE) : const Color(0xFFFCE8E6);
     final label = connected ? 'WSS: conectat' : 'WSS: deconectat';
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: bg,
-        border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.25))),
+        border: Border(
+          bottom: BorderSide(color: color.withValues(alpha: 0.18)),
+        ),
       ),
       child: Row(
         children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: color.withValues(alpha: 0.45),
+                  blurRadius: 6,
+                  spreadRadius: 0.5,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
           Icon(
-            connected ? Icons.wifi : Icons.wifi_off,
+            connected ? Icons.wifi_rounded : Icons.wifi_off_rounded,
             size: 18,
             color: color,
           ),
@@ -37,8 +54,9 @@ class WssBanner extends StatelessWidget {
               label,
               style: TextStyle(
                 color: color,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 fontSize: 13,
+                letterSpacing: 0.1,
               ),
             ),
           ),
@@ -48,6 +66,7 @@ class WssBanner extends StatelessWidget {
               style: TextStyle(
                 color: color.withValues(alpha: 0.85),
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
         ],

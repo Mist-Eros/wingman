@@ -79,6 +79,8 @@ class _CrewScreenState extends State<CrewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Intervenție rezolvată · ${ticket.incidentCode}'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -88,109 +90,192 @@ class _CrewScreenState extends State<CrewScreen> {
   Widget build(BuildContext context) {
     final board = CoreScope.boardOf(context);
     final session = CoreScope.sessionOf(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: const Color(0xFFF4F7FB),
+        surfaceTintColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('Echipaj'),
+            const Text(
+              'Echipaj',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                color: Color(0xFF0F172A),
+              ),
+            ),
             Text(
               session.displayName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.7),
-                  ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
         actions: <Widget>[
-          IconButton(
+          _AppBarIconButton(
             tooltip: 'Reîmprospătează',
-            icon: const Icon(Icons.refresh),
+            icon: Icons.refresh_rounded,
             onPressed: board.refresh,
           ),
-          IconButton(
+          const SizedBox(width: 4),
+          _AppBarIconButton(
             tooltip: 'Ieși din rol',
-            icon: const Icon(Icons.logout),
+            icon: Icons.logout_rounded,
             onPressed: () => CoreScope.of(context).onSignOut(),
           ),
+          const SizedBox(width: 10),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: board,
-        builder: (BuildContext context, Widget? _) {
-          final queue = _crewQueue(board.tickets);
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Color(0xFFF4F7FB),
+              Color(0xFFE8EEF5),
+              Color(0xFFE2EAF3),
+            ],
+          ),
+        ),
+        child: ListenableBuilder(
+          listenable: board,
+          builder: (BuildContext context, Widget? _) {
+            final queue = _crewQueue(board.tickets);
 
-          return Column(
-            children: <Widget>[
-              WssBanner(connected: board.connected),
-              if (board.lastError != null)
-                Material(
-                  color: const Color(0xFFFCE8E6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: <Widget>[
-                        const Icon(
-                          Icons.error_outline,
-                          size: 18,
-                          color: Color(0xFFB3261E),
+            return Column(
+              children: <Widget>[
+                WssBanner(connected: board.connected),
+                if (board.lastError != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                    child: Material(
+                      color: const Color(0xFFFCE8E6),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            board.lastError!,
-                            style: const TextStyle(
+                        child: Row(
+                          children: <Widget>[
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              size: 18,
                               color: Color(0xFFB3261E),
-                              fontSize: 13,
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: queue.isEmpty
-                    ? _EmptyState(loading: board.loading)
-                    : RefreshIndicator(
-                        onRefresh: board.refresh,
-                        child: ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                          itemCount: queue.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (BuildContext context, int index) {
-                            final ticket = queue[index];
-                            return CrewTicketCard(
-                              key: ValueKey<String>(ticket.id),
-                              ticket: ticket,
-                              crewId: session.userId,
-                              onJoin: () => board.join(
-                                ticket.id,
-                                crewId: session.userId,
-                                crewName: session.displayName,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                board.lastError!,
+                                style: const TextStyle(
+                                  color: Color(0xFFB3261E),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                              onVote: () => board.vote(
-                                ticket.id,
-                                crewId: session.userId,
-                              ),
-                              lastActionError: () => board.lastActionError,
-                            );
-                          },
+                            ),
+                          ],
                         ),
                       ),
-              ),
-            ],
-          );
-        },
+                    ),
+                  ),
+                Expanded(
+                  child: queue.isEmpty
+                      ? _EmptyState(loading: board.loading)
+                      : RefreshIndicator(
+                          color: const Color(0xFF0F766E),
+                          onRefresh: board.refresh,
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+                            itemCount: queue.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (BuildContext context, int index) {
+                              final ticket = queue[index];
+                              return TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0, end: 1),
+                                duration: Duration(
+                                  milliseconds: 280 + (index * 40).clamp(0, 160),
+                                ),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value,
+                                    child: Transform.translate(
+                                      offset: Offset(0, 10 * (1 - value)),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: CrewTicketCard(
+                                  key: ValueKey<String>(ticket.id),
+                                  ticket: ticket,
+                                  crewId: session.userId,
+                                  onJoin: () => board.join(
+                                    ticket.id,
+                                    crewId: session.userId,
+                                    crewName: session.displayName,
+                                  ),
+                                  onVote: () => board.vote(
+                                    ticket.id,
+                                    crewId: session.userId,
+                                  ),
+                                  lastActionError: () => board.lastActionError,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AppBarIconButton extends StatelessWidget {
+  const _AppBarIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        shape: const CircleBorder(
+          side: BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 20, color: const Color(0xFF334155)),
+          ),
+        ),
       ),
     );
   }
@@ -206,29 +291,49 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (loading)
               const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: CircularProgressIndicator(),
+                padding: EdgeInsets.only(bottom: 18),
+                child: CircularProgressIndicator(
+                  color: Color(0xFF0F766E),
+                  strokeWidth: 2.5,
+                ),
               )
             else
-              Icon(
-                Icons.engineering_outlined,
-                size: 56,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x120F172A),
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.engineering_outlined,
+                  size: 40,
+                  color: Color(0xFF0F766E),
+                ),
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
             Text(
               loading
                   ? 'Se încarcă intervențiile…'
                   : 'Nicio intervenție alocată',
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
               ),
             ),
             const SizedBox(height: 8),
@@ -239,8 +344,8 @@ class _EmptyState extends StatelessWidget {
                       'Trage în jos pentru reîmprospătare.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
+                color: const Color(0xFF64748B),
+                height: 1.45,
               ),
             ),
           ],

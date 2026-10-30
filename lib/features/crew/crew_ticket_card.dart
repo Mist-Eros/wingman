@@ -94,6 +94,8 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
       SnackBar(
         content: Text(message),
         backgroundColor: const Color(0xFFB3261E),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -102,169 +104,243 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final joinedCount = _ticket.joinedCrewIds.length;
+    final voteProgress = _ticket.quorum == 0
+        ? 0.0
+        : (_ticket.resolveVotes / _ticket.quorum).clamp(0.0, 1.0);
 
     return Material(
-      color: theme.colorScheme.surface,
-      elevation: 1.5,
-      shadowColor: Colors.black26,
-      borderRadius: BorderRadius.circular(12),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => setState(() => _expanded = !_expanded),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border(
-              left: BorderSide(color: _accent, width: 4),
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x140F172A),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Container(width: 5, color: _accent),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            _ticket.incidentCode,
-                            style: theme.textTheme.labelLarge?.copyWith(
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      _ticket.incidentCode,
+                                      style:
+                                          theme.textTheme.labelLarge?.copyWith(
+                                        color: _accent,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _ticket.labelRo,
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.25,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              AnimatedRotation(
+                                turns: _expanded ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 220),
+                                child: Icon(
+                                  Icons.expand_more_rounded,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: <Widget>[
+                              _Chip(
+                                label: _ticket.urgency.labelRo,
+                                color: _urgencyColor,
+                                filled: true,
+                              ),
+                              _Chip(
+                                label: _ticket.status.labelRo,
+                                color: _accent,
+                              ),
+                              _Chip(
+                                label: _ticket.departmentsLabel,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _MetaRow(
+                            icon: Icons.place_outlined,
+                            text: _ticket.location.display,
+                          ),
+                          const SizedBox(height: 6),
+                          _MetaRow(
+                            icon: Icons.groups_outlined,
+                            text: joinedCount == 0
+                                ? 'Nimeni nu a preluat încă'
+                                : '$joinedCount '
+                                    '${joinedCount == 1 ? 'membru' : 'membri'} alăturați',
+                          ),
+                          const SizedBox(height: 6),
+                          _MetaRow(
+                            icon: Icons.how_to_vote_outlined,
+                            text:
+                                'Voturi: ${_ticket.resolveVotes}/${_ticket.quorum}',
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: voteProgress,
+                              minHeight: 5,
+                              backgroundColor: _accent.withValues(alpha: 0.12),
                               color: _accent,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.4,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _ticket.labelRo,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 260),
+                            curve: Curves.easeOutCubic,
+                            alignment: Alignment.topCenter,
+                            child: _expanded
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 14),
+                                    child: _DispatchPanel(
+                                      joined: _joined,
+                                      voted: _voted,
+                                      joining: _joining,
+                                      voting: _voting,
+                                      joinedCount: joinedCount,
+                                      joinedIds: _ticket.joinedCrewIds,
+                                      resolveVotes: _ticket.resolveVotes,
+                                      quorum: _ticket.quorum,
+                                      onJoin: _onJoin,
+                                      onVote: _onVote,
+                                      accent: _accent,
+                                    ),
+                                  )
+                                : (!_joined
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: FilledButton.icon(
+                                            onPressed: _busy
+                                                ? null
+                                                : () {
+                                                    setState(
+                                                      () => _expanded = true,
+                                                    );
+                                                    _onJoin();
+                                                  },
+                                            icon: _joining
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.handshake_outlined,
+                                                  ),
+                                            label: Text(
+                                              _joining ? 'Se preia…' : 'Preia',
+                                            ),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: _accent,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 13,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: FilledButton.tonalIcon(
+                                            onPressed: (_voted || _busy)
+                                                ? null
+                                                : _onVote,
+                                            icon: _voting
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : Icon(
+                                                    _voted
+                                                        ? Icons
+                                                            .check_circle_outline
+                                                        : Icons.task_alt,
+                                                  ),
+                                            label: Text(
+                                              _voted
+                                                  ? 'Ai votat (${_ticket.resolveVotes}/${_ticket.quorum})'
+                                                  : 'Rezolvat',
+                                            ),
+                                            style: FilledButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 13,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )),
                           ),
                         ],
                       ),
                     ),
-                    Icon(
-                      _expanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: <Widget>[
-                    _Chip(
-                      label: _ticket.urgency.labelRo,
-                      color: _urgencyColor,
-                      filled: true,
-                    ),
-                    _Chip(
-                      label: _ticket.status.labelRo,
-                      color: _accent,
-                    ),
-                    _Chip(
-                      label: _ticket.departmentsLabel,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _MetaRow(
-                  icon: Icons.place_outlined,
-                  text: _ticket.location.display,
-                ),
-                const SizedBox(height: 4),
-                _MetaRow(
-                  icon: Icons.groups_outlined,
-                  text: joinedCount == 0
-                      ? 'Nimeni nu a preluat încă'
-                      : '$joinedCount '
-                          '${joinedCount == 1 ? 'membru' : 'membri'} alăturați',
-                ),
-                const SizedBox(height: 4),
-                _MetaRow(
-                  icon: Icons.how_to_vote_outlined,
-                  text: 'Voturi: ${_ticket.resolveVotes}/${_ticket.quorum}',
-                ),
-                if (_expanded) ...<Widget>[
-                  const SizedBox(height: 14),
-                  _DispatchPanel(
-                    joined: _joined,
-                    voted: _voted,
-                    joining: _joining,
-                    voting: _voting,
-                    joinedCount: joinedCount,
-                    joinedIds: _ticket.joinedCrewIds,
-                    resolveVotes: _ticket.resolveVotes,
-                    quorum: _ticket.quorum,
-                    onJoin: _onJoin,
-                    onVote: _onVote,
-                    accent: _accent,
-                  ),
-                ] else if (!_joined) ...<Widget>[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _busy ? null : () {
-                        setState(() => _expanded = true);
-                        _onJoin();
-                      },
-                      icon: _joining
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.handshake_outlined),
-                      label: Text(_joining ? 'Se preia…' : 'Preia'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _accent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ] else ...<Widget>[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.tonalIcon(
-                      onPressed: (_voted || _busy) ? null : _onVote,
-                      icon: _voting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              _voted
-                                  ? Icons.check_circle_outline
-                                  : Icons.task_alt,
-                            ),
-                      label: Text(
-                        _voted
-                            ? 'Ai votat (${_ticket.resolveVotes}/${_ticket.quorum})'
-                            : 'Rezolvat',
-                      ),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
                   ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -303,14 +379,15 @@ class _DispatchPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final progress = quorum == 0 ? 0.0 : (resolveVotes / quorum).clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,25 +397,26 @@ class _DispatchPanel extends StatelessWidget {
             style: theme.textTheme.labelLarge?.copyWith(
               color: accent,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
+              letterSpacing: 0.9,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             joined
                 ? 'Ești pe teren. Confirmă rezolvarea când intervenția e gata.'
                 : 'Echipajul tău a fost alocat. Apasă Preia ca să te alături.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.35,
+              color: const Color(0xFF475569),
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (joined) ...<Widget>[
             Text(
               'Alăturați: $joinedCount',
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
               ),
             ),
             if (joinedIds.isNotEmpty) ...<Widget>[
@@ -346,18 +424,41 @@ class _DispatchPanel extends StatelessWidget {
               Text(
                 joinedIds.map(_shortId).join(' · '),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: const Color(0xFF64748B),
                 ),
               ),
             ],
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Text(
+                  'Progres vot',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '$resolveVotes / $quorum',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            Text(
-              'Progres vot: $resolveVotes / $quorum',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 7,
+                backgroundColor: accent.withValues(alpha: 0.14),
+                color: accent,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -381,7 +482,11 @@ class _DispatchPanel extends StatelessWidget {
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: accent,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -403,7 +508,11 @@ class _DispatchPanel extends StatelessWidget {
                 label: Text(joining ? 'Se preia…' : 'Preia'),
                 style: FilledButton.styleFrom(
                   backgroundColor: accent,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -432,18 +541,21 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: filled ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+        color: filled
+            ? color.withValues(alpha: 0.14)
+            : color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: filled ? 0.28 : 0.22)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.15,
         ),
       ),
     );
@@ -458,16 +570,20 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
+        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        const SizedBox(width: 7),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(color: color, fontSize: 13, height: 1.3),
+            style: const TextStyle(
+              color: Color(0xFF475569),
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
