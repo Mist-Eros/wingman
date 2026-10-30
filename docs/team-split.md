@@ -21,10 +21,12 @@ feature folder and ask for contract changes instead of hacking around them.
 | Owner | Status | Evidence |
 |---|---|---|
 | Lead | ✅ done: contracts, backend, AI, STT, TLS, APKs, phone bring-up, gates | `smoke 58/58`, live Dart 7/7, phone shows „Server conectat" |
-| Friend 3 | ✅ merged + verified on phone: „Preia" → join, „Rezolvat" → vote, quorum 2 → resolved over WSS; Chrome preview harness + widget tests | branches `feat/crew` (`0440163`, `5de1d6a`) |
-| Friend 1 | ✅ merged + verified on phone: type-to-report path creates a real ticket (SF-FIRE 95% critical), follow-up question, confirmation with tappable words | branch `feat/reporter` (`5b7e2c9`), 24 files / 5k lines, 3 test files |
-| Friend 2 | ⏳ not pushed yet | only stub `dispatcher_screen.dart` in `main` |
+| Friend 3 | ✅ merged: crew „Preia"/„Rezolvat" verified on phone (join, vote, quorum → resolved over WSS); airport-ops UI polish + Chrome preview + widget tests | branches `feat/crew` (`0440163`, `5de1d6a`, `5fee0df`) |
+| Friend 1 | ✅ merged + verified on phone: type-to-report creates a real ticket (SF-FIRE 95% critical) with follow-ups and confirmation; 3 test suites | branch `feat/reporter` (`5b7e2c9`), 24 files / 5k lines |
+| Friend 2 | ✅ merged: full dispatcher dashboard (live/demo modes, urgency counters, department strip, override countdown card, timeline, zones, filters, history, keyboard shortcuts) + Windows runner. Verified live data + override card on phone. **Mobile-layout caveat:** phone opens in Demo mode by default and the action buttons sit below the fold/under the gesture bar (designed for the Windows dashboard) | branch `feat/dispatcher` (`60051a3`, `f563740`), 14 files / 4.5k lines |
 | Design | ⏳ not started | shell is default Material 3 |
+
+Attribution so far from commit authors: Friend 1 = `rarescu08`, Friend 2 = `Radu <radu.fita2000@gmail.com>`; Friend 3's commits still carry the demo machine identity — fix with a `TEAM.md` and their own `git config` before submitting.
 
 Before judging, each friend should push their branch with **their own git identity** so the
 commit history shows real authorship (`git config user.name/user.email` locally), and we add a
