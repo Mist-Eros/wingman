@@ -84,8 +84,11 @@ winget install --id Flutter.Flutter -e          # or use your existing Flutter i
 
 # Ollama (once): install, then pull the chosen model
 winget install --id Ollama.Ollama -e
-ollama pull qwen2.5:7b
+ollama pull qwen2.5:1.5b
 # alternative: ollama pull llama3.1:8b   → set $env:OLLAMA_MODEL='llama3.1:8b'
+# If the Ollama registry stalls on the venue network (it did for us), build the
+# same model from the official HuggingFace GGUF instead:
+#   .\scripts\prepare_ollama_model.ps1
 ```
 
 Open a **new** terminal after installs, then:
