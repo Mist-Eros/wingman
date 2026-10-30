@@ -50,7 +50,8 @@ New-Item -ItemType Directory -Force -Path $dist | Out-Null
 function Save-Build([string]$name, [string[]]$dartDefines) {
     $args = @('build', 'apk', "--$mode") + $dartDefines
     Write-Host ('==> flutter ' + ($args -join ' ')) -ForegroundColor Cyan
-    & flutter @args
+    # Out-Host keeps the build chatter out of this function's return value.
+    & flutter @args | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "build failed for $name" }
     $built = Join-Path $repo "build\app\outputs\flutter-apk\app-$mode.apk"
     if (-not (Test-Path $built)) { throw "APK not found at $built" }
