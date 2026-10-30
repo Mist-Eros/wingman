@@ -29,7 +29,8 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Item | Owner | Notes |
 |---|---|---|
 | Ollama install + model pull | background job | guest Wi-Fi ≈ 0.6 MB/s → OllamaSetup.exe 1.6 GB (~40 min) then `qwen2.5:1.5b` (~1 GB, ~25 min); then verify `/api/analyze` returns `ai_source: ollama` |
-| Android SDK done; **APK build** | background job | Gradle 9.3.1 + first-build dependencies downloading on the same slow link |
+| Android SDK done; **APK build** | background job | Gradle 9.3.1 downloaded (224 MB); first build is downloading the Android NDK r28c (~1 GB) on the same slow link, then compiles |
+| **Backlog: location gate** (app usable only near the airport) | designed, not implemented | see `docs/backlog.md` — needs permission_handler + geofence + a dev bypass so we can work from home; implement after H36 if the demo is stable |
 | Phone ↔ laptop reachability on `HACKATHON-GUEST` | **user** | open `https://10.10.28.37:8443/` in the phone browser |
 | First APK install + app boot | Lead | after the build finishes: `flutter build apk --debug` → `adb install` |
 
