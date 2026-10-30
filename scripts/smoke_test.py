@@ -533,6 +533,41 @@ async def run(args: argparse.Namespace) -> int:
         str(body.get("question")),
     )
 
+    # 10d ── Craiova airport zones (entrances/exits, terminal areas, apron) ──
+    print("[10d] Craiova airport zone extraction")
+    zone_cases = [
+        ("A luat foc un calculator la intrare.", "Intrarea principală"),
+        ("Fum la ieșirea principală.", "Ieșirea principală"),
+        ("Scurgere de combustibil în parcarea de scurtă durată.",
+         "Parcare scurtă durată"),
+        ("Bagaj abandonat în parcarea P2.", "Parcare"),
+        ("Miros de fum în terminalul de sosiri.", "Terminal Sosiri"),
+        ("Un pasager a căzut în zona de îmbarcare.", "Zona de îmbarcare"),
+        ("Incendiu lângă turnul de control.", "Turn de control"),
+        ("Problemă la controlul de securitate.", "Control securitate"),
+        ("Corp străin pe pistă lângă stand 3.", "Stand 3"),
+        ("Un bagaj suspect lângă banda de bagaje 2.", "Banda 2"),
+    ]
+    for text, expected in zone_cases:
+        status, body = http_call(
+            base, token, "/api/analyze",
+            method="POST",
+            payload={"transcript": text, "clarifications_asked": 0},
+            insecure=insecure,
+        )
+        fields = body.get("fields") or {}
+        location = str(fields.get("location", ""))
+        check(
+            f"zone extracted: {text[:32]}",
+            expected.lower() in location.lower(),
+            f"location={location!r}",
+        )
+        check(
+            f"zone report does not ask for the location: {text[:32]}",
+            "location" not in (body.get("missing") or []),
+            str(body.get("missing")),
+        )
+
     # 10b ── urgency from what was said (mirrors reporter brain/severity.dart)
     print("[10b] urgency escalation from the transcript")
     status, body = http_call(

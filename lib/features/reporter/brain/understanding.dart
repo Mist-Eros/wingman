@@ -124,11 +124,23 @@ const Map<String, String> _placeNouns = <String, String>{
 
 /// Places that are a location even without a number ("pe pistă").
 const Map<String, String> _placeWords = <String, String>{
-  'pista': 'Pistă', 'runway': 'Runway', 'platforma': 'Platformă',
-  'apron': 'Apron', 'terminal': 'Terminal', 'terminalul': 'Terminal',
-  'parcare': 'Parcare', 'parcarea': 'Parcare', 'hol': 'Hol', 'holul': 'Hol',
-  'intrare': 'Intrare', 'intrarea': 'Intrare', 'sosiri': 'Sosiri',
-  'plecari': 'Plecări', 'arrivals': 'Arrivals', 'departures': 'Departures',
+  'pista': 'Pistă 09/27', 'runway': 'Pistă 09/27',
+  'platforma': 'Platformă', 'apron': 'Platformă',
+  'terminal': 'Terminal', 'terminalul': 'Terminal',
+  'parcare': 'Parcare', 'parcarea': 'Parcare',
+  'hol': 'Hol', 'holul': 'Hol',
+  'intrare': 'Intrarea principală', 'intrarea': 'Intrarea principală',
+  'intrare principala': 'Intrarea principală',
+  'iesire': 'Ieșirea principală', 'iesirea': 'Ieșirea principală',
+  'sosiri': 'Terminal Sosiri', 'plecari': 'Terminal Plecări',
+  'arrivals': 'Terminal Sosiri', 'departures': 'Terminal Plecări',
+  'vama': 'Vamă', 'customs': 'Vamă',
+  'cargo': 'Terminal Cargo', 'hangar': 'Hangar',
+  'terasa': 'Terasă / zonă publică',
+  'control': 'Control securitate', 'securitate': 'Control securitate',
+  'imbarcare': 'Zona de îmbarcare', 'boarding': 'Zona de îmbarcare',
+  'checkin': 'Check-in', 'check-in': 'Check-in',
+  'turn': 'Turn de control',
   'toaleta': 'Toaletă', 'toalete': 'Toaletă', 'restroom': 'Restroom',
   'cafenea': 'Cafenea', 'magazin': 'Magazin', 'depozit': 'Depozit',
 };

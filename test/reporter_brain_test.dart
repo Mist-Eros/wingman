@@ -89,7 +89,7 @@ void main() {
       expect(understand('at gate B').location, 'Gate B');
       expect(understand('terminal 2, nivelul 1').location, 'Terminal 2');
       expect(understand('lângă T1').location, 'Terminal 1');
-      expect(understand('pe pistă').location, 'Pistă');
+      expect(understand('pe pistă').location, 'Pistă 09/27');
       expect(understand('în hol').location, 'Hol');
       expect(understand('undeva').location, isEmpty);
     });

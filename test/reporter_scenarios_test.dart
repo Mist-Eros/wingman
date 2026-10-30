@@ -99,9 +99,9 @@ const List<Scenario> scenarios = <Scenario>[
   Scenario('Inundație în toaleta de la terminalul 1',
       code: 'SF-SPILL', urgency: M, place: 'Terminal 1'),
 
-  Scenario('Șurub pe pistă', code: 'SF-FOD', urgency: C, place: 'Pistă'),
+  Scenario('Șurub pe pistă', code: 'SF-FOD', urgency: C, place: 'Pistă 09/27'),
   Scenario('Bird on the runway',
-      code: 'SF-FOD', urgency: C, place: 'Runway'),
+      code: 'SF-FOD', urgency: C, place: 'Pistă 09/27'),
   Scenario('Un câine pe platformă',
       code: 'SF-FOD', urgency: C, place: 'Platformă'),
   Scenario('Foreign object near stand 9',
@@ -120,7 +120,7 @@ const List<Scenario> scenarios = <Scenario>[
   Scenario('Unattended suitcase at gate B',
       code: 'SC-BAG', urgency: H, place: 'Gate B'),
   Scenario('O geantă uitată în sala de plecări',
-      code: 'SC-BAG', urgency: H, place: 'Plecări'),
+      code: 'SC-BAG', urgency: H, place: 'Terminal Plecări'),
   Scenario('Cineva a sărit gardul lângă pista 2',
       code: 'SC-ACCESS', urgency: C, place: 'Pista 2'),
   Scenario('Pasager pe platformă', code: 'SC-ACCESS', urgency: C, place: 'Platformă'),
@@ -134,7 +134,7 @@ const List<Scenario> scenarios = <Scenario>[
   Scenario('Drunk man shouting at gate 3',
       code: 'SC-BEHAV', urgency: H, place: 'Gate 3'),
   Scenario('Cineva fumează în zona de îmbarcare',
-      code: 'SC-BEHAV', urgency: H),
+      code: 'SC-BEHAV', urgency: H, place: 'Zona de îmbarcare'),
 
   // ── maintenance ────────────────────────────────────────────────────────────
   Scenario('Banda de bagaje 3 s-a oprit',
@@ -150,18 +150,18 @@ const List<Scenario> scenarios = <Scenario>[
   Scenario('Pasarela de îmbarcare de la poarta 8 nu se mișcă',
       code: 'MT-JBRIDGE', urgency: H, place: 'Poarta 8'),
   Scenario('Ușa automată nu se deschide la intrarea B',
-      code: 'MT-ESC', urgency: M, place: 'Intrare'),
+      code: 'MT-ESC', urgency: M, place: 'Intrarea principală'),
 
   // ── operations ─────────────────────────────────────────────────────────────
   Scenario('Coadă uriașă la controlul de securitate',
-      code: 'OP-QUEUE', urgency: M),
+      code: 'OP-QUEUE', urgency: M, place: 'Control securitate'),
   Scenario('Prea mulți oameni la poarta 10',
       code: 'OP-QUEUE', urgency: M, place: 'Poarta 10'),
   Scenario('Sistemul de check-in a căzut', code: 'OP-IT', urgency: H),
   Scenario('Flight information display is not working',
       code: 'OP-IT', urgency: H),
   Scenario('Radio communication is down at the apron',
-      code: 'OP-IT', urgency: C, place: 'Apron'),
+      code: 'OP-IT', urgency: C, place: 'Platformă'),
 
   // ── life at risk: always critical, even without a dedicated type ───────────
   Scenario('Cineva a leșinat la poarta 6',

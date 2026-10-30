@@ -798,36 +798,116 @@ QUESTION_TYPE = (
     "Ce fel de problemă este: siguranță/incendiu, securitate, mentenanță sau operațional?"
 )
 QUESTION_LOCATION = "Unde se întâmplă exact? (terminal, poartă sau zonă)"
-QUESTION_DETAIL = "Poți descrie pe scurt ce vezi sau ce s-a întâmplat?"
 
 _LOCATION_PATTERNS: tuple[tuple[str, str], ...] = (
-    (r"\bterminal(?:ul)?\s*([a-z0-9]+)", "Terminal {0}"),
+    (r"\bterminal(?:ul)?\s+(?:de\s+)?([a-zăâîșț0-9]+)", "Terminal {0}"),
     (r"\b(t\d)\b", "{0}"),
     (r"\bsector(?:ul)?\s*([a-z0-9]+)", "Sector {0}"),
     (r"\bpoart[aă]?\s*(?:nr\.?\s*)?([a-z0-9]+)", "Poarta {0}"),
     (r"\bgate\s*([a-z0-9]+)", "Gate {0}"),
     (r"\bband[aă]?\s*(?:de\s*bagaje\s*)?(?:nr\.?\s*)?([a-z0-9]+)", "Banda {0}"),
+    (r"\bstand(?:ul)?\s*([a-z0-9]+)", "Stand {0}"),
+    (r"\bparcare(?:a)?\s*(p\s?\d+|\d+)", "Parcare {0}"),
     (
         r"\bzona?\s+([a-zăâîșț0-9]+(?:\s+[a-zăâîșț0-9]+){0,2})",
         "Zona {0}",
     ),
 )
 
-_LOCATION_KEYWORDS: tuple[tuple[str, str], ...] = (
+# ── Craiova airport zone catalog (checked BEFORE the generic patterns, so
+#    "terminalul de sosiri" is not parsed as "Terminal De"). Zones marked (map)
+#    were taken from the OpenStreetMap data of Aeroportul Internațional Craiova:
+#    Terminal 2, Platforma CRA apron, runway 09/27, taxiways, hangars, helipads
+#    and the parking areas. The rest are the standard passenger-flow areas
+#    published by the airport (check-in, security control, customs, boarding,
+#    baggage belts, entrances/exits, cargo, control tower).
+_LOCATION_ZONES: tuple[tuple[str, str], ...] = (
+    ("intrarea principala", "Intrarea principală"),
+    ("intrarea principală", "Intrarea principală"),
+    ("ieșirea principală", "Ieșirea principală"),
+    ("iesirea principala", "Ieșirea principală"),
+    ("parcare scurta durata", "Parcare scurtă durată"),
+    ("parcare scurtă durată", "Parcare scurtă durată"),
+    ("parcare de scurta durata", "Parcare scurtă durată"),
+    ("parcare de scurtă durată", "Parcare scurtă durată"),
+    ("parcarea de scurta durata", "Parcare scurtă durată"),
+    ("parcarea de scurtă durată", "Parcare scurtă durată"),
+    ("parcare lunga durata", "Parcare lungă durată"),
+    ("parcare lungă durată", "Parcare lungă durată"),
+    ("parcare de lunga durata", "Parcare lungă durată"),
+    ("parcare de lungă durată", "Parcare lungă durată"),
+    ("parcarea de lunga durata", "Parcare lungă durată"),
+    ("parcarea de lungă durată", "Parcare lungă durată"),
+    ("parcare taxi", "Parcare taxi / bus"),
+    ("parcare autobuz", "Parcare taxi / bus"),
+    ("parcare autocar", "Parcare taxi / bus"),
+    ("sala de imbarcare", "Sala de îmbarcare"),
+    ("sală de îmbarcare", "Sala de îmbarcare"),
+    ("zona de imbarcare", "Zona de îmbarcare"),
+    ("zona de îmbarcare", "Zona de îmbarcare"),
     ("control securitate", "Control securitate"),
-    ("security", "Control securitate"),
+    ("controlul de securitate", "Control securitate"),
+    ("filtru securitate", "Control securitate"),
+    ("vama", "Vamă"),
+    ("vamă", "Vamă"),
+    ("turn de control", "Turn de control"),
+    ("turnul de control", "Turn de control"),
+    ("terminal cargo", "Terminal Cargo"),
+    ("terminal sosiri", "Terminal Sosiri"),
+    ("terminalul de sosiri", "Terminal Sosiri"),
+    ("terminalul sosiri", "Terminal Sosiri"),
+    ("terminal de sosiri", "Terminal Sosiri"),
+    ("terminal plecari", "Terminal Plecări"),
+    ("terminal plecări", "Terminal Plecări"),
+    ("terminalul de plecari", "Terminal Plecări"),
+    ("terminalul de plecări", "Terminal Plecări"),
+    ("terminal de plecari", "Terminal Plecări"),
+    ("terminal de plecări", "Terminal Plecări"),
+    ("zona publica", "Terasă / zonă publică"),
+    ("zonă publică", "Terasă / zonă publică"),
+    ("zona de bagaje", "Zona bagaje"),
+    ("pista 09/27", "Pistă 09/27"),
+)
+
+# Single-word fallbacks (after the numbered patterns above).
+_LOCATION_WORDS: tuple[tuple[str, str], ...] = (
+    ("intrare", "Intrarea principală"),
+    ("intrarea", "Intrarea principală"),
+    ("ieșire", "Ieșirea principală"),
+    ("iesire", "Ieșirea principală"),
+    ("ieșirea", "Ieșirea principală"),
+    ("iesirea", "Ieșirea principală"),
+    ("sosiri", "Terminal Sosiri"),
+    ("arrivals", "Terminal Sosiri"),
+    ("plecari", "Terminal Plecări"),
+    ("plecări", "Terminal Plecări"),
+    ("departures", "Terminal Plecări"),
     ("check-in", "Check-in"),
     ("check in", "Check-in"),
-    ("îmbarcare", "Zona de îmbarcare"),
-    ("imbarcare", "Zona de îmbarcare"),
-    ("parcare", "Parcare"),
-    ("pistă", "Pistă"),
-    ("pista", "Pistă"),
+    ("checkin", "Check-in"),
+    ("security", "Control securitate"),
+    ("securitate", "Control securitate"),
+    ("vama", "Vamă"),
+    ("vamă", "Vamă"),
+    ("customs", "Vamă"),
+    ("cargo", "Terminal Cargo"),
+    ("hangar", "Hangar"),
+    ("terasa", "Terasă / zonă publică"),
+    ("terasă", "Terasă / zonă publică"),
     ("platformă", "Platformă"),
     ("platforma", "Platformă"),
+    ("apron", "Platformă"),
+    ("pistă", "Pistă 09/27"),
+    ("pista", "Pistă 09/27"),
+    ("runway", "Pistă 09/27"),
+    ("parcare", "Parcare"),
+    ("parcarea", "Parcare"),
+    ("imbarcare", "Zona de îmbarcare"),
+    ("îmbarcare", "Zona de îmbarcare"),
+    ("boarding", "Zona de îmbarcare"),
+    ("bagaje", "Zona bagaje"),
     ("pasarelă", "Pasarelă"),
     ("pasarela", "Pasarelă"),
-    ("bagaje", "Zona bagaje"),
 )
 
 _PEOPLE_AT_RISK_TRUE: tuple[str, ...] = (
@@ -883,14 +963,23 @@ _LOCATION_TRAILING_STOPWORDS: tuple[str, ...] = (
 
 
 def extract_location(transcript: str) -> str:
-    """Best-effort location label from free text (Romanian + a few English)."""
+    """Best-effort location label from free text (Romanian + a few English).
+
+    Order: named Craiova zones first ("terminalul de sosiri"), then numbered
+    patterns ("poarta 4", "stand 3"), then single-word fallbacks ("intrare").
+    """
     if not transcript:
         return ""
     text = transcript.lower()
+    for keyword, label in _LOCATION_ZONES:
+        if re.search(rf"\b{re.escape(keyword)}\b", text):
+            return label
     for pattern, template in _LOCATION_PATTERNS:
         match = re.search(pattern, text)
         if match:
             value = match.group(1).strip()
+            if value in _LOCATION_TRAILING_STOPWORDS:
+                continue
             # "zona de îmbarcare și" -> "Zona de îmbarcare"
             while True:
                 parts = value.split()
@@ -901,7 +990,7 @@ def extract_location(transcript: str) -> str:
             if value:
                 label = template.format(value)
                 return label[:1].upper() + label[1:]
-    for keyword, label in _LOCATION_KEYWORDS:
+    for keyword, label in _LOCATION_WORDS:
         if keyword in text:
             return label
     return ""
@@ -946,11 +1035,9 @@ def next_question(
         return QUESTION_TYPE
     if "location" in missing:
         return QUESTION_LOCATION
-    if urgency in ("high", "critical"):
-        # High-stakes reports go out now; volume/size details can wait.
-        return None
-    if confidence < settings.confidence_threshold:
-        return QUESTION_DETAIL
+    # No more "describe it" / "is anyone in danger?" questions: send the report
+    # to the dispatcher with whatever we have. Low confidence already lands in
+    # the 5-second override window, which is the right place to resolve it.
     return None
 
 

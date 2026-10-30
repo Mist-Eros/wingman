@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ro">
 <head>
 <meta charset="utf-8" />
@@ -200,10 +200,20 @@
         style="flex:1;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
     </div>
     <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
-      <button class="chip" onclick="fillReport('Scurgere de combustibil lângă poarta 5, terminal 1')">Scurgere</button>
-      <button class="chip" onclick="fillReport('Bagaj nesupravegheat lângă poarta 7')">Bagaj</button>
-      <button class="chip" onclick="fillReport('O femeie a leșinat la poarta 6')">Persoană leșinată</button>
-      <button class="chip" onclick="fillReport('Un copil a luat foc la poarta 4')">Incendiu</button>
+      <span class="tiny" style="align-self:center">Locații rapide:</span>
+      <button class="chip" onclick="fillZone('Intrarea principală')">Intrare</button>
+      <button class="chip" onclick="fillZone('Ieșirea principală')">Ieșire</button>
+      <button class="chip" onclick="fillZone('Terminal Sosiri')">Sosiri</button>
+      <button class="chip" onclick="fillZone('Terminal Plecări')">Plecări</button>
+      <button class="chip" onclick="fillZone('Check-in')">Check-in</button>
+      <button class="chip" onclick="fillZone('Control securitate')">Securitate</button>
+      <button class="chip" onclick="fillZone('Vamă')">Vamă</button>
+      <button class="chip" onclick="fillZone('Terminal 2')">Terminal 2</button>
+      <button class="chip" onclick="fillZone('Poarta 2')">Poarta 2</button>
+      <button class="chip" onclick="fillZone('Banda 1')">Bandă bagaje</button>
+      <button class="chip" onclick="fillZone('Parcare')">Parcare</button>
+      <button class="chip" onclick="fillZone('Platformă')">Platformă</button>
+      <button class="chip" onclick="fillZone('Terminal Cargo')">Cargo</button>
     </div>
     <div class="row" style="justify-content:flex-end;margin-top:10px">
       <button class="btn" onclick="closeReport()">Anulează</button>
@@ -425,6 +435,10 @@ function closeReport() { $('reportBg').style.display = 'none'; }
 function fillReport(text) {
   $('reportText').value = text;
   $('reportText').focus();
+}
+function fillZone(text) {
+  $('reportZone').value = text;
+  $('reportZone').focus();
 }
 async function submitReport() {
   const text = $('reportText').value.trim();

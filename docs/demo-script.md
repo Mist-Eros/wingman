@@ -38,8 +38,8 @@
 | Time | Who | Screen | What happens |
 |---|---|---|---|
 | 0:00 | Lead | laptop | One sentence: „Wingman turns a 30-second voice report into a dispatched, department-assigned ticket — fully offline, on this laptop." |
-| 0:15 | Admin on PC | Waterfox dashboard | Press **N** → type „Scurgere de carburant lângă poarta 5, terminal 1", terminal T1, zona Poarta 5 → **Ctrl+Enter**. Point at the live ticket + AI code (SF-SPILL). |
-| 0:40 | Crew phone | Notification | The phone buzzes: „🚨 SF-SPILL · Scurgere de lichid…" (only for maintenance+terminal — the janitor/engineer). Open it. |
+| 0:15 | Admin on PC | Waterfox dashboard | Press **N** → type „A luat foc un calculator la intrare, terminalul de sosiri", pick a quick zone chip if you want → **Ctrl+Enter**. Point at the live ticket + AI code (SF-FIRE) and location (Intrarea principală). |
+| 0:40 | Crew phone | Notification | The phone buzzes: „🚨 SF-FIRE · Foc sau fum…" (firefighters + security only — Fred/Gina). Open it. |
 | 1:00 | Engineer phone | Echipaj | Sign in as **Earl Engineer** → the same ticket is there; tap **Preia** → **Rezolvat** (vote 1/2). |
 | 1:30 | Janitor phone | Echipaj | Sign in as **John Janitor** → only terminal incidents (spill shown, security/bag hidden). „Different crew, different alert." |
 | 2:00 | Admin | Dashboard | Show urgency counters + ticket detail; Reclasifică shows the closed 14-type taxonomy. |

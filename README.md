@@ -246,6 +246,13 @@ goes straight to the verification card with **no follow-up questions**. Question
 for information that is genuinely missing (e.g. no place mentioned). The server owns the
 conversation; the app's local brain only fills gaps when the server is unreachable.
 
+**Craiova airport zones:** locations are free text and the extractor knows the airport layout —
+**intrarea/ieșirea principală**, Terminal 1/2, **Terminal Sosiri / Terminal Plecări**, Check-in,
+Control securitate, Vamă, Zona de îmbarcare, Poarta 1…N, Bandă de bagaje 1…N, Parcare (P1/P2,
+scurtă/lungă durată, taxi), Platforma CRA, Stand 1…8, Pistă 09/27, Turn de control, Terminal
+Cargo, Hangar. The PC dashboard has quick zone chips for the common ones. Full catalog and map
+sources: **[docs/airport-zones.md](docs/airport-zones.md)**.
+
 Alerts are real Android notifications (high-importance channel, sound + vibration) showing
 `🚨 <code> · <label>` and `<location> · <departments>`. Notifications are local (no cloud push):
 the phone must stay connected to the laptop backend while the demo runs — keep the app open on
