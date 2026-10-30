@@ -43,14 +43,28 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Session persistence**: saved session + secure token store; re-picking the same role keeps the crew/dispatcher id, so a joined ticket stays joined after app restart | `lib/core/auth/session_store.dart`, `lib/main.dart` |
 | Friendly error messages (no raw SocketException on screen) + pluralization fixes | `lib/core/state/ticket_board.dart`, `lib/main.dart`, crew card |
 | Rehearsal assets: `TEAM.md`, `docs/demo-script.md` (3-min flow + fallbacks), seed script verified | repo root, `backend/seed_demo.py` |
+| **Hardcoded demo accounts with encrypted credentials**: admin/engineer/janitor/reporter, salted SHA-256 passwords, login sheet with hash validation, persisted identity | `lib/core/auth/demo_accounts.dart`, `lib/features/auth/login_screen.dart`, `test/demo_accounts_test.dart` |
+| **Department-scoped alerts**: janitor sees only terminal incidents, engineer only maintenance/IT/baggage/airside, admin sees everything | `Session.seesDepartments` + crew primary-department filter; verified on phone (John Janitor → only SF-SPILL) |
+| **Aerospace design**: animated sky gradient + drifting clouds + plane silhouette login, account cards with scope/password, mobile-friendly layout | `lib/core/widgets/sky_background.dart`, login screen |
+| **Back button fixed**: role screens are pushed over login, Android back returns to the account chooser instead of exiting | `lib/main.dart` (`pushNamed`, `popUntil`) — verified on device |
+| **Desktop control room (real-time)**: Flutter web dashboard in Edge — WSS live queue, urgency counters, departments, Confirmă/Respinge/Reclasifică | `lib/web_dashboard_main.dart`, `scripts/serve_dashboard.ps1` (no Visual Studio needed) |
 
 ## In progress ⏳
 
 | Item | Owner | Notes |
 |---|---|---|
-| Demo rehearsal on 2-3 phones | **user + Lead** | seed data, run the 3-min script, time it; fallbacks listed in `docs/demo-script.md` |
-| Voice on the real microphone | **user** | hold the mic and say „Este fum lângă poarta 12"; typed path already verified end-to-end |
-| Location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; implement only after the demo flow is stable |
+| Demo rehearsal on 2-3 phones + desktop | **user + Lead** | sign in as Rita/Earl/John/Andy per `docs/demo-script.md`, run the 3-min flow, time it |
+| Voice on the real microphone | **user** | hold the mic on the reporter account and say „Este fum lângă poarta 12" |
+| Desktop dashboard polish | Lead | add ticket age/live feed highlights if time permits |
+| Location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; after the demo flow is stable |
+
+## Next
+
+1. Rehearse the 3-minute script with the new accounts (Rita reporter → Andy admin desktop →
+   Earl engineer → John janitor) and the desktop control room open on the laptop.
+2. Real-mic test on the reporter account.
+3. Optional: project the dashboard on the big screen while phones act (F11 fullscreen in Edge).
+4. iOS stays **cloud Mac later** (Apple Developer account needed for device installs).
 
 ## Next (H0–H4 remaining)
 

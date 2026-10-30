@@ -195,6 +195,22 @@ After `gen_certs.ps1` runs, **commit `assets/certs/ca.crt`** (public cert) but *
 
 Full field-level contract (JSON keys, statuses, errors): **[CONTRACTS.md](CONTRACTS.md)**.
 
+### Desktop control room (real-time ops view)
+
+```powershell
+.\scripts\serve_dashboard.ps1        # builds lib/web_dashboard_main.dart, serves it, opens Edge
+```
+
+The dashboard is a Flutter **web** target in this repo (no Visual Studio needed) that talks to
+the same backend as the phones: REST snapshot + WSS live events, urgency counters, department
+strip, and Confirmă/Respinge/Reclasifică actions. Edge is opened with
+`--ignore-certificate-errors` because the demo backend uses our self-signed CA.
+
+**Demo accounts** (hardcoded, passwords stored as salted SHA-256; scope decides alerts):
+`admin/admin123` (everything), `engineer/engineer123` (maintenance/IT/baggage/airside),
+`janitor/janitor123` (terminal only), `reporter/reporter123` (reports incidents).
+Back from a role screen returns to the login screen (no more app exit).
+
 ---
 
 ## 7. Gates (run before every merge)
