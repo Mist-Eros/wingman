@@ -1,5 +1,5 @@
-// =============================================================================
-// OWNER: Friend 3 (lib/features/crew/).
+﻿// =============================================================================
+// OWNER: Rares (lib/features/crew/).
 //
 // FROZEN CONTRACT (main.dart depends on it):
 //   • class name: CrewScreen
@@ -380,3 +380,4 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+

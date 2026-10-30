@@ -1,4 +1,4 @@
-# Team split — who owns what, and how to explain it
+﻿# Team split — who owns what, and how to explain it
 
 ## 1. The split (frozen in `CONTRACTS.md` §1)
 
@@ -8,12 +8,12 @@ the others because the interfaces were written before any screen:
 | Owner | Files they own | What that means in the product |
 |---|---|---|
 | **Lead (you)** | `lib/core/**`, `lib/main.dart`, `backend/**`, `scripts/**`, `docs/**` | taxonomy, models, API/WSS client, role routing, FastAPI backend, Ollama classification, faster-whisper STT, TLS/certs, APKs, verification suite, integration |
-| **Friend 1** | `lib/features/reporter/**` | the reporter experience: voice recording → `/api/transcribe` → conversation `/api/analyze` → menu fallback → submit |
-| **Friend 2** | `lib/features/dispatcher/**` | the dispatcher experience: live ticket list, 5-second override card, confirm / deny / reclassify |
-| **Friend 3** | `lib/features/crew/**` | the crew experience: dispatched list, join („Preia"), vote to resolve, quorum progress |
+| **rarescu08** | `lib/features/reporter/**` | the reporter experience: voice recording → `/api/transcribe` → conversation `/api/analyze` → menu fallback → submit |
+| **Radu Fita** | `lib/features/dispatcher/**` | the dispatcher experience: live ticket list, 5-second override card, confirm / deny / reclassify |
+| **Rares** | `lib/features/crew/**` | the crew experience: dispatched list, join („Preia"), vote to resolve, quorum progress |
 | **Design** | (to assign) | Material 3 theme + tokens in `lib/core/theme`, screen polish, pitch visuals |
 
-Rule that made it work: **only the Lead edits core, backend, main.dart**; friends only touch their
+Rule that made it work: **only the Lead edits core, backend, main.dart**; feature owners only touch their
 feature folder and ask for contract changes instead of hacking around them.
 
 ## 2. Status right now (honest)
@@ -21,14 +21,14 @@ feature folder and ask for contract changes instead of hacking around them.
 | Owner | Status | Evidence |
 |---|---|---|
 | Lead | ✅ done: contracts, backend, AI, STT, TLS, APKs, phone bring-up, gates | `smoke 58/58`, live Dart 7/7, phone shows „Server conectat" |
-| Friend 3 | ✅ merged: crew „Preia"/„Rezolvat" verified on phone (join, vote, quorum → resolved over WSS); airport-ops UI polish + Chrome preview + widget tests | branches `feat/crew` (`0440163`, `5de1d6a`, `5fee0df`) |
-| Friend 1 | ✅ merged + verified on phone: type-to-report creates a real ticket (SF-FIRE 95% critical) with follow-ups and confirmation; 3 test suites | branch `feat/reporter` (`5b7e2c9`), 24 files / 5k lines |
-| Friend 2 | ✅ merged: full dispatcher dashboard (live/demo modes, urgency counters, department strip, override countdown card, timeline, zones, filters, history, keyboard shortcuts) + Windows runner. Verified live data + override card on phone. **Mobile-layout caveat:** phone opens in Demo mode by default and the action buttons sit below the fold/under the gesture bar (designed for the Windows dashboard) | branch `feat/dispatcher` (`60051a3`, `f563740`), 14 files / 4.5k lines |
+| Rares | ✅ merged: crew „Preia"/„Rezolvat" verified on phone (join, vote, quorum → resolved over WSS); airport-ops UI polish + Chrome preview + widget tests | branches `feat/crew` (`0440163`, `5de1d6a`, `5fee0df`) |
+| rarescu08 | ✅ merged + verified on phone: type-to-report creates a real ticket (SF-FIRE 95% critical) with follow-ups and confirmation; 3 test suites | branch `feat/reporter` (`5b7e2c9`), 24 files / 5k lines |
+| Radu Fita | ✅ merged: full dispatcher dashboard (live/demo modes, urgency counters, department strip, override countdown card, timeline, zones, filters, history, keyboard shortcuts) + Windows runner. Verified live data + override card on phone. **Mobile-layout caveat:** phone opens in Demo mode by default and the action buttons sit below the fold/under the gesture bar (designed for the Windows dashboard) | branch `feat/dispatcher` (`60051a3`, `f563740`), 14 files / 4.5k lines |
 | Design | ⏳ not started | shell is default Material 3 |
 
-Attribution so far from commit authors: Friend 1 = `rarescu08`, Friend 2 = `Radu <radu.fita2000@gmail.com>`; Friend 3's commits still carry the demo machine identity — fix with a `TEAM.md` and their own `git config` before submitting.
+Attribution so far from commit authors: rarescu08 = `rarescu08`, Radu Fita = `Radu <radu.fita2000@gmail.com>`; Rares's commits still carry the demo machine identity — fix with a `TEAM.md` and their own `git config` before submitting.
 
-Before judging, each friend should push their branch with **their own git identity** so the
+Before judging, each owner should push their branch with **their own git identity** so the
 commit history shows real authorship (`git config user.name/user.email` locally), and we add a
 `TEAM.md` with names. Right now every commit is authored by the same account because the demo
 machine's identity was reused.
@@ -78,3 +78,4 @@ The story is not „we split screens", it is:
 - [ ] Add `TEAM.md`: full names + GitHub usernames + per-person contribution lines.
 - [ ] Design owner assigned (theme in `lib/core/theme`, screens follow the tokens).
 - [ ] Record the 4-step demo flow once, so the pitch matches the actual app.
+

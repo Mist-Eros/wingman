@@ -1,12 +1,12 @@
-// =============================================================================
+﻿// =============================================================================
 // lib/main.dart
 //
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
 //
 //   /            → LoginScreen (hardcoded demo accounts, hashed passwords)
-//   /reporter    → lib/features/reporter/     (Friend 1)
-//   /dispatcher  → lib/features/dispatcher/  (Friend 2 / admin)
-//   /crew        → lib/features/crew/        (Friend 3 / scoped crews)
+//   /reporter    → lib/features/reporter/     (rarescu08)
+//   /dispatcher  → lib/features/dispatcher/  (Radu Fita / admin)
+//   /crew        → lib/features/crew/        (Rares / scoped crews)
 //
 // Back behaviour: role screens are PUSHED over the login screen, so Android's
 // back button returns to the account chooser instead of killing the app.
@@ -285,3 +285,4 @@ class _AirportAppState extends State<AirportApp> {
         initialSession: _session,
       );
 }
+

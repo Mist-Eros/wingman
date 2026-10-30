@@ -1,8 +1,8 @@
-// =============================================================================
+﻿// =============================================================================
 // lib/core/models/analyze_result.dart
 //
 // OWNER: Lead (lib/core/). FROZEN CONTRACT for the conversational reporter flow
-// (Friend 1). Mirrors `POST /api/analyze` in `backend/app/main.py`.
+// (rarescu08). Mirrors `POST /api/analyze` in `backend/app/main.py`.
 //
 // One turn of the conversation:
 //   1. Reporter app records/collects text into `transcript`.
@@ -204,3 +204,4 @@ AiSource _aiSource(Object? value) {
   }
   return AiSource.fallback;
 }
+

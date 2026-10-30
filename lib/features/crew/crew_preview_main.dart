@@ -1,5 +1,5 @@
-// =============================================================================
-// LOCAL PREVIEW ONLY — Friend 3.
+﻿// =============================================================================
+// LOCAL PREVIEW ONLY — Rares.
 // Opens the Crew UI with fake tickets. No backend. Works on Chrome (no dart:io).
 //
 //   flutter run -t lib/features/crew/crew_preview_main.dart -d chrome
@@ -353,3 +353,4 @@ Ticket _ticket({
     version: 1,
   );
 }
+

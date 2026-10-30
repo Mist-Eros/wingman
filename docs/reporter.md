@@ -1,6 +1,6 @@
 ﻿# Reporter feature — design & integration notes
 
-# Reporter (Friend 1)
+# Reporter (rarescu08)
 
 The employee who reports an incident. **Hold the mic and say what happened;
 release when you are done.** The app asks only for what is missing, then shows
@@ -74,7 +74,7 @@ flutter test test/reporter_controller_test.dart   # push-to-talk flow, edits, er
 
 ## Notes for the Lead
 
-# Note pentru Lead (de la Friend 1 / reporter)
+# Note pentru Lead (de la rarescu08 / reporter)
 
 ## 1. Whisper — mulțumesc, e folosit
 Clientul din `reporter` apelează `api.transcribe(wav, mimeType: 'audio/wav',
@@ -123,5 +123,6 @@ scurgere de lichid, urgență medie).
 
 Până atunci: urgența afișată pe telefon e maximul dintre serverul tău și
 regulile locale, dar tichetul creat are urgența de la server.
+
 
 

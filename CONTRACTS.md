@@ -1,4 +1,4 @@
-# CONTRACTS — frozen interfaces and the merge protocol
+﻿# CONTRACTS — frozen interfaces and the merge protocol
 
 **Read this before writing code.** Everything here is already implemented and tested in this
 repo. The three feature folders build against it; the Lead owns it. If something here blocks
@@ -28,9 +28,9 @@ you, ask for a contract change (section 9) — do **not** edit `lib/core/`, `lib
 |---|---|---|---|
 | `lib/core/**`, `lib/main.dart` | Lead | always | never |
 | `backend/**`, `scripts/**`, `tools/**`, `docs/**` | Lead | always | never |
-| `lib/features/reporter/**` | Friend 1 | always | always |
-| `lib/features/dispatcher/**` | Friend 2 | always | always |
-| `lib/features/crew/**` | Friend 3 | always | always |
+| `lib/features/reporter/**` | rarescu08 | always | always |
+| `lib/features/dispatcher/**` | Radu Fita | always | always |
+| `lib/features/crew/**` | Rares | always | always |
 
 ---
 
@@ -340,7 +340,7 @@ already reflects them, use that for the "reconectare..." banner.
   `dart run tool/emit_taxonomy.dart --write` (or `python scripts/sync_taxonomy.py --write`),
   then everyone pulls. `scripts/sync_taxonomy.py` fails the build on drift.
 
-Example menu section (Friend 1):
+Example menu section (rarescu08):
 
 ```dart
 for (final category in IncidentCategory.values)
@@ -396,3 +396,4 @@ value changes, and announces in the team channel. Never "just add it" locally.
 - [ ] No unhandled exceptions in `flutter run` console during the happy path.
 - [ ] Works after a cold app start (no hot reload) on a physical phone.
 - [ ] 30-second manual test: report → see it appear on the dispatcher screen → act on it.
+

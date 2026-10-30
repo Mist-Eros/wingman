@@ -1,4 +1,4 @@
-// Widget tests for Friend 3 Crew UI — no phone, no backend.
+﻿// Widget tests for Rares Crew UI — no phone, no backend.
 // Run:  flutter test test/crew_screen_test.dart
 
 import 'dart:async';
@@ -229,3 +229,4 @@ void main() {
     expect(find.text('SF-FIRE'), findsNothing);
   });
 }
+
