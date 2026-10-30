@@ -4,9 +4,9 @@
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
 //
 //   /            → LoginScreen (hardcoded demo accounts, hashed passwords)
-//   /reporter    → lib/features/reporter/     (rarescu08)
-//   /dispatcher  → lib/features/dispatcher/  (Radu Fita / admin)
-//   /crew        → lib/features/crew/        (Rares / scoped crews)
+//   /reporter    → lib/features/reporter/     (Cutulescu Andrei-Rares)
+//   /dispatcher  → lib/features/dispatcher/  (Fita Redu Mihai / admin)
+//   /crew        → lib/features/crew/        (Lica Rares Adelin / scoped crews)
 //
 // Back behaviour: role screens are PUSHED over the login screen, so Android's
 // back button returns to the account chooser instead of killing the app.
@@ -285,4 +285,7 @@ class _AirportAppState extends State<AirportApp> {
         initialSession: _session,
       );
 }
+
+
+
 

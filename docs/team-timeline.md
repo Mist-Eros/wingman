@@ -5,64 +5,64 @@ the three feature branches were built in parallel against it and merged in one i
 Times are commit times from the git history.
 
 > Visual version (rendered PNG): `D:\Hackathon\Screenshots\Team\timeline.png`
-> Per-person cards: `D:\Hackathon\Screenshots\Team\lead.png`, `rarescu08-reporter.png`,
-> `radu-fita-dispatcher.png`, `rares-crew.png`.
+> Per-person cards: `D:\Hackathon\Screenshots\Team\furtuna-lead.png`, `cutulescu-reporter.png`,
+> `fita-dispatcher.png`, `lica-crew.png`.
 
 ## Timeline
 
 | Time | Who | What landed |
 |---|---|---|
-| 16:15–17:18 | **Lead** | Repo, taxonomy, wire contracts, FastAPI + WSS + TLS, `/api/analyze` conversational contract, first 50 tests. |
-| 19:21 | **Rares** (crew) | `feat(crew): replace stub with Preia/Rezolvat phone UI` (`0440163`). |
-| 19:30 | **Radu Fita** (dispatcher) | Windows/live dispatcher dashboard with urgency-colored demo tickets (`60051a3`). |
-| 19:38 | **rarescu08** (reporter) | Hold-to-talk voice flow, smart follow-ups, urgency from what was said (`5b7e2c9`). |
-| 19:44–19:55 | **Rares** | Chrome preview harness + widget tests (`5de1d6a`), airport-ops phone UI polish (`5fee0df`). |
-| 19:59 | **Radu Fita** | Dispatcher UX polish: demo/live controls, shortcuts, zones, timeline (`f563740`). |
-| 20:09–20:19 | **Lead** | Merged all three features (`c1e3d7e`, `1625b79`, `6544404`, `d499b35`); server mirrors reporter urgency; 141 tests. |
-| 21:01 | **Lead** | Design system: navy airport-ops theme, semantic urgency palette, design tokens. |
-| 21:08–21:14 | **Lead** | Dispatcher live-by-default + compact phone header + SafeArea; session persistence; TEAM.md + 3-min demo script. |
-| 21:28 | **Lead** | Demo accounts (hashed passwords), department-scoped alerts, aerospace login, back-button routing, web control room. |
-| 21:51–22:05 | **Lead** | Six time-of-day skies, DevTools, Waterfox control room, scoped Android notifications, S24 fit. |
-| 22:32 | **Lead** | Firefighter + Guard roles, reporter account removed, AI takes all available info on both client and server. |
-| 22:43–22:59 | **Lead** | Dispatch-first AI policy; Craiova airport zone catalog (entrances/exits, terminals, security, customs, parking, apron, runway…). |
-| 23:13 | **Lead** | Repo cleanup + formatting (dart format, black), README/layout/docs indexes, single-field PC report dialog. |
+| 16:15–17:18 | **Furtuna-Cola Andrei-Alexandru** (Lead) | Repo, taxonomy, wire contracts, FastAPI + WSS + TLS, `/api/analyze` conversational contract, first 50 tests. |
+| 19:21 | **Lica Rares Adelin** (crew) | `feat(crew): replace stub with Preia/Rezolvat phone UI` (`0440163`). |
+| 19:30 | **Fita Redu Mihai** (dispatcher) | Windows/live dispatcher dashboard with urgency-colored demo tickets (`60051a3`). |
+| 19:38 | **Cutulescu Andrei-Rares** (reporter) | Hold-to-talk voice flow, smart follow-ups, urgency from what was said (`5b7e2c9`). |
+| 19:44–19:55 | **Lica Rares Adelin** | Chrome preview harness + widget tests (`5de1d6a`), airport-ops phone UI polish (`5fee0df`). |
+| 19:59 | **Fita Redu Mihai** | Dispatcher UX polish: demo/live controls, shortcuts, zones, timeline (`f563740`). |
+| 20:09–20:19 | **Furtuna-Cola Andrei-Alexandru** (Lead) | Merged all three features (`c1e3d7e`, `1625b79`, `6544404`, `d499b35`); server mirrors reporter urgency; 141 tests. |
+| 21:01 | **Furtuna-Cola Andrei-Alexandru** | Design system: navy airport-ops theme, semantic urgency palette, design tokens. |
+| 21:08–21:14 | **Furtuna-Cola Andrei-Alexandru** | Dispatcher live-by-default + compact phone header + SafeArea; session persistence; TEAM.md + 3-min demo script. |
+| 21:28 | **Furtuna-Cola Andrei-Alexandru** | Demo accounts (hashed passwords), department-scoped alerts, aerospace login, back-button routing, web control room. |
+| 21:51–22:05 | **Furtuna-Cola Andrei-Alexandru** | Six time-of-day skies, DevTools, Waterfox control room, scoped Android notifications, S24 fit. |
+| 22:32 | **Furtuna-Cola Andrei-Alexandru** | Firefighter + Guard roles, reporter account removed, AI takes all available info on both client and server. |
+| 22:43–22:59 | **Furtuna-Cola Andrei-Alexandru** | Dispatch-first AI policy; Craiova airport zone catalog (entrances/exits, terminals, security, customs, parking, apron, runway…). |
+| 23:13 | **Furtuna-Cola Andrei-Alexandru** | Repo cleanup + formatting (dart format, black), README/layout/docs indexes, single-field PC report dialog. |
 
 ## By person
 
-### Lead — @Mist-Eros
+### Furtuna-Cola Andrei-Alexandru — Lead (@Mist-Eros)
 **Owns:** `lib/core/**`, `lib/main.dart`, `backend/**`, `scripts/**`, `docs/**`, design system, demo hardening.
 **Built:** closed 14-type taxonomy; one-listener TLS backend (REST + WSS, in-memory store, 5 s override,
 vote quorum); local Qwen2.5 classification + deterministic guards; faster-whisper STT; pinned CA;
 navy airport-ops theme with six time-of-day skies and DevTools; five hashed demo accounts with
 department-scoped notifications; Waterfox control room and report form; APK pipeline; verification
 gates (analyze, 160 tests, smoke 90/90, ALL GATES PASSED).
-**Showcase:** `Team/lead.png`.
+**Showcase:** `Team/furtuna-lead.png`.
 
-### rarescu08 — Reporter
+### Cutulescu Andrei-Rares — Reporter (@rarescu08)
 **Owns:** `lib/features/reporter/**`.
 **Built:** push-to-talk voice reporter (record → local Whisper → transcript), a local conversation
 brain that asks only what is missing (max 3 questions), urgency inference from what was said,
 confirmation card with editable words, typed and 14-button-menu fallbacks. Later extended by the
 Lead's dispatch-first policy (no "is anyone in danger?" question).
 **Commit:** `5b7e2c9` · merged `1625b79`.
-**Showcase:** `Team/rarescu08-reporter.png`.
+**Showcase:** `Team/cutulescu-reporter.png`.
 
-### Radu Fita — Dispatcher
+### Fita Redu Mihai — Dispatcher (@RaduFita23)
 **Owns:** `lib/features/dispatcher/**`.
 **Built:** dispatcher dashboard with live/demo modes, urgency counters, department distribution,
 per-ticket timeline, zones, filters, history, density control, and the 5-second override card
 (Confirmă / Respinge / Reclasifică) with keyboard shortcuts; Windows runner additions.
 **Commits:** `60051a3`, `f563740` · merged `c1e3d7e`.
-**Showcase:** `Team/radu-fita-dispatcher.png`.
+**Showcase:** `Team/fita-dispatcher.png`.
 
-### Rares — Crew
+### Lica Rares Adelin — Crew
 **Owns:** `lib/features/crew/**`.
 **Built:** crew queue scoped by department, **Preia** (join) and **Rezolvat** (vote) with quorum
 progress, live resolution SnackBar, WSS banner, airport-ops card design, and widget tests.
 (Their feature commits were authored under the shared demo-machine git identity; the files under
 `lib/features/crew/**` are theirs.)
 **Commits:** `0440163`, `5de1d6a`, `5fee0df`.
-**Showcase:** `Team/rares-crew.png`.
+**Showcase:** `Team/lica-crew.png`.
 
 ## Final state
 

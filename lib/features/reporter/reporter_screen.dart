@@ -1,4 +1,4 @@
-﻿// Reporter screen — OWNER: rarescu08 (lib/features/reporter/).
+﻿// Reporter screen — OWNER: Cutulescu Andrei-Rares (rarescu08) (lib/features/reporter/).
 //
 // FROZEN CONTRACT with main.dart: class `ReporterScreen`, const constructor,
 // no required arguments, dependencies only through CoreScope.
@@ -499,4 +499,5 @@ class _LanguageToggle extends StatelessWidget {
     );
   }
 }
+
 

@@ -1,5 +1,5 @@
 ﻿// =============================================================================
-// OWNER: Radu Fita (lib/features/dispatcher/).
+// OWNER: Fita Redu Mihai (lib/features/dispatcher/).
 //
 // Frozen contract for main.dart:
 //   • class name: DispatcherScreen
@@ -1592,4 +1592,5 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
 

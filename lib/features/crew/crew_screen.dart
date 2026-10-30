@@ -1,5 +1,5 @@
 ﻿// =============================================================================
-// OWNER: Rares (lib/features/crew/).
+// OWNER: Lica Rares Adelin (lib/features/crew/).
 //
 // FROZEN CONTRACT (main.dart depends on it):
 //   • class name: CrewScreen
@@ -380,4 +380,5 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
 

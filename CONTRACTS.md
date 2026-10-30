@@ -28,9 +28,9 @@ you, ask for a contract change (section 9) — do **not** edit `lib/core/`, `lib
 |---|---|---|---|
 | `lib/core/**`, `lib/main.dart` | Lead | always | never |
 | `backend/**`, `scripts/**`, `tools/**`, `docs/**` | Lead | always | never |
-| `lib/features/reporter/**` | rarescu08 | always | always |
-| `lib/features/dispatcher/**` | Radu Fita | always | always |
-| `lib/features/crew/**` | Rares | always | always |
+| `lib/features/reporter/**` | Cutulescu Andrei-Rares | always | always |
+| `lib/features/dispatcher/**` | Fita Redu Mihai | always | always |
+| `lib/features/crew/**` | Lica Rares Adelin | always | always |
 
 ---
 
@@ -340,7 +340,7 @@ already reflects them, use that for the "reconectare..." banner.
   `dart run tool/emit_taxonomy.dart --write` (or `python scripts/sync_taxonomy.py --write`),
   then everyone pulls. `scripts/sync_taxonomy.py` fails the build on drift.
 
-Example menu section (rarescu08):
+Example menu section (reporter):
 
 ```dart
 for (final category in IncidentCategory.values)
@@ -396,4 +396,8 @@ value changes, and announces in the team channel. Never "just add it" locally.
 - [ ] No unhandled exceptions in `flutter run` console during the happy path.
 - [ ] Works after a cold app start (no hot reload) on a physical phone.
 - [ ] 30-second manual test: report → see it appear on the dispatcher screen → act on it.
+
+
+
+
 
