@@ -1,4 +1,4 @@
-# Build progress — live checklist
+﻿# Build progress — live checklist
 
 Updated: 2026-10-30 (H0 session). Tick items as they land.
 
@@ -65,7 +65,7 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Plane silhouette** redrawn as a real top-down airliner (fuselage, swept wings, tailplane, engines); crescent moon via transparent cutout | `lib/core/widgets/sky_background.dart` |
 | **Conversational AI fix — no redundant questions**: person-harm phrasings („un copil a luat foc", „pasagerul a leșinat") now imply `people_at_risk=true`, and an already-given location is never asked again. `Un copil a luat foc la poarta 4` → SF-FIRE/critical/Poarta 4, **ready immediately, no questions**. Smoke **65/65** | `backend/app/ai.py`, `scripts/smoke_test.py` [10c], parity fix for `force_override` |
 | **Dispatch-first policy — no blocking questions**: the “is anyone in danger?” question is removed entirely; high/critical reports are routed to the right departments immediately and the dispatcher confirms/denies in the 5-second window. Sector locations are extracted (`sectorul 2`, `terminal 7`). Verified on-device: `o pisica a luat foc la sector 2 terminal 7` → SF-FIRE/critical/Terminal 7 → **straight to verification, zero questions**. Smoke **70/70** | `backend/app/ai.py`, `lib/features/reporter/brain/conversation_brain.dart`, `scripts/smoke_test.py` [10c] |
-| **Craiova airport zone catalog**: locations match the real map — Terminal 2, Platforma CRA, runway 09/27 (OSM data), plus Terminal 1 / Sosiri / Plecări, **Intrarea & Ieșirea principală**, Check-in, Control securitate, Vamă, Zona de îmbarcare, Poarta / Banda / Stand N, Parcare (P1/P2, scurtă/lungă, taxi), Turn de control, Cargo, Hangar. On-device: `a luat foc un calculator la intrare` → **Intrarea principală, no questions, dispatched**. PC dashboard has zone quick-chips (no dropdowns). Smoke **90/90** | `backend/app/ai.py` (`_LOCATION_ZONES`), `docs/airport-zones.md`, `scripts/dashboard/index.html` |
+| **Craiova airport zone catalog**: locations match the real map — Terminal 2, Platforma CRA, runway 09/27 (OSM data), plus Terminal 1 / Sosiri / Plecări, **Intrarea & Ieșirea principală**, Check-in, Control securitate, Vamă, Zona de îmbarcare, Poarta / Banda / Stand N, Parcare (P1/P2, scurtă/lungă, taxi), Turn de control, Cargo, Hangar. On-device: `a luat foc un calculator la intrare` → **Intrarea principală, no questions, dispatched**. PC dashboard now uses a single “Zonă / locație” field (no dropdowns, no quick chips); the server extracts the zone from the text when left empty. Smoke **90/90** | `backend/app/ai.py` (`_LOCATION_ZONES`), `docs/airport-zones.md`, `scripts/dashboard/index.html` |
 
 ## In progress ⏳
 
@@ -83,4 +83,5 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 2. Real-mic test on any report screen (voice button) — the typed path is already verified.
 3. Optional: project the Waterfox control room on the big screen (F11).
 4. iOS stays **cloud Mac later** (Apple Developer account needed for device installs).
+
 

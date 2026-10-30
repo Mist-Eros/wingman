@@ -1,4 +1,4 @@
-# 3-minute demo script (rehearsal-ready)
+﻿# 3-minute demo script (rehearsal-ready)
 
 ## T-10 minutes checklist
 
@@ -38,7 +38,7 @@
 | Time | Who | Screen | What happens |
 |---|---|---|---|
 | 0:00 | Lead | laptop | One sentence: „Wingman turns a 30-second voice report into a dispatched, department-assigned ticket — fully offline, on this laptop." |
-| 0:15 | Admin on PC | Waterfox dashboard | Press **N** → type „A luat foc un calculator la intrare, terminalul de sosiri", pick a quick zone chip if you want → **Ctrl+Enter**. Point at the live ticket + AI code (SF-FIRE) and location (Intrarea principală). |
+| 0:15 | Admin on PC | Waterfox dashboard | Press **N** → type „A luat foc un calculator la intrare, terminalul de sosiri", → **Ctrl+Enter**. Point at the live ticket + AI code (SF-FIRE) and location (Intrarea principală). |
 | 0:40 | Crew phone | Notification | The phone buzzes: „🚨 SF-FIRE · Foc sau fum…" (firefighters + security only — Fred/Gina). Open it. |
 | 1:00 | Engineer phone | Echipaj | Sign in as **Earl Engineer** → the same ticket is there; tap **Preia** → **Rezolvat** (vote 1/2). |
 | 1:30 | Janitor phone | Echipaj | Sign in as **John Janitor** → only terminal incidents (spill shown, security/bag hidden). „Different crew, different alert." |
@@ -61,3 +61,4 @@
 - „Everything you just saw ran on this laptop: no cloud, no API key, no data leaving the room."
 - „The 5-second window exists because the model is allowed to be unsure — the human is the tie-breaker."
 - „14 closed types, not free text: the dispatcher always knows which department to wake up."
+

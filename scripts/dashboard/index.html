@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ro">
 <head>
 <meta charset="utf-8" />
@@ -109,8 +109,39 @@
   .tax button:hover { border-color: var(--accent); }
   ::-webkit-scrollbar { width: 10px; }
   ::-webkit-scrollbar-thumb { background: #22324a; border-radius: 8px; }
-</style>
-</head>
+  /* ── report dialog ───────────────────────────────────────────────────── */
+  .modal-bg { backdrop-filter: blur(5px); }
+  .report-modal {
+    width: min(620px, 92vw); max-height: 90vh; display: flex; flex-direction: column;
+    background: #0e1a2c; border: 1px solid #2a3a55; border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden;
+    animation: reportPop .16s ease-out;
+  }
+  @keyframes reportPop { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+  .report-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #22324a; background: linear-gradient(180deg, rgba(91,167,255,.06), transparent); }
+  .report-icon { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; color: #5ba7ff; background: rgba(91,167,255,.14); border: 1px solid rgba(91,167,255,.38); }
+  .report-head h3 { margin: 0; font-size: 20px; letter-spacing: -.3px; }
+  .report-head .tiny { margin-top: 3px; }
+  .report-close { margin-left: auto; background: transparent; border: 0; color: #8fa3bd; font-size: 16px; padding: 7px 9px; border-radius: 9px; cursor: pointer; }
+  .report-close:hover { background: #1a2942; color: #e8f0fa; }
+  .report-body { padding: 18px 20px 6px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 10px; letter-spacing: 1.15px; text-transform: uppercase; color: #8fa3bd; font-weight: 700; }
+  .report-body textarea, .report-body input {
+    background: #0a1524; color: #e8f0fa; border: 1px solid #2a3a55; border-radius: 12px;
+    padding: 12px 14px; font: inherit; font-size: 14px; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .report-body textarea { min-height: 118px; line-height: 1.45; resize: vertical; }
+  .report-body textarea:focus, .report-body input:focus { border-color: #5ba7ff; box-shadow: 0 0 0 3px rgba(91,167,255,.14); }
+  .report-body textarea::placeholder, .report-body input::placeholder { color: #61758f; }
+  .report-foot { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-top: 1px solid #22324a; background: #0b1626; }
+  .report-hint { font-size: 10px; color: #8fa3bd; line-height: 2; }
+  .kbd { display: inline-block; padding: 1px 6px; border: 1px solid #2a3a55; border-bottom-width: 2px; border-radius: 5px; background: #132238; color: #dce7f5; font-size: 10px; font-family: inherit; }
+  .report-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .report-actions .btn.primary { padding: 11px 20px; font-size: 13px; box-shadow: 0 6px 20px rgba(91,167,255,.25); }
+  .report-actions .btn.primary:disabled { opacity: .6; cursor: wait; }
+</style></head>
 <body>
 <div class="app">
   <!-- sidebar -->
@@ -183,43 +214,38 @@
 </div>
 
 <div class="modal-bg" id="reportBg">
-  <div class="modal" style="width:560px">
-    <h3>Raportează incident (PC · Andy Admin)</h3>
-    <div class="tiny">Scrie ce s-a întâmplat. AI-ul local ia automat tot ce poate (tip, locație, persoane), iar alertele pleacă doar către departamentele necesare.</div>
-    <textarea id="reportText" rows="4"
-      placeholder="ex. Scurgere de carburant lângă poarta 5, terminal 1"
-      style="width:100%;margin-top:10px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:12px;font:inherit;font-size:14px;resize:vertical"></textarea>
-    <div class="row" style="margin-top:8px;gap:8px">
-      <input id="reportTerminal" list="terminalOptions" placeholder="Terminal (ex. T1)"
-        title="Terminal — text liber"
-        style="flex:0 0 150px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
-      <datalist id="terminalOptions">
-        <option value="T1"></option><option value="T2"></option><option value="Platformă"></option>
-      </datalist>
-      <input id="reportZone" placeholder="Zonă / poartă (ex. Poarta 5)"
-        style="flex:1;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
+  <div class="report-modal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+    <div class="report-head">
+      <div class="report-icon">✈</div>
+      <div>
+        <h3 id="reportTitle">Raportează incident</h3>
+        <div class="tiny">Dispecerat · Andy Admin · clasificare AI locală</div>
+      </div>
+      <button class="report-close" onclick="closeReport()" title="Închide (Esc)">✕</button>
     </div>
-    <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
-      <span class="tiny" style="align-self:center">Locații rapide:</span>
-      <button class="chip" onclick="fillZone('Intrarea principală')">Intrare</button>
-      <button class="chip" onclick="fillZone('Ieșirea principală')">Ieșire</button>
-      <button class="chip" onclick="fillZone('Terminal Sosiri')">Sosiri</button>
-      <button class="chip" onclick="fillZone('Terminal Plecări')">Plecări</button>
-      <button class="chip" onclick="fillZone('Check-in')">Check-in</button>
-      <button class="chip" onclick="fillZone('Control securitate')">Securitate</button>
-      <button class="chip" onclick="fillZone('Vamă')">Vamă</button>
-      <button class="chip" onclick="fillZone('Terminal 2')">Terminal 2</button>
-      <button class="chip" onclick="fillZone('Poarta 2')">Poarta 2</button>
-      <button class="chip" onclick="fillZone('Banda 1')">Bandă bagaje</button>
-      <button class="chip" onclick="fillZone('Parcare')">Parcare</button>
-      <button class="chip" onclick="fillZone('Platformă')">Platformă</button>
-      <button class="chip" onclick="fillZone('Terminal Cargo')">Cargo</button>
+
+    <div class="report-body">
+      <label class="field">
+        <span class="field-label">Ce s-a întâmplat?</span>
+        <textarea id="reportText" rows="5"
+          placeholder="ex. A luat foc un calculator la intrare"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Zonă / locație</span>
+        <input id="reportZone" placeholder="ex. Intrarea principală, Poarta 2, Parcare P1" />
+      </label>
     </div>
-    <div class="row" style="justify-content:flex-end;margin-top:10px">
-      <button class="btn" onclick="closeReport()">Anulează</button>
-      <button class="btn primary" onclick="submitReport()">Trimite raportul</button>
+    <div class="report-foot">
+      <div class="report-hint">
+        <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> trimite<br>
+        <span class="kbd">N</span> deschide · <span class="kbd">Esc</span> închide
+      </div>
+      <div class="report-actions">
+        <button class="btn" onclick="closeReport()">Anulează</button>
+        <button class="btn primary" id="reportSubmit" onclick="submitReport()">➤ Trimite raportul</button>
+      </div>
     </div>
-    <div class="tiny" style="margin-top:6px">Ctrl+Enter trimite · N deschide formularul</div>
   </div>
 </div>
 
@@ -429,20 +455,23 @@ function openReport() {
   $('reportBg').style.display = 'grid';
   $('reportText').value = '';
   $('reportZone').value = '';
+  const btn = $('reportSubmit');
+  btn.disabled = false;
+  btn.textContent = '➤ Trimite raportul';
   setTimeout(() => $('reportText').focus(), 50);
 }
 function closeReport() { $('reportBg').style.display = 'none'; }
-function fillReport(text) {
-  $('reportText').value = text;
-  $('reportText').focus();
-}
-function fillZone(text) {
-  $('reportZone').value = text;
-  $('reportZone').focus();
-}
 async function submitReport() {
   const text = $('reportText').value.trim();
-  if (!text) { toast('Scrie descrierea incidentului.'); return; }
+  if (!text) {
+    toast('Scrie descrierea incidentului.');
+    $('reportText').focus();
+    return;
+  }
+  const btn = $('reportSubmit');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Se trimite…';
   try {
     const data = await request('/api/reports', {
       method: 'POST',
@@ -450,7 +479,6 @@ async function submitReport() {
         source: 'voice', transcript: text,
         reporter_id: 'admin-pc', reporter_name: 'Andy Admin', use_ai: true,
         location: {
-          terminal: $('reportTerminal').value.trim(),
           zone: $('reportZone').value.trim(),
         },
       }),
@@ -459,7 +487,12 @@ async function submitReport() {
     closeReport();
     if (ticket && ticket.id) { tickets.set(ticket.id, ticket); render(); }
     toast('Raport trimis · ' + (ticket ? ticket.incident_code + ' → ' + ticket.status : 'ok'));
-  } catch (err) { toast('Raportarea a eșuat: ' + err.message); }
+  } catch (err) {
+    toast('Raportarea a eșuat: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '➤ Trimite raportul';
+  }
 }
 
 function toggleFilter() {
@@ -488,8 +521,13 @@ $('apiLabel').title = CFG.api;
 loadTaxonomy();
 loadTickets();
 connectWs();
+$('reportBg').addEventListener('click', (e) => { if (e.target === $('reportBg')) closeReport(); });
 setInterval(() => loadTickets(false), 20000);
 </script>
 </body>
 </html>
+
+
+
+
 

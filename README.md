@@ -1,4 +1,4 @@
-# Wingman — 48h hackathon starter
+﻿# Wingman — 48h hackathon starter
 
 **Wingman** — the airport's extra pair of eyes. Flutter app (Android + iOS) for airport
 incident reporting: staff report by **voice or a button menu**, a **local Ollama model**
@@ -250,7 +250,7 @@ conversation; the app's local brain only fills gaps when the server is unreachab
 **intrarea/ieșirea principală**, Terminal 1/2, **Terminal Sosiri / Terminal Plecări**, Check-in,
 Control securitate, Vamă, Zona de îmbarcare, Poarta 1…N, Bandă de bagaje 1…N, Parcare (P1/P2,
 scurtă/lungă durată, taxi), Platforma CRA, Stand 1…8, Pistă 09/27, Turn de control, Terminal
-Cargo, Hangar. The PC dashboard has quick zone chips for the common ones. Full catalog and map
+Cargo, Hangar. The PC dashboard report form has a single “Zonă / locație” field (no dropdowns, no quick chips) and the server extracts the zone from the text when it is left empty. Full catalog and map
 sources: **[docs/airport-zones.md](docs/airport-zones.md)**.
 
 Alerts are real Android notifications (high-importance channel, sound + vibration) showing
@@ -313,3 +313,4 @@ Schedule: **[docs/48h-timeline.md](docs/48h-timeline.md)**. Team rules:
 | Phone-side CA profile installs but the app still fails | Expected on Android 7+ (apps don't trust user CAs), and possible on iOS. The app pins the bundled CA instead — rebuild after `gen_certs.ps1`, and make sure `assets/certs/ca.crt` exists and is declared in `pubspec.yaml`. |
 | `flutter run` fails: unable to find `assets/certs/ca.crt` | Run `.\scripts\gen_certs.ps1 -Force` first (it creates the asset), then `flutter pub get`. |
 | Manual PowerShell `POST /api/reports` returns 400/422 with Romanian text | Windows PowerShell 5.1 mangles UTF-8 bodies and quotes. Use `python backend\seed_demo.py`, `scripts\smoke_test.py`, or `curl.exe --data-binary "@body.json"`. The API accepts UTF-8 JSON (verified with the smoke test). |
+

@@ -25,7 +25,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 
 from . import schemas
-from .ai import KEYWORD_RULES, OllamaClient, analyze_conversation, analyze_report
+from .ai import (
+    KEYWORD_RULES,
+    OllamaClient,
+    analyze_conversation,
+    analyze_report,
+    extract_location,
+)
 from .config import BASE_DIR, settings
 from .stt import stt_available, stt_error, transcribe_audio
 from .store import Conflict, Hub, NotFound, TicketStore, utc_now
@@ -336,6 +342,16 @@ if _MULTIPART_AVAILABLE:
 @api.post("/reports", status_code=201)
 async def create_report(report: schemas.ReportIn) -> dict:
     location = report.location.model_dump()
+    # Free-text reports (PC dashboard, typed mobile path) may not have a zone
+    # field filled — pull the zone out of the sentence instead (Craiova zones,
+    # gates, entrances, parking, etc.).
+    if not any(
+        str(location.get(key) or "").strip()
+        for key in ("terminal", "zone", "note")
+    ):
+        extracted = extract_location(report.transcript)
+        if extracted:
+            location["zone"] = extracted
     try:
         classification = await analyze_report(
             ollama,

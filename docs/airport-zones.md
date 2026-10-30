@@ -1,4 +1,4 @@
-# Craiova airport zones (used by the AI location extractor + UI)
+﻿# Craiova airport zones (used by the AI location extractor + UI)
 
 The demo is set at **Aeroportul Internațional Craiova (CRA / LRCV)**. Locations are
 free text in the app and on the PC dashboard; the backend extracts a zone from the
@@ -40,5 +40,7 @@ Anything addressed like `terminal 2`, `poarta 3`, `banda 1`, `stand 4`, `sector 
   is **dispatched directly** — no “where?” or “is anyone hurt?” question.
 - The only question left is for a completely unknown location (`„unde se întâmplă exact?”`)
   and for an unknown incident type.
-- The PC dashboard report form has quick zone chips for the common places (no dropdowns);
-  the mobile app accepts the same words by voice or typed text.
+- The PC dashboard report form has a single “Zonă / locație” field (no dropdowns, no quick chips);
+  if it is left empty, the server extracts the zone from the sentence. The mobile app accepts
+  the same words by voice or typed text.
+
