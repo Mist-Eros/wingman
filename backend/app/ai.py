@@ -51,10 +51,37 @@ RULES_PROMPT = """REGULI OBLIGATORII
 3. `urgency` poate fi doar: low, medium, high, critical. Poți RIDICA urgency implicită a codului, niciodată să o cobori.
 4. `confidence` este între 0.0 și 1.0: 0.90+ potrivire clară, 0.65-0.89 probabilă, sub 0.65 ambiguă.
 5. `rationale`: maximum 12 cuvinte, în română, fără date personale.
-6. Răspunde STRICT cu un obiect JSON valid, fără markdown, fără explicații în afara JSON-ului."""
+6. Răspunde STRICT cu un obiect JSON valid, fără markdown, fără explicații în afara JSON-ului.
+7. GHID DE ÎNCADRARE — dacă textul conține:
+   • fum, foc, flacără, incendiu, arde, scânteie → SF-FIRE
+   • corp străin, obiect pe pistă/platformă, resturi, FOD → SF-FOD
+   • scurgere, lichid, ulei, suprafață alunecoasă → SF-SPILL
+   • stingător/hidrant/sprinkler defect, echipament de stingere → SF-EQUIP
+   • bagaj nesupravegheat, valiză abandonată, geamantan suspect → SC-BAG
+   • acces neautorizat, zonă restricționată, efracție, a intrat fără drept → SC-ACCESS
+   • obiect interzis, armă, cuțit, lichid interzis → SC-ITEM
+   • persoană suspectă/agresivă/agitată, comportament ciudat, panică → SC-BEHAV
+   • bandă de bagaje, carusel, conveyor → MT-BELT
+   • escalator, lift, scară rulantă → MT-ESC
+   • pasarelă de îmbarcare, jet bridge, poartă blocată → MT-JBRIDGE
+   • coadă foarte mare, aglomerare, flux de pasageri → OP-QUEUE
+   • sistem căzut, aplicație, rețea, internet, check-in IT → OP-IT
+   • orice altceva specific aeroportului → OP-OTHER
+8. Dacă ezitați între un cod specific și OP-OTHER, alegeți codul specific.
+9. Pentru SF-* și SC-* pune urgency critical/high, chiar dacă textul nu spune explicit.
+10. Nu folosi OP-OTHER dacă un cod din ghid se potrivește; OP-OTHER este ULTIMA opțiune."""
 
 JSON_SCHEMA_PROMPT = """SCHEMA DE RĂSPUNS
 {"incident_code": "<cod din listă>", "urgency": "low|medium|high|critical", "confidence": 0.0, "rationale": "<max 12 cuvinte>"}"""
+
+FEW_SHOT_PROMPT = """EXEMPLE (intrare → ieșire)
+"Este fum gros lângă poarta 12" → {"incident_code": "SF-FIRE", "urgency": "critical", "confidence": 0.95, "rationale": "fum, pericol de incendiu"}
+"Un bărbat agitat amenință personalul la control" → {"incident_code": "SC-BEHAV", "urgency": "high", "confidence": 0.9, "rationale": "persoană agresivă în zona de securitate"}
+"Banda de bagaje din terminal 2 s-a oprit" → {"incident_code": "MT-BELT", "urgency": "high", "confidence": 0.95, "rationale": "bandă bagaje defectă"}
+"Cineva a intrat în zona restricționată de lângă poarta 5" → {"incident_code": "SC-ACCESS", "urgency": "critical", "confidence": 0.93, "rationale": "acces neautorizat în zonă restricționată"}
+"Un bagaj a fost lăsat nesupravegheat în terminal" → {"incident_code": "SC-BAG", "urgency": "high", "confidence": 0.92, "rationale": "bagaj nesupravegheat"}
+
+Top 3 demo includes a smoke/fire report — when the word fum/foc/incendiu appears, the answer is SF-FIRE."""
 
 TAXONOMY_HEADER = """TAXONOMIE ÎNCHISĂ (cod | categorie | urgency implicită | etichetă | departamente)
 ----------------------------------------"""
@@ -69,6 +96,7 @@ def build_system_prompt(taxonomy: Taxonomy) -> str:
             ROLE_PROMPT,
             RULES_PROMPT,
             f"{TAXONOMY_HEADER}\n{taxonomy.prompt_catalog()}\n{TAXONOMY_FOOTER}",
+            FEW_SHOT_PROMPT,
             JSON_SCHEMA_PROMPT,
         ]
     )
@@ -482,7 +510,7 @@ async def analyze_report(
         if hint is not None and code == hint.code:
             confidence = max(confidence, 0.90)
         rationale = str(parsed.get("rationale") or "").strip()[:200]
-        return Classification(
+        classification = Classification(
             incident_code=incident_type.code,
             urgency=escalate_urgency(incident_type.urgency, parsed.get("urgency")),
             confidence=confidence,
@@ -490,9 +518,114 @@ async def analyze_report(
             ai_source="ollama",
             latency_ms=raw.get("latency_ms"),
         )
+        if hint is None:
+            classification = apply_classification_guards(
+                taxonomy, transcript, classification
+            )
+        return classification
     except (ValueError, KeyError) as exc:
         logger.warning("Ollama returned unusable classification: %s", exc)
         return fallback_classify(taxonomy, transcript, hint_code)
+
+
+# Unambiguous Romanian triggers. A 1.5B model occasionally confuses smoke with
+# FOD or suspicion with OP-OTHER; these guards make the demo-critical cases
+# deterministic while the prompt does the rest. Ordered: first match wins.
+_KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "SF-FIRE",
+        ("fum", "foc", "incendiu", "flacăr", "flacar", "scânte", "scante", "arde"),
+    ),
+    # Mechanical failures before security: "banda de bagaje" must be MT-BELT,
+    # not SC-BAG just because the word bagaj appears.
+    (
+        "MT-BELT",
+        ("bandă", "banda", "carusel", "conveyor"),
+    ),
+    (
+        "MT-ESC",
+        ("escalator", "scară rulantă", "scara rulanta", "lift"),
+    ),
+    (
+        "MT-JBRIDGE",
+        ("pasarel", "jet bridge", "jetbridge"),
+    ),
+    (
+        "SC-ACCESS",
+        (
+            "acces neautorizat", "zona restricționat", "zona restrictionat",
+            "efrac", "a intrat fără", "a intrat fara", "intrat ilegal",
+            "fără drept", "fara drept",
+        ),
+    ),
+    (
+        "SC-BAG",
+        (
+            "bagaj nesupravegheat", "bagaj abandonat", "bagaj suspect",
+            "bagaj lăsat", "bagaj lasat", "valiz", "geamantan", "calet",
+        ),
+    ),
+    (
+        "SC-BEHAV",
+        ("suspect", "agresiv", "agitat", "ameninț", "amenint", "comportament"),
+    ),
+    (
+        "OP-QUEUE",
+        ("coadă", "coada", "aglomer"),
+    ),
+)
+
+
+def apply_classification_guards(
+    taxonomy: Taxonomy, transcript: str, classification: Classification
+) -> Classification:
+    """Deterministic keyword override for demo-critical, unambiguous reports.
+
+    Keeps `ai_source` as "ollama" (a new enum value would break the Dart
+    contract); the rationale records which grounded word won. A catch-all
+    OP-OTHER is always pushed to the dispatcher by capping confidence.
+    """
+    text = (transcript or "").lower()
+
+    if classification.incident_code == "OP-OTHER" and classification.confidence > 0.55:
+        classification = replace(
+            classification,
+            confidence=0.55,
+            rationale=(
+                classification.rationale + " [catch-all: verificare dispecer]"
+            ).strip()[:200],
+        )
+
+    for code, words in _KEYWORD_GUARDS:
+        matched = next((word for word in words if word in text), None)
+        if matched is None:
+            continue
+        if classification.incident_code == code:
+            break
+        target = taxonomy.by_code(code)
+        if target is None:
+            continue
+        urgency = classification.urgency
+        if URGENCY_LEVELS.index(target.urgency) > URGENCY_LEVELS.index(urgency):
+            urgency = target.urgency
+        logger.info(
+            "keyword guard: %s -> %s (matched %r, was %s/%.2f)",
+            classification.incident_code,
+            code,
+            matched,
+            classification.incident_code,
+            classification.confidence,
+        )
+        return replace(
+            classification,
+            incident_code=code,
+            urgency=urgency,
+            confidence=max(min(classification.confidence, 0.95), 0.80),
+            rationale=(
+                classification.rationale + f" [ghid cheie: {matched}]"
+            ).strip()[:200],
+        )
+    return classification
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -577,6 +710,13 @@ _PEOPLE_AT_RISK_FALSE: tuple[str, ...] = (
 )
 
 
+_LOCATION_TRAILING_STOPWORDS: tuple[str, ...] = (
+    "și", "si", "sau", "dacă", "daca", "când", "cand", "unde", "care",
+    "este", "sunt", "se", "a", "al", "ale", "lângă", "langa", "aproape",
+    "din", "de", "la", "pe", "în", "in", "cu", "pentru", "către", "catre",
+)
+
+
 def extract_location(transcript: str) -> str:
     """Best-effort location label from free text (Romanian + a few English)."""
     if not transcript:
@@ -586,6 +726,13 @@ def extract_location(transcript: str) -> str:
         match = re.search(pattern, text)
         if match:
             value = match.group(1).strip()
+            # "zona de îmbarcare și" -> "Zona de îmbarcare"
+            while True:
+                parts = value.split()
+                if len(parts) > 1 and parts[-1] in _LOCATION_TRAILING_STOPWORDS:
+                    value = " ".join(parts[:-1])
+                    continue
+                break
             if value:
                 label = template.format(value)
                 return label[:1].upper() + label[1:]

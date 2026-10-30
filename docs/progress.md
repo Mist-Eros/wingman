@@ -27,14 +27,17 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Demo APKs built**: TLS release, emergency HTTP release, TLS debug | `D:\Hackathon\dist\` (47.5 / 47.5 / 170 MB) |
 | **Voice → text**: `POST /api/transcribe` (local faster-whisper `small` int8) + Dart `api.transcribe` | smoke 56/56 · live Dart 7/7 · `docs/whisper-contract.md` |
 | Hotspot fallback for phone testing (guest Wi-Fi isolates clients) | SSID `DESKTOP-ET39230 5531`, laptop IP `192.168.137.1`, `scripts/hotspot_on.ps1` |
+| **Local LLM live**: Ollama 0.40.13 + Qwen2.5-1.5B-Instruct Q4_K_M (built from official HF GGUF, official Qwen chat template) | `/api/analyze` → `ai_source: "ollama"`, **0.3–0.6 s/report on the RTX 4060** |
+| **AI classification matrix 5/5** (smoke→SF-FIRE, bandă→MT-BELT, bagaj→SC-BAG, suspect→SC-BEHAV, coadă→OP-QUEUE) | `backend/app/ai.py` prompt triggers + deterministic keyword guards |
+| **Voice → text verified with real speech** (Windows TTS → `/api/transcribe` → exact sentence) | `scripts/check_stt.ps1` (200, ~4.8 s for 4.2 s audio, CPU int8) |
+| **All gates green with live AI**: smoke 56/56, live Dart 7/7, `flutter analyze` clean, 18 offline tests | `scripts/smoke_test.py`, `flutter test` |
 
 ## In progress ⏳
 
 | Item | Owner | Notes |
 |---|---|---|
-| Ollama + model | Lead | Ollama 0.40.13 installed; `qwen2.5:1.5b` pull resumed after a stall (~940 MB / ~1 GB already on disk). When it lands: restart backend, check `/api/analyze` → `ai_source: "ollama"` |
 | Phone install + first boot | **user** | plug Android with USB debugging → `.\scripts\phone_run.ps1`; hotspot must be on (`.\scripts\hotspot_on.ps1`) |
-| F1 voice integration | F1 + Lead | `/api/transcribe` is live; `docs/whisper-contract.md` sent. Waiting for their `CONTRACT_REQUEST.md` to confirm field names / multipart-vs-base64 |
+| F1 voice integration | F1 + Lead | `/api/transcribe` live + `docs/whisper-contract.md`. Waiting for their `CONTRACT_REQUEST.md` to confirm field names / multipart-vs-base64; app-side recorder still to be added by F1 |
 | Backlog: location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; implement after H36 if stable |
 
 ## Next (H0–H4 remaining)
