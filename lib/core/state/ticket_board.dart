@@ -99,9 +99,12 @@ class TicketBoard extends ChangeNotifier {
         ..addEntries(tickets.map((ticket) => MapEntry(ticket.id, ticket)));
       _lastError = null;
     } on ApiException catch (error) {
-      _lastError = error.message;
+      _lastError = error.isNetworkIssue
+          ? 'Nu pot contacta serverul. Verifică rețeaua și încearcă din nou.'
+          : error.message;
     } on Object catch (error) {
-      _lastError = 'Eroare neașteptată: $error';
+      debugPrint('[board] refresh failed: $error');
+      _lastError = 'Eroare neașteptată la încărcarea tichetelor.';
     } finally {
       _loading = false;
       _resort();
@@ -171,7 +174,8 @@ class TicketBoard extends ChangeNotifier {
     if (event.isConnectionEvent) {
       _connected = event.isConnected;
       if (!_connected && event.detail != null) {
-        _lastError = 'Conexiune WSS întreruptă: ${event.detail}';
+        debugPrint('[board] WSS interrupted: ${event.detail}');
+        _lastError = 'Conexiune live întreruptă. Reîncerc automat…';
       }
       if (_connected) {
         _lastError = null;
@@ -204,11 +208,14 @@ class TicketBoard extends ChangeNotifier {
       _notify();
       return true;
     } on ApiException catch (error) {
-      _lastActionError = error.message;
+      _lastActionError = error.isNetworkIssue
+          ? 'Nu am putut trimite acțiunea — serverul nu răspunde. Reîncearcă.'
+          : error.message;
       _notify();
       return false;
     } on Object catch (error) {
-      _lastActionError = 'Eroare neașteptată: $error';
+      debugPrint('[board] action failed: $error');
+      _lastActionError = 'Acțiunea a eșuat. Reîncearcă.';
       _notify();
       return false;
     }

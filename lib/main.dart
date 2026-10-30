@@ -28,6 +28,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'core/api/api_client.dart';
+import 'core/auth/secure_token_store.dart';
+import 'core/auth/session_store.dart';
 import 'core/auth/token_store.dart';
 import 'core/core_scope.dart';
 import 'core/incidents/taxonomy.dart';
@@ -104,12 +106,22 @@ Future<void> main() async {
     allowInsecure: kDevInsecure,
   );
 
-  // Swap for SecureTokenStore once flutter_secure_storage is in pubspec
-  // (see lib/core/auth/secure_token_store.dart).
-  final tokenStore = MemoryTokenStore(kApiToken);
+  // Secure token storage (flutter_secure_storage) + persisted session, so a
+  // crew id survives an app restart. Both fall back gracefully.
+  final tokenStore = SecureTokenStore(fallback: kApiToken);
+  final sessionStore = SecureSessionStore();
+  final initialSession = await sessionStore.read();
   final board = TicketBoard(api: api);
 
-  runApp(AirportApp(api: api, board: board, tokenStore: tokenStore));
+  runApp(
+    AirportApp(
+      api: api,
+      board: board,
+      tokenStore: tokenStore,
+      sessionStore: sessionStore,
+      initialSession: initialSession,
+    ),
+  );
 }
 
 /// Loads the self-signed CA bundled as a Flutter asset. Missing asset is a
@@ -138,11 +150,17 @@ class AirportApp extends StatefulWidget {
     required this.api,
     required this.board,
     required this.tokenStore,
+    required this.sessionStore,
+    this.initialSession,
   });
 
   final ApiClient api;
   final TicketBoard board;
   final TokenStore tokenStore;
+  final SessionStore sessionStore;
+
+  /// Restored on launch so the crew id / dispatcher identity survives a restart.
+  final Session? initialSession;
 
   @override
   State<AirportApp> createState() => _AirportAppState();
@@ -155,6 +173,7 @@ class _AirportAppState extends State<AirportApp> {
   @override
   void initState() {
     super.initState();
+    _session = widget.initialSession;
     // One WSS connection for the whole app lifetime; the board fans events out
     // to every screen through ListenableBuilder.
     unawaited(widget.board.start());
@@ -169,11 +188,13 @@ class _AirportAppState extends State<AirportApp> {
 
   void _selectRole(Session session) {
     setState(() => _session = session);
+    unawaited(widget.sessionStore.write(session));
     _navigatorKey.currentState?.pushReplacementNamed(session.role.route);
   }
 
   void _signOut() {
     setState(() => _session = null);
+    unawaited(widget.sessionStore.clear());
     _navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
   }
 
@@ -209,23 +230,39 @@ class _AirportAppState extends State<AirportApp> {
   Widget _guard(Widget screen) =>
       _session == null ? _roleSelect() : screen;
 
-  Widget _roleSelect() => RoleSelectScreen(onRoleSelected: _selectRole);
+  Widget _roleSelect() => RoleSelectScreen(
+        onRoleSelected: _selectRole,
+        initialName: _session?.displayName ?? '',
+      );
 }
 
 /// Hackathon stand-in for auth: pick a role, get a demo session. The real token
 /// comes from `--dart-define=API_TOKEN`, never from this screen.
 class RoleSelectScreen extends StatefulWidget {
-  const RoleSelectScreen({super.key, required this.onRoleSelected});
+  const RoleSelectScreen({
+    super.key,
+    required this.onRoleSelected,
+    this.initialName = '',
+  });
 
   /// Created by `main.dart`; hands the chosen demo session back to the router.
   final ValueChanged<Session> onRoleSelected;
+
+  /// Pre-fills the name field after a restart (display name only).
+  final String initialName;
 
   @override
   State<RoleSelectScreen> createState() => _RoleSelectScreenState();
 }
 
 class _RoleSelectScreenState extends State<RoleSelectScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+  }
 
   @override
   void dispose() {

@@ -42,7 +42,10 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   final Set<String> _busyIds = <String>{};
   final FocusNode _focusNode = FocusNode();
 
-  bool _forceDemo = true;
+  // Live by default: when the server has tickets the dispatcher shows them.
+  // Demo mode is an explicit toggle (used for the stage scene when the laptop
+  // is not on the same network as the phones).
+  bool _forceDemo = false;
   late List<Ticket> _demoTickets;
   DispatcherDensity _density = DispatcherDensity.comfortable;
 
@@ -481,6 +484,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   Widget build(BuildContext context) {
     final board = CoreScope.boardOf(context);
     final session = CoreScope.sessionOf(context);
+    final compact = MediaQuery.sizeOf(context).width < 720;
 
     return Focus(
       focusNode: _focusNode,
@@ -550,15 +554,15 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             const SizedBox(width: 8),
             SegmentedButton<bool>(
-              segments: const <ButtonSegment<bool>>[
+              segments: <ButtonSegment<bool>>[
                 ButtonSegment<bool>(
                   value: true,
-                  label: Text('Date locale'),
+                  label: Text(compact ? 'Demo' : 'Date locale'),
                   icon: Icon(Icons.science, size: 16),
                 ),
                 ButtonSegment<bool>(
                   value: false,
-                  label: Text('Live server'),
+                  label: Text(compact ? 'Live' : 'Live server'),
                   icon: Icon(Icons.cloud_outlined, size: 16),
                 ),
               ],
@@ -574,29 +578,62 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                 });
               },
             ),
-            IconButton(
-              tooltip: 'Încarcă scenă demo',
-              icon: const Icon(Icons.movie_filter_outlined),
-              onPressed: _reloadDemo,
-            ),
-            PopupMenuButton<DispatcherDensity>(
-              tooltip: 'Densitate UI',
-              initialValue: _density,
-              onSelected: (value) => setState(() => _density = value),
-              itemBuilder: (context) => <PopupMenuEntry<DispatcherDensity>>[
-                for (final d in DispatcherDensity.values)
-                  PopupMenuItem<DispatcherDensity>(
-                    value: d,
-                    child: Text(d.labelRo),
+            if (!compact) ...<Widget>[
+              IconButton(
+                tooltip: 'Încarcă scenă demo',
+                icon: const Icon(Icons.movie_filter_outlined),
+                onPressed: _reloadDemo,
+              ),
+              PopupMenuButton<DispatcherDensity>(
+                tooltip: 'Densitate UI',
+                initialValue: _density,
+                onSelected: (value) => setState(() => _density = value),
+                itemBuilder: (context) => <PopupMenuEntry<DispatcherDensity>>[
+                  for (final d in DispatcherDensity.values)
+                    PopupMenuItem<DispatcherDensity>(
+                      value: d,
+                      child: Text(d.labelRo),
+                    ),
+                ],
+                icon: const Icon(Icons.density_medium),
+              ),
+              IconButton(
+                tooltip: 'Reîmprospătează live',
+                icon: const Icon(Icons.refresh),
+                onPressed: board.refresh,
+              ),
+            ] else
+              PopupMenuButton<String>(
+                tooltip: 'Mai multe',
+                onSelected: (value) {
+                  if (value == 'refresh') {
+                    board.refresh();
+                  } else if (value == 'demo') {
+                    _reloadDemo();
+                  } else {
+                    setState(() {
+                      final values = DispatcherDensity.values;
+                      _density =
+                          values[(_density.index + 1) % values.length];
+                    });
+                  }
+                },
+                itemBuilder: (context) => const <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: 'refresh',
+                    child: Text('Reîmprospătează live'),
                   ),
-              ],
-              icon: const Icon(Icons.density_medium),
-            ),
-            IconButton(
-              tooltip: 'Reîmprospătează live',
-              icon: const Icon(Icons.refresh),
-              onPressed: board.refresh,
-            ),
+                  PopupMenuItem<String>(
+                    value: 'demo',
+                    child: Text('Încarcă scenă demo'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'density',
+                    child: Text('Schimbă densitatea'),
+                  ),
+                ],
+                icon: const Icon(Icons.more_vert),
+              ),
             IconButton(
               tooltip: 'Ieși din rol',
               icon: const Icon(Icons.logout),
@@ -605,7 +642,9 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             const SizedBox(width: 8),
           ],
         ),
-        body: ListenableBuilder(
+        body: SafeArea(
+          top: false,
+          child: ListenableBuilder(
           listenable: board,
           builder: (context, _) {
             final demo = _usingDemo(board);
@@ -690,6 +729,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
               },
             );
           },
+        ),
         ),
       ),
     );
