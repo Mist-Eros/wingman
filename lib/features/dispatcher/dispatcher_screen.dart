@@ -8,19 +8,25 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/core_scope.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
 import 'department_queue_strip.dart';
+import 'dispatcher_density.dart';
 import 'dispatcher_dialogs.dart';
 import 'dispatcher_filters.dart';
+import 'dispatcher_history.dart';
 import 'override_countdown_card.dart';
 import 'ticket_feed_card.dart';
+import 'ticket_timeline.dart';
 import 'urgency_style.dart';
+import 'zone_board.dart';
 
 class DispatcherScreen extends StatefulWidget {
   const DispatcherScreen({super.key});
@@ -29,32 +35,84 @@ class DispatcherScreen extends StatefulWidget {
   State<DispatcherScreen> createState() => _DispatcherScreenState();
 }
 
-class _DispatcherScreenState extends State<DispatcherScreen> {
+class _DispatcherScreenState extends State<DispatcherScreen>
+    with SingleTickerProviderStateMixin {
   DispatcherFilters _filters = const DispatcherFilters();
   String? _selectedTicketId;
   final Set<String> _busyIds = <String>{};
+  final FocusNode _focusNode = FocusNode();
 
-  /// Demo stays on until live tickets arrive, unless user forces it.
   bool _forceDemo = true;
   late List<Ticket> _demoTickets;
+  DispatcherDensity _density = DispatcherDensity.comfortable;
+
+  final List<DispatcherHistoryEntry> _history = <DispatcherHistoryEntry>[];
+  String _lastEventLabel = 'Niciun eveniment încă';
+  List<Ticket> _prevLiveSnapshot = const <Ticket>[];
+  Set<String> _knownPendingIds = <String>{};
+  bool _pendingFlash = false;
+  bool _offeredLiveSwitch = false;
+
+  late final AnimationController _flashController;
+  TicketBoard? _board;
+  bool _boardListening = false;
 
   @override
   void initState() {
     super.initState();
     _demoTickets = buildDemoTickets();
+    _knownPendingIds = _demoTickets
+        .where((t) => t.isPendingOverride)
+        .map((t) => t.id)
+        .toSet();
+    _flashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
-  bool _usingDemo(TicketBoard board) =>
-      _forceDemo || board.isEmpty;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final board = CoreScope.boardOf(context);
+    if (!identical(board, _board)) {
+      _board?.removeListener(_onBoardChanged);
+      _board = board;
+      _board!.addListener(_onBoardChanged);
+      _boardListening = true;
+      _prevLiveSnapshot = List<Ticket>.of(board.tickets);
+    }
+  }
+
+  void _onBoardChanged() {
+    final board = _board;
+    if (board == null || !mounted) return;
+    _watchPendingAndLive(board);
+  }
+
+  @override
+  void dispose() {
+    if (_boardListening) {
+      _board?.removeListener(_onBoardChanged);
+    }
+    _flashController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  bool _usingDemo(TicketBoard board) => _forceDemo || board.isEmpty;
 
   List<Ticket> _sourceTickets(TicketBoard board) =>
       _usingDemo(board) ? _demoTickets : board.tickets;
 
   List<Ticket> _pending(TicketBoard board) {
-    if (_usingDemo(board)) {
-      return _demoTickets.where((t) => t.isPendingOverride).toList();
-    }
-    return board.pendingOverrides;
+    final list = _usingDemo(board)
+        ? _demoTickets.where((t) => t.isPendingOverride)
+        : board.pendingOverrides;
+    return sortDispatcherTickets(list);
   }
 
   List<Ticket> _feed(TicketBoard board) {
@@ -75,11 +133,35 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
     return board.find(id);
   }
 
+  void _pushHistory(DispatcherHistoryEntry entry) {
+    setState(() {
+      _history.insert(0, entry);
+      if (_history.length > 40) {
+        _history.removeRange(40, _history.length);
+      }
+      _lastEventLabel = entry.summary;
+    });
+  }
+
   void _reloadDemo() {
     setState(() {
       _demoTickets = buildDemoTickets();
       _selectedTicketId = null;
+      _knownPendingIds = _demoTickets
+          .where((t) => t.isPendingOverride)
+          .map((t) => t.id)
+          .toSet();
+      _forceDemo = true;
     });
+    _pushHistory(
+      DispatcherHistoryEntry(
+        at: DateTime.now().toUtc(),
+        kind: DispatcherHistoryKind.observed,
+        ticketId: 'demo',
+        summary: 'Scenă demo reîncărcată (${_demoTickets.length} tichete)',
+      ),
+    );
+    _triggerPendingAlert(force: true);
   }
 
   void _patchDemo(String ticketId, Ticket Function(Ticket) update) {
@@ -89,6 +171,83 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
           if (t.id == ticketId) update(t) else t,
       ];
     });
+  }
+
+  void _triggerPendingAlert({bool force = false}) {
+    SystemSound.play(SystemSoundType.alert);
+    setState(() => _pendingFlash = true);
+    _flashController.forward(from: 0).whenComplete(() {
+      if (mounted) setState(() => _pendingFlash = false);
+    });
+  }
+
+  void _watchPendingAndLive(TicketBoard board) {
+    final pending = _pending(board);
+    final pendingIds = pending.map((t) => t.id).toSet();
+    final newPending = pendingIds.difference(_knownPendingIds);
+    if (newPending.isNotEmpty) {
+      _knownPendingIds = pendingIds;
+      _triggerPendingAlert();
+      final ticket = pending.firstWhere((t) => newPending.contains(t.id));
+      _pushHistory(
+        DispatcherHistoryEntry(
+          at: DateTime.now().toUtc(),
+          kind: DispatcherHistoryKind.created,
+          ticketId: ticket.id,
+          summary: 'Pending 5s: ${shortTicketLabel(ticket)}',
+          detail: 'Încredere ${ticket.confidenceLabel}',
+        ),
+      );
+    } else {
+      _knownPendingIds = pendingIds;
+    }
+
+    if (!_usingDemo(board)) {
+      final entry = diffBoardEvent(
+        previous: _prevLiveSnapshot,
+        next: board.tickets,
+        at: DateTime.now().toUtc(),
+      );
+      if (entry != null) {
+        _pushHistory(entry);
+      }
+      _prevLiveSnapshot = List<Ticket>.of(board.tickets);
+    }
+
+    if (_forceDemo && board.hasTickets && !_offeredLiveSwitch) {
+      _offeredLiveSwitch = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _offerSwitchToLive(board);
+      });
+    }
+  }
+
+  Future<void> _offerSwitchToLive(TicketBoard board) async {
+    final goLive = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tichete live detectate'),
+        content: Text(
+          'Serverul are ${board.tickets.length} tichet(e). '
+          'Oprești modul Demo și treci pe date live?',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Rămân pe Demo'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Treci pe Live'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (goLive == true) {
+      setState(() => _forceDemo = false);
+    }
   }
 
   Future<void> _runLiveAction(
@@ -125,6 +284,15 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
           updatedAt: DateTime.now().toUtc(),
         ),
       );
+      final ticket = _demoTickets.firstWhere((t) => t.id == ticketId);
+      _pushHistory(
+        DispatcherHistoryEntry(
+          at: DateTime.now().toUtc(),
+          kind: DispatcherHistoryKind.confirmed,
+          ticketId: ticketId,
+          summary: 'Confirmat: ${shortTicketLabel(ticket)}',
+        ),
+      );
       return Future<void>.value();
     }
     return _runLiveAction(
@@ -134,7 +302,19 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
             dispatcherId: session.userId,
             dispatcherName: session.displayName,
           ),
-    );
+    ).then((_) {
+      final t = board.find(ticketId);
+      if (t != null) {
+        _pushHistory(
+          DispatcherHistoryEntry(
+            at: DateTime.now().toUtc(),
+            kind: DispatcherHistoryKind.confirmed,
+            ticketId: ticketId,
+            summary: 'Confirmat: ${shortTicketLabel(t)}',
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _deny(
@@ -154,6 +334,16 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
           updatedAt: DateTime.now().toUtc(),
         ),
       );
+      final ticket = _demoTickets.firstWhere((t) => t.id == ticketId);
+      _pushHistory(
+        DispatcherHistoryEntry(
+          at: DateTime.now().toUtc(),
+          kind: DispatcherHistoryKind.denied,
+          ticketId: ticketId,
+          summary: 'Respins: ${shortTicketLabel(ticket)}',
+          detail: reason,
+        ),
+      );
       return Future<void>.value();
     }
     return _runLiveAction(
@@ -163,7 +353,30 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
             reason: reason,
             dispatcherId: session.userId,
           ),
-    );
+    ).then((_) {
+      final t = board.find(ticketId);
+      if (t != null) {
+        _pushHistory(
+          DispatcherHistoryEntry(
+            at: DateTime.now().toUtc(),
+            kind: DispatcherHistoryKind.denied,
+            ticketId: ticketId,
+            summary: 'Respins: ${shortTicketLabel(t)}',
+            detail: reason,
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _denyFlow(
+    Session session,
+    TicketBoard board,
+    String ticketId,
+  ) async {
+    final reason = await showDenyReasonDialog(context);
+    if (reason == null || !mounted) return;
+    await _deny(session, board, ticketId, reason);
   }
 
   Future<void> _reclassify(
@@ -192,6 +405,15 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
           updatedAt: DateTime.now().toUtc(),
         ),
       );
+      final ticket = _demoTickets.firstWhere((t) => t.id == ticketId);
+      _pushHistory(
+        DispatcherHistoryEntry(
+          at: DateTime.now().toUtc(),
+          kind: DispatcherHistoryKind.reclassified,
+          ticketId: ticketId,
+          summary: 'Reclasificat: ${shortTicketLabel(ticket)} → ${type.code}',
+        ),
+      );
       return Future<void>.value();
     }
     return _runLiveAction(
@@ -202,7 +424,57 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
             urgency: choice.urgency,
             dispatcherId: session.userId,
           ),
-    );
+    ).then((_) {
+      final t = board.find(ticketId);
+      if (t != null) {
+        _pushHistory(
+          DispatcherHistoryEntry(
+            at: DateTime.now().toUtc(),
+            kind: DispatcherHistoryKind.reclassified,
+            ticketId: ticketId,
+            summary: 'Reclasificat: ${shortTicketLabel(t)}',
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> _reclassifyFlow(
+    Session session,
+    TicketBoard board,
+    String ticketId,
+  ) async {
+    final choice = await showReclassifyDialog(context);
+    if (choice == null || !mounted) return;
+    await _reclassify(session, board, ticketId, choice);
+  }
+
+  KeyEventResult _onKey(
+    Session session,
+    TicketBoard board,
+    KeyEvent event,
+  ) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final pending = _pending(board);
+    if (pending.isEmpty) return KeyEventResult.ignored;
+    final current = pending.first;
+
+    if (event.logicalKey == LogicalKeyboardKey.digit1 ||
+        event.logicalKey == LogicalKeyboardKey.numpad1) {
+      _confirm(session, board, current.id);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.digit2 ||
+        event.logicalKey == LogicalKeyboardKey.numpad2) {
+      _denyFlow(session, board, current.id);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.digit3 ||
+        event.logicalKey == LogicalKeyboardKey.numpad3) {
+      _reclassifyFlow(session, board, current.id);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -210,158 +482,215 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
     final board = CoreScope.boardOf(context);
     final session = CoreScope.sessionOf(context);
 
-    return Scaffold(
-      backgroundColor: kDispatcherCanvas,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        title: const Text('Dispecerat Wingman'),
-        actions: <Widget>[
-          ListenableBuilder(
-            listenable: board,
-            builder: (context, _) {
-              final online = board.connected;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: online
-                          ? const Color(0xFFECFDF3)
-                          : const Color(0xFFFEE4E2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(
-                          Icons.circle,
-                          size: 9,
-                          color: online
-                              ? const Color(0xFF027A48)
-                              : const Color(0xFFD92D20),
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: (node, event) => _onKey(session, board, event),
+      child: Scaffold(
+        backgroundColor: kDispatcherCanvas,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('Dispecerat Wingman'),
+          actions: <Widget>[
+            ListenableBuilder(
+              listenable: board,
+              builder: (context, _) {
+                final pendingCount = _pending(board).length;
+                final online = board.connected;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (pendingCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Badge(
+                          backgroundColor: const Color(0xFFD92D20),
+                          label: Text('$pendingCount'),
+                          child: const Icon(Icons.notification_important),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          online ? 'WSS conectat' : 'WSS deconectat',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                      ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: online
+                            ? const Color(0xFFECFDF3)
+                            : const Color(0xFFFEE4E2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.circle,
+                            size: 9,
                             color: online
                                 ? const Color(0xFF027A48)
                                 : const Color(0xFFD92D20),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-          FilterChip(
-            label: Text(_forceDemo ? 'Demo ON' : 'Demo OFF'),
-            selected: _forceDemo,
-            avatar: Icon(
-              _forceDemo ? Icons.science : Icons.cloud_outlined,
-              size: 16,
-            ),
-            onSelected: (value) {
-              setState(() {
-                _forceDemo = value;
-                if (value) _reloadDemo();
-              });
-            },
-          ),
-          if (_forceDemo)
-            IconButton(
-              tooltip: 'Regenerează tickete demo',
-              icon: const Icon(Icons.restart_alt),
-              onPressed: _reloadDemo,
-            ),
-          IconButton(
-            tooltip: 'Reîmprospătează live',
-            icon: const Icon(Icons.refresh),
-            onPressed: board.refresh,
-          ),
-          IconButton(
-            tooltip: 'Ieși din rol',
-            icon: const Icon(Icons.logout),
-            onPressed: () => CoreScope.of(context).onSignOut(),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: board,
-        builder: (context, _) {
-          final demo = _usingDemo(board);
-          final allTickets = _sourceTickets(board);
-          final pending = _pending(board);
-          final feed = _feed(board);
-          final selected = _findTicket(board, _selectedTicketId);
-
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 1100;
-              final showDetail = wide && selected != null;
-
-              final feedPane = _FeedPane(
-                demoMode: demo,
-                filters: _filters,
-                allTickets: allTickets,
-                pending: pending,
-                feed: feed,
-                selectedTicketId: _selectedTicketId,
-                busyIds: _busyIds,
-                loading: board.loading && !demo,
-                lastError: demo ? null : board.lastError,
-                lastActionError: demo ? null : board.lastActionError,
-                onFiltersChanged: (next) => setState(() => _filters = next),
-                onSelectTicket: (id) => setState(() => _selectedTicketId = id),
-                onConfirm: (id) => _confirm(session, board, id),
-                onDeny: (id, reason) => _deny(session, board, id, reason),
-                onReclassify: (id, choice) =>
-                    _reclassify(session, board, id, choice),
-              );
-
-              if (!wide) return feedPane;
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    width: 300,
-                    child: _FilterSidebar(
-                      tickets: allTickets,
-                      filters: _filters,
-                      demoMode: demo,
-                      onChanged: (next) => setState(() => _filters = next),
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: feedPane),
-                  if (showDetail) ...[
-                    const VerticalDivider(width: 1),
-                    SizedBox(
-                      width: 360,
-                      child: _DetailPane(
-                        ticket: selected,
-                        onClose: () =>
-                            setState(() => _selectedTicketId = null),
+                          const SizedBox(width: 6),
+                          Text(
+                            online ? 'WSS conectat' : 'WSS deconectat',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              color: online
+                                  ? const Color(0xFF027A48)
+                                  : const Color(0xFFD92D20),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ],
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            SegmentedButton<bool>(
+              segments: const <ButtonSegment<bool>>[
+                ButtonSegment<bool>(
+                  value: true,
+                  label: Text('Date locale'),
+                  icon: Icon(Icons.science, size: 16),
+                ),
+                ButtonSegment<bool>(
+                  value: false,
+                  label: Text('Live server'),
+                  icon: Icon(Icons.cloud_outlined, size: 16),
+                ),
+              ],
+              selected: <bool>{_forceDemo},
+              onSelectionChanged: (value) {
+                final demo = value.first;
+                setState(() {
+                  _forceDemo = demo;
+                  if (demo) {
+                    _demoTickets = buildDemoTickets();
+                    _offeredLiveSwitch = false;
+                  }
+                });
+              },
+            ),
+            IconButton(
+              tooltip: 'Încarcă scenă demo',
+              icon: const Icon(Icons.movie_filter_outlined),
+              onPressed: _reloadDemo,
+            ),
+            PopupMenuButton<DispatcherDensity>(
+              tooltip: 'Densitate UI',
+              initialValue: _density,
+              onSelected: (value) => setState(() => _density = value),
+              itemBuilder: (context) => <PopupMenuEntry<DispatcherDensity>>[
+                for (final d in DispatcherDensity.values)
+                  PopupMenuItem<DispatcherDensity>(
+                    value: d,
+                    child: Text(d.labelRo),
+                  ),
+              ],
+              icon: const Icon(Icons.density_medium),
+            ),
+            IconButton(
+              tooltip: 'Reîmprospătează live',
+              icon: const Icon(Icons.refresh),
+              onPressed: board.refresh,
+            ),
+            IconButton(
+              tooltip: 'Ieși din rol',
+              icon: const Icon(Icons.logout),
+              onPressed: () => CoreScope.of(context).onSignOut(),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: ListenableBuilder(
+          listenable: board,
+          builder: (context, _) {
+            final demo = _usingDemo(board);
+            final allTickets = _sourceTickets(board);
+            final pending = _pending(board);
+            final feed = _feed(board);
+            final selected = _findTicket(board, _selectedTicketId);
+            final liveCount = board.tickets.length;
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 1100;
+                final showDetail = wide && selected != null;
+
+                final feedPane = _FeedPane(
+                  demoMode: demo,
+                  liveCount: liveCount,
+                  connected: board.connected,
+                  lastEventLabel: _lastEventLabel,
+                  pendingFlash: _pendingFlash,
+                  density: _density,
+                  filters: _filters,
+                  allTickets: allTickets,
+                  pending: pending,
+                  feed: feed,
+                  selectedTicketId: _selectedTicketId,
+                  busyIds: _busyIds,
+                  loading: board.loading && !demo,
+                  lastError: demo ? null : board.lastError,
+                  lastActionError: demo ? null : board.lastActionError,
+                  onFiltersChanged: (next) => setState(() => _filters = next),
+                  onSelectTicket: (id) =>
+                      setState(() => _selectedTicketId = id),
+                  onConfirm: (id) => _confirm(session, board, id),
+                  onDenyReason: (id, reason) =>
+                      _deny(session, board, id, reason),
+                  onReclassifyChoice: (id, choice) =>
+                      _reclassify(session, board, id, choice),
+                  onDenyFlow: (id) => _denyFlow(session, board, id),
+                  onReclassifyFlow: (id) =>
+                      _reclassifyFlow(session, board, id),
+                  onLoadDemoScene: _reloadDemo,
+                );
+
+                if (!wide) return feedPane;
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 310,
+                      child: _FilterSidebar(
+                        tickets: allTickets,
+                        filters: _filters,
+                        demoMode: demo,
+                        liveCount: liveCount,
+                        history: _history,
+                        onChanged: (next) => setState(() => _filters = next),
+                        onSelectTicket: (id) =>
+                            setState(() => _selectedTicketId = id),
+                        onLoadDemoScene: _reloadDemo,
+                      ),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: feedPane),
+                    if (showDetail) ...[
+                      const VerticalDivider(width: 1),
+                      SizedBox(
+                        width: 380,
+                        child: _DetailPane(
+                          ticket: selected,
+                          history: _history
+                              .where((e) => e.ticketId == selected.id)
+                              .toList(),
+                          onClose: () =>
+                              setState(() => _selectedTicketId = null),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -370,6 +699,11 @@ class _DispatcherScreenState extends State<DispatcherScreen> {
 class _FeedPane extends StatelessWidget {
   const _FeedPane({
     required this.demoMode,
+    required this.liveCount,
+    required this.connected,
+    required this.lastEventLabel,
+    required this.pendingFlash,
+    required this.density,
     required this.filters,
     required this.allTickets,
     required this.pending,
@@ -382,11 +716,19 @@ class _FeedPane extends StatelessWidget {
     required this.onFiltersChanged,
     required this.onSelectTicket,
     required this.onConfirm,
-    required this.onDeny,
-    required this.onReclassify,
+    required this.onDenyReason,
+    required this.onReclassifyChoice,
+    required this.onDenyFlow,
+    required this.onReclassifyFlow,
+    required this.onLoadDemoScene,
   });
 
   final bool demoMode;
+  final int liveCount;
+  final bool connected;
+  final String lastEventLabel;
+  final bool pendingFlash;
+  final DispatcherDensity density;
   final DispatcherFilters filters;
   final List<Ticket> allTickets;
   final List<Ticket> pending;
@@ -399,8 +741,12 @@ class _FeedPane extends StatelessWidget {
   final ValueChanged<DispatcherFilters> onFiltersChanged;
   final ValueChanged<String> onSelectTicket;
   final Future<void> Function(String id) onConfirm;
-  final Future<void> Function(String id, String reason) onDeny;
-  final Future<void> Function(String id, ReclassifyChoice choice) onReclassify;
+  final Future<void> Function(String id, String reason) onDenyReason;
+  final Future<void> Function(String id, ReclassifyChoice choice)
+      onReclassifyChoice;
+  final Future<void> Function(String id) onDenyFlow;
+  final Future<void> Function(String id) onReclassifyFlow;
+  final VoidCallback onLoadDemoScene;
 
   @override
   Widget build(BuildContext context) {
@@ -414,9 +760,19 @@ class _FeedPane extends StatelessWidget {
           _Banner(
             color: const Color(0xFFE0F2FE),
             text:
-                'Mod demonstrativ — tickete exemplu colorate pe urgență. Oprește Demo când conectezi backend/mobil.',
+                'Nu ești pe WSS live — Date locale (demo). '
+                'Live pe server: $liveCount tichet(e). '
+                'Comenzi pending: 1 Confirmă · 2 Respinge · 3 Reclasifică.',
             icon: Icons.science_outlined,
+            actionLabel: 'Încarcă scenă demo',
+            onAction: onLoadDemoScene,
           ),
+        _Banner(
+          color: connected ? const Color(0xFFECFDF3) : const Color(0xFFFEE4E2),
+          text:
+              '${connected ? 'WSS OK' : 'WSS DOWN'} · Ultimul eveniment: $lastEventLabel',
+          icon: connected ? Icons.bolt : Icons.link_off,
+        ),
         if (lastError != null)
           _Banner(
             color: theme.colorScheme.errorContainer,
@@ -444,6 +800,24 @@ class _FeedPane extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              Row(
+                children: <Widget>[
+                  FilterChip(
+                    label: const Text('Doar nerezolvate'),
+                    selected: filters.unresolvedOnly,
+                    onSelected: (v) =>
+                        onFiltersChanged(filters.copyWith(unresolvedOnly: v)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Densitate: ${density.labelRo}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               Text(
                 'Distribuție pe departamente',
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -461,18 +835,6 @@ class _FeedPane extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth >= 820) {
-                    return const SizedBox.shrink();
-                  }
-                  return _CompactFilterBar(
-                    filters: filters,
-                    onChanged: onFiltersChanged,
-                  );
-                },
-              ),
             ],
           ),
         ),
@@ -481,37 +843,61 @@ class _FeedPane extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: <Widget>[
               if (pending.isNotEmpty) ...[
-                Text(
-                  'Necesită confirmare (5s)',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFFD92D20),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: pendingFlash
+                        ? const Color(0xFF7A271A)
+                        : const Color(0xFF1D2939),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: pendingFlash
+                          ? const Color(0xFFFEE4E2)
+                          : const Color(0xFFD92D20),
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        'Necesită confirmare (5s)',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Zonă contrast pe scenă · taste 1 / 2 / 3',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      for (final ticket in pending) ...[
+                        AnimatedTicketItem(
+                          itemKey: 'pending-${ticket.id}-${ticket.version}',
+                          child: OverrideCountdownCard(
+                            ticket: ticket,
+                            busy: busyIds.contains(ticket.id),
+                            selected: selectedTicketId == ticket.id,
+                            demoMode: demoMode,
+                            onSelect: () => onSelectTicket(ticket.id),
+                            onConfirm: () => onConfirm(ticket.id),
+                            onDeny: (reason) =>
+                                onDenyReason(ticket.id, reason),
+                            onReclassify: (choice) =>
+                                onReclassifyChoice(ticket.id, choice),
+                          ),
+                        ),
+                        SizedBox(height: density.cardGap),
+                      ],
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tichetele cu încredere mică apar aici înainte de dispecerizare.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                for (final ticket in pending) ...[
-                  OverrideCountdownCard(
-                    ticket: ticket,
-                    busy: busyIds.contains(ticket.id),
-                    selected: selectedTicketId == ticket.id,
-                    demoMode: demoMode,
-                    onSelect: () => onSelectTicket(ticket.id),
-                    onConfirm: () => onConfirm(ticket.id),
-                    onDeny: (reason) => onDeny(ticket.id, reason),
-                    onReclassify: (choice) =>
-                        onReclassify(ticket.id, choice),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                const SizedBox(height: 4),
-                const Divider(height: 28),
+                const SizedBox(height: 16),
               ],
               Row(
                 children: <Widget>[
@@ -553,22 +939,28 @@ class _FeedPane extends StatelessWidget {
                 const _EmptyState(
                   title: 'Niciun tichet încă',
                   subtitle:
-                      'Activează Demo sau așteaptă rapoarte de pe mobil / reporter.',
+                      'Apasă „Încarcă scenă demo” sau așteaptă rapoarte live.',
                 )
               else if (feed.isEmpty && pending.isEmpty)
                 const _EmptyState(
                   title: 'Niciun tichet pentru filtrele curente',
-                  subtitle:
-                      'Resetează filtrele sau apasă pe o culoare de urgență din summary.',
+                  subtitle: 'Resetează filtrele din stânga.',
                 )
               else
                 for (final ticket in feed) ...[
-                  TicketFeedCard(
-                    ticket: ticket,
-                    selected: selectedTicketId == ticket.id,
-                    onTap: () => onSelectTicket(ticket.id),
+                  AnimatedTicketItem(
+                    itemKey: '${ticket.id}-${ticket.version}-${ticket.status.wire}',
+                    child: TicketFeedCard(
+                      ticket: ticket,
+                      selected: selectedTicketId == ticket.id,
+                      density: density,
+                      busy: busyIds.contains(ticket.id),
+                      onTap: () => onSelectTicket(ticket.id),
+                      onDeny: () => onDenyFlow(ticket.id),
+                      onReclassify: () => onReclassifyFlow(ticket.id),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: density.cardGap),
                 ],
             ],
           ),
@@ -583,13 +975,21 @@ class _FilterSidebar extends StatelessWidget {
     required this.tickets,
     required this.filters,
     required this.demoMode,
+    required this.liveCount,
+    required this.history,
     required this.onChanged,
+    required this.onSelectTicket,
+    required this.onLoadDemoScene,
   });
 
   final List<Ticket> tickets;
   final DispatcherFilters filters;
   final bool demoMode;
+  final int liveCount;
+  final List<DispatcherHistoryEntry> history;
   final ValueChanged<DispatcherFilters> onChanged;
+  final ValueChanged<String> onSelectTicket;
+  final VoidCallback onLoadDemoScene;
 
   @override
   Widget build(BuildContext context) {
@@ -615,21 +1015,35 @@ class _FilterSidebar extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (demoMode) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                'Date locale de demonstrație. Când conectezi mobilul, oprește Demo.',
-                style: TextStyle(fontSize: 12, height: 1.35),
-              ),
+          const SizedBox(height: 8),
+          Text(
+            demoMode
+                ? 'Mod: Date locale · pe server așteaptă $liveCount live'
+                : 'Mod: Live de pe server ($liveCount)',
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-          ],
-          const SizedBox(height: 18),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(
+            onPressed: onLoadDemoScene,
+            icon: const Icon(Icons.movie_filter_outlined),
+            label: const Text('Încarcă scenă demo'),
+          ),
+          const SizedBox(height: 14),
+          FilterChip(
+            label: const Text('Doar nerezolvate'),
+            selected: filters.unresolvedOnly,
+            onSelected: (v) => onChanged(filters.copyWith(unresolvedOnly: v)),
+          ),
+          const SizedBox(height: 14),
+          Text('Zone active', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          ZoneBoard(
+            tickets: tickets,
+            onSelectZoneTicket: (t) => onSelectTicket(t.id),
+          ),
+          const SizedBox(height: 14),
           Text('Legendă urgență', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           for (final u in Urgency.values.reversed)
@@ -637,7 +1051,7 @@ class _FilterSidebar extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: _LegendRow(urgency: u),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text('Listă', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           for (final option in DispatcherListFilter.values)
@@ -649,7 +1063,7 @@ class _FilterSidebar extends StatelessWidget {
                 onSelected: (_) => onChanged(filters.copyWith(list: option)),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text('Urgență', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           Wrap(
@@ -667,7 +1081,6 @@ class _FilterSidebar extends StatelessWidget {
                   label: Text(UrgencyStyle.of(u).label),
                   selected: filters.urgency == u,
                   selectedColor: UrgencyStyle.of(u).fillStrong,
-                  checkmarkColor: UrgencyStyle.of(u).accent,
                   onSelected: (selected) => onChanged(
                     selected
                         ? filters.copyWith(urgency: u)
@@ -676,7 +1089,7 @@ class _FilterSidebar extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text('Departament', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           for (final dept in Department.values)
@@ -692,6 +1105,23 @@ class _FilterSidebar extends StatelessWidget {
                 ),
               ),
             ),
+          const SizedBox(height: 14),
+          Text('Istoric acțiuni', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          if (history.isEmpty)
+            Text(
+              'Nicio acțiune încă.',
+              style: theme.textTheme.bodySmall,
+            )
+          else
+            for (final entry in history.take(8))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '• ${entry.kindLabelRo}: ${entry.summary}',
+                  style: theme.textTheme.bodySmall?.copyWith(height: 1.3),
+                ),
+              ),
           const SizedBox(height: 12),
           TextButton.icon(
             onPressed: () => onChanged(const DispatcherFilters()),
@@ -739,60 +1169,20 @@ class _LegendRow extends StatelessWidget {
             ),
           ),
         ),
-        Container(
-          width: 28,
-          height: 14,
-          decoration: BoxDecoration(
-            color: style.fill,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: style.accent.withValues(alpha: 0.4)),
-          ),
-        ),
       ],
     );
   }
 }
 
-class _CompactFilterBar extends StatelessWidget {
-  const _CompactFilterBar({
-    required this.filters,
-    required this.onChanged,
+class _DetailPane extends StatelessWidget {
+  const _DetailPane({
+    required this.ticket,
+    required this.history,
+    required this.onClose,
   });
 
-  final DispatcherFilters filters;
-  final ValueChanged<DispatcherFilters> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: <Widget>[
-          for (final option in DispatcherListFilter.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ChoiceChip(
-                label: Text(option == DispatcherListFilter.all
-                    ? 'Toate'
-                    : option == DispatcherListFilter.pending
-                        ? 'Pending'
-                        : option == DispatcherListFilter.active
-                            ? 'Active'
-                            : 'Închise'),
-                selected: filters.list == option,
-                onSelected: (_) => onChanged(filters.copyWith(list: option)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailPane extends StatelessWidget {
-  const _DetailPane({required this.ticket, required this.onClose});
-
   final Ticket ticket;
+  final List<DispatcherHistoryEntry> history;
   final VoidCallback onClose;
 
   @override
@@ -823,6 +1213,25 @@ class _DetailPane extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TicketFeedCard(ticket: ticket),
+          const SizedBox(height: 16),
+          TicketTimeline(ticket: ticket),
+          const SizedBox(height: 16),
+          Text('Istoric pe tichet', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          if (history.isEmpty)
+            Text(
+              'Nicio acțiune locală pe acest tichet.',
+              style: theme.textTheme.bodySmall,
+            )
+          else
+            for (final entry in history)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '• ${entry.kindLabelRo}: ${entry.detail ?? entry.summary}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -905,11 +1314,15 @@ class _Banner extends StatelessWidget {
     required this.color,
     required this.text,
     required this.icon,
+    this.actionLabel,
+    this.onAction,
   });
 
   final Color color;
   final String text;
   final IconData icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -927,6 +1340,11 @@ class _Banner extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600, height: 1.3),
               ),
             ),
+            if (actionLabel != null && onAction != null)
+              TextButton(
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
           ],
         ),
       ),

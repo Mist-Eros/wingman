@@ -1,6 +1,7 @@
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import 'dispatcher_history.dart';
 
 /// Status bucket for the dispatcher feed (not a server status).
 enum DispatcherListFilter {
@@ -16,27 +17,34 @@ class DispatcherFilters {
     this.list = DispatcherListFilter.all,
     this.department,
     this.urgency,
+    this.unresolvedOnly = false,
+    this.zone,
   });
 
   final DispatcherListFilter list;
   final Department? department;
   final Urgency? urgency;
+  final bool unresolvedOnly;
+  final String? zone;
 
   DispatcherFilters copyWith({
     DispatcherListFilter? list,
     Department? department,
     Urgency? urgency,
+    bool? unresolvedOnly,
+    String? zone,
     bool clearDepartment = false,
     bool clearUrgency = false,
+    bool clearZone = false,
   }) =>
       DispatcherFilters(
         list: list ?? this.list,
         department: clearDepartment ? null : (department ?? this.department),
         urgency: clearUrgency ? null : (urgency ?? this.urgency),
+        unresolvedOnly: unresolvedOnly ?? this.unresolvedOnly,
+        zone: clearZone ? null : (zone ?? this.zone),
       );
 
-  /// Tickets for the main feed. Pending overrides are usually rendered in their
-  /// own top section; pass [excludePending] true to avoid duplicates.
   List<Ticket> apply(
     TicketBoard board, {
     bool excludePending = true,
@@ -55,7 +63,6 @@ class DispatcherFilters {
     return _narrow(source, excludePending: excludePending);
   }
 
-  /// Same filters against a local list (demo mode).
   List<Ticket> applyToList(
     List<Ticket> tickets, {
     bool excludePending = true,
@@ -82,6 +89,10 @@ class DispatcherFilters {
       source = source.where((t) => !t.isPendingOverride);
     }
 
+    if (unresolvedOnly) {
+      source = source.where((t) => !t.status.isTerminal);
+    }
+
     if (department != null) {
       final dept = department!;
       source = source.where(
@@ -96,7 +107,14 @@ class DispatcherFilters {
       source = source.where((t) => t.urgency == u);
     }
 
-    return List<Ticket>.unmodifiable(source.toList(growable: false));
+    if (zone != null && zone!.trim().isNotEmpty) {
+      final z = zone!;
+      source = source.where((t) => zoneKeyFor(t) == z);
+    }
+
+    return List<Ticket>.unmodifiable(
+      sortDispatcherTickets(source),
+    );
   }
 
   String get listLabelRo => switch (list) {

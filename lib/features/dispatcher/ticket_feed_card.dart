@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import 'dispatcher_density.dart';
 import 'urgency_style.dart';
 
 /// Shared body used by feed cards and the override card.
@@ -10,10 +11,12 @@ class TicketCardBody extends StatelessWidget {
     super.key,
     required this.ticket,
     this.compact = false,
+    this.density = DispatcherDensity.comfortable,
   });
 
   final Ticket ticket;
   final bool compact;
+  final DispatcherDensity density;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +33,7 @@ class TicketCardBody extends StatelessWidget {
             fontWeight: FontWeight.w800,
             color: style.onFill,
             height: 1.25,
+            fontSize: density.titleSize,
           ),
         ),
         const SizedBox(height: 4),
@@ -53,6 +57,8 @@ class TicketCardBody extends StatelessWidget {
                 icon: Icons.notifications_paused_outlined,
                 label: 'Standby: $standby',
               ),
+            if (ticket.confidence < 0.65 || ticket.isPendingOverride)
+              const _WhyChip(),
           ],
         ),
         if (ticket.aiRationale != null &&
@@ -71,7 +77,9 @@ class TicketCardBody extends StatelessWidget {
         if (!compact) ...[
           const SizedBox(height: 10),
           Text(
-            ticket.transcript.isEmpty ? 'Fără transcript' : '„${ticket.transcript}”',
+            ticket.transcript.isEmpty
+                ? 'Fără transcript'
+                : '„${ticket.transcript}”',
             style: theme.textTheme.bodySmall?.copyWith(
               color: style.onFill.withValues(alpha: 0.7),
               fontStyle: FontStyle.italic,
@@ -86,6 +94,36 @@ class TicketCardBody extends StatelessWidget {
   }
 }
 
+class _WhyChip extends StatelessWidget {
+  const _WhyChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD92D20),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.help_outline, size: 14, color: Colors.white),
+          SizedBox(width: 4),
+          Text(
+            'De ce e aici: încredere < 65% · așteaptă dispecerul',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Scannable ticket card — background color follows urgency.
 class TicketFeedCard extends StatelessWidget {
   const TicketFeedCard({
@@ -93,11 +131,24 @@ class TicketFeedCard extends StatelessWidget {
     required this.ticket,
     this.selected = false,
     this.onTap,
+    this.density = DispatcherDensity.comfortable,
+    this.onDeny,
+    this.onReclassify,
+    this.busy = false,
   });
 
   final Ticket ticket;
   final bool selected;
   final VoidCallback? onTap;
+  final DispatcherDensity density;
+  final VoidCallback? onDeny;
+  final VoidCallback? onReclassify;
+  final bool busy;
+
+  bool get _showActions =>
+      !ticket.status.isTerminal &&
+      !ticket.isPendingOverride &&
+      (onDeny != null || onReclassify != null);
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +202,7 @@ class TicketFeedCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                    padding: density.cardPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
@@ -186,9 +237,12 @@ class TicketFeedCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        TicketCardBody(ticket: ticket),
-                        const SizedBox(height: 12),
+                        SizedBox(height: density == DispatcherDensity.compact ? 8 : 12),
+                        TicketCardBody(
+                          ticket: ticket,
+                          density: density,
+                        ),
+                        SizedBox(height: density == DispatcherDensity.compact ? 8 : 12),
                         Row(
                           children: <Widget>[
                             Icon(
@@ -215,8 +269,7 @@ class TicketFeedCard extends StatelessWidget {
                             const SizedBox(width: 10),
                             _FooterStat(
                               icon: Icons.how_to_vote_outlined,
-                              text:
-                                  '${ticket.resolveVotes}/${ticket.quorum}',
+                              text: '${ticket.resolveVotes}/${ticket.quorum}',
                               color: style.onFill,
                             ),
                           ],
@@ -244,6 +297,27 @@ class TicketFeedCard extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ),
+                        ],
+                        if (_showActions) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: <Widget>[
+                              if (onDeny != null)
+                                OutlinedButton.icon(
+                                  onPressed: busy ? null : onDeny,
+                                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                                  label: const Text('Respinge'),
+                                ),
+                              if (onReclassify != null)
+                                OutlinedButton.icon(
+                                  onPressed: busy ? null : onReclassify,
+                                  icon: const Icon(Icons.swap_horiz, size: 18),
+                                  label: const Text('Reclasifică'),
+                                ),
+                            ],
                           ),
                         ],
                       ],
@@ -415,7 +489,9 @@ class _InfoPill extends StatelessWidget {
 String _shortId(String id) {
   if (id.startsWith('demo-')) {
     final tail = id.replaceFirst('demo-', '');
-    return tail.length <= 10 ? tail.toUpperCase() : tail.substring(0, 10).toUpperCase();
+    return tail.length <= 10
+        ? tail.toUpperCase()
+        : tail.substring(0, 10).toUpperCase();
   }
   final cleaned = id.replaceAll('-', '');
   if (cleaned.length <= 8) return id;
