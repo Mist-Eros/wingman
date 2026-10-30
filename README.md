@@ -109,10 +109,16 @@ cd ..
 python backend\seed_demo.py
 python scripts\smoke_test.py            # must print 37 passed · 0 failed
 
-# 5) run the app on a phone (USB debugging or `flutter run -d <device>`)
-cd <your flutter project>
+# 5) run the app on a phone (USB debugging; Android needs the Android SDK)
+#    The Flutter project IS this repo (android/, ios/, lib/, test/ are generated)
+cd D:\Hackathon\Wingman
 flutter pub get
+flutter analyze
+flutter test
 flutter run --dart-define=API_BASE=https://<LAPTOP_IP>:8443 --dart-define=API_TOKEN=demo-token
+
+# 6) one-command gate before every merge
+.\scripts\verify_all.ps1
 ```
 
 Phone-side CA installation (2 iPhones + 2 Androids): **[docs/certs-and-phones.md](docs/certs-and-phones.md)**
@@ -190,10 +196,15 @@ Full field-level contract (JSON keys, statuses, errors): **[CONTRACTS.md](CONTRA
 ## 7. Gates (run before every merge)
 
 ```powershell
+.\scripts\verify_all.ps1                   # everything below in one command
+```
+
+```powershell
 python scripts\sync_taxonomy.py            # taxonomy.dart ↔ backend/taxonomy.json
 python scripts\check_wire_parity.py        # Dart JSON mapping ↔ FastAPI wire (offline)
-flutter analyze                            # in the Flutter project
-python scripts\smoke_test.py               # backend must pass 37/37
+flutter analyze
+flutter test                               # core contract tests (taxonomy/wire/session)
+python scripts\smoke_test.py --ca backend\certs\ca.crt   # backend must pass 37/37
 ```
 
 The smoke test also asserts that the backend ticket JSON keys **exactly** match what
