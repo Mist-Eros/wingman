@@ -611,12 +611,16 @@ def apply_classification_guards(
 
     # "bagaj lângă banda de bagaje" is a LOCATION, not a belt fault. When the
     # report says the bag is unattended/ownerless, SC-BAG must win over the
-    # mechanical MT-BELT guard (both words appear in the same sentence).
+    # mechanical MT-BELT guard (both words appear in the same sentence), and the
+    # later keyword loop must not flip it back to MT-BELT. The skip is based on
+    # the TEXT (not only on the model's code): the model often already answers
+    # SC-BAG and the "banda" keyword would otherwise undo it.
+    unattended_bag = any(phrase in text for phrase in _UNATTENDED_BAG_SIGNALS)
     if (
-        classification.incident_code != "SC-BAG"
+        unattended_bag
+        and classification.incident_code != "SC-BAG"
         and classification.incident_code
         in {"MT-BELT", "SC-BEHAV", "SC-ITEM", "OP-OTHER", "OP-QUEUE"}
-        and any(phrase in text for phrase in _UNATTENDED_BAG_SIGNALS)
     ):
         bag_type = taxonomy.by_code("SC-BAG")
         urgency = classification.urgency
@@ -639,6 +643,10 @@ def apply_classification_guards(
         )
 
     for code, words in _KEYWORD_GUARDS:
+        if unattended_bag and code == "MT-BELT":
+            # Do not undo SC-BAG just because the word "banda" appeared as a
+            # location ("lângă banda de bagaje").
+            continue
         matched = next((word for word in words if word in text), None)
         if matched is None:
             continue
