@@ -22,17 +22,20 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Contracts + docs + demo runbook written | `CONTRACTS.md`, `docs/` |
 | **Conversational `/analyze` contract** (`fields` + `missing` + `question`, max 3 questions, dispatcher cap) | smoke 50/50 · live Dart 7/7 |
 | `compileSdk = 37` pinned in `android/app/build.gradle.kts` (permission_handler fix) | F1 request applied |
-| Teammate distribution zip | `D:\Hackathon\Wingman-repo.zip` |
+| Teammate distribution zip | `D:\Hackathon\Wingman-repo.zip` (bundle: `D:\Hackathon\Wingman.bundle`) |
+| **GitHub repo (private) `Mist-Eros/wingman`**, full history pushed | `git log --oneline`, `gh repo view` |
+| **Demo APKs built**: TLS release, emergency HTTP release, TLS debug | `D:\Hackathon\dist\` (47.5 / 47.5 / 170 MB) |
+| **Voice → text**: `POST /api/transcribe` (local faster-whisper `small` int8) + Dart `api.transcribe` | smoke 56/56 · live Dart 7/7 · `docs/whisper-contract.md` |
+| Hotspot fallback for phone testing (guest Wi-Fi isolates clients) | SSID `DESKTOP-ET39230 5531`, laptop IP `192.168.137.1`, `scripts/hotspot_on.ps1` |
 
 ## In progress ⏳
 
 | Item | Owner | Notes |
 |---|---|---|
-| Ollama install + model pull | background job | guest Wi-Fi ≈ 0.6 MB/s → OllamaSetup.exe 1.6 GB (~40 min) then `qwen2.5:1.5b` (~1 GB, ~25 min); then verify `/api/analyze` returns `ai_source: ollama` |
-| Android SDK done; **APK build** | background job | Gradle 9.3.1 downloaded (224 MB); first build is downloading the Android NDK r28c (~1 GB) on the same slow link, then compiles |
-| **Backlog: location gate** (app usable only near the airport) | designed, not implemented | see `docs/backlog.md` — needs permission_handler + geofence + a dev bypass so we can work from home; implement after H36 if the demo is stable |
-| Phone ↔ laptop reachability on `HACKATHON-GUEST` | **user** | open `https://10.10.28.37:8443/` in the phone browser |
-| First APK install + app boot | Lead | after the build finishes: `flutter build apk --debug` → `adb install` |
+| Ollama + model | Lead | Ollama 0.40.13 installed; `qwen2.5:1.5b` pull resumed after a stall (~940 MB / ~1 GB already on disk). When it lands: restart backend, check `/api/analyze` → `ai_source: "ollama"` |
+| Phone install + first boot | **user** | plug Android with USB debugging → `.\scripts\phone_run.ps1`; hotspot must be on (`.\scripts\hotspot_on.ps1`) |
+| F1 voice integration | F1 + Lead | `/api/transcribe` is live; `docs/whisper-contract.md` sent. Waiting for their `CONTRACT_REQUEST.md` to confirm field names / multipart-vs-base64 |
+| Backlog: location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; implement after H36 if stable |
 
 ## Next (H0–H4 remaining)
 
