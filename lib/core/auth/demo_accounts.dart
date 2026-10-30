@@ -6,10 +6,14 @@
 // so the "encrypted accounts" requirement is real even in a hackathon build.
 //
 // Department scope decides who gets alerted:
-//   • Andy Admin   → dispatcher dashboard, sees everything, can decide.
-//   • Earl Engineer→ crew, only maintenance/IT/baggage/airside incidents.
-//   • John Janitor → crew, only terminal incidents (spills, queues, terminal).
-//   • Rita Reporter→ reporter, files incidents.
+//   • Andy Admin        → dispatcher dashboard, sees everything, can decide.
+//   • Earl Engineer     → crew, only maintenance/IT/baggage/airside incidents.
+//   • John Janitor      → crew, only terminal incidents (spills, queues, terminal).
+//   • Fred Firefighter  → crew, only fire/rescue incidents (fire brigade).
+//   • Gina Guard        → crew, only security incidents (guards).
+//
+// ANYONE can report (report buttons on the crew/dispatcher screens and the PC
+// dashboard); the role only controls which incidents alert the account.
 //
 // The demo password is shown on the login card on purpose (judges must be able
 // to sign in in 5 seconds); the hash validation is what protects the account.
@@ -92,7 +96,7 @@ DemoAccount _account({
       tag: tag,
     );
 
-/// The four hardcoded demo accounts (passwords are hashed above).
+/// The hardcoded demo accounts (passwords are hashed above).
 final List<DemoAccount> demoAccounts = <DemoAccount>[
   _account(
     username: 'admin',
@@ -125,12 +129,20 @@ final List<DemoAccount> demoAccounts = <DemoAccount>[
     tag: 'JANITOR',
   ),
   _account(
-    username: 'reporter',
-    displayName: 'Rita Reporter',
-    password: 'reporter123',
-    role: UserRole.reporter,
-    departments: const <Department>{},
-    tag: 'REPORTER',
+    username: 'firefighter',
+    displayName: 'Fred Firefighter',
+    password: 'firefighter123',
+    role: UserRole.crew,
+    departments: const <Department>{Department.fireRescue},
+    tag: 'FIRE',
+  ),
+  _account(
+    username: 'guard',
+    displayName: 'Gina Guard',
+    password: 'guard123',
+    role: UserRole.crew,
+    departments: const <Department>{Department.security},
+    tag: 'GUARD',
   ),
 ];
 

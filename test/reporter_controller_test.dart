@@ -324,9 +324,10 @@ void main() {
         ),
       );
       await h.speak('ceva s-a vărsat');
-      // the server knows type + place; only the size is left to ask
-      expect(h.question, contains('Cât de mare'));
-      await h.speak('mare');
+      // The server already has type + place and says "ready": the app must not
+      // invent the local "size" question after that.
+      expect(h.question, isNull);
+      expect(h.controller.phase, ReporterPhase.confirming);
       final fields = h.controller.result!.fields;
       expect(fields.confidence, 0.93);
       expect(fields.aiSource, AiSource.ollama);

@@ -1,4 +1,4 @@
-# Build progress — live checklist
+﻿# Build progress — live checklist
 
 Updated: 2026-10-30 (H0 session). Tick items as they land.
 
@@ -54,10 +54,14 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Time-of-day skies**: six adaptive looks (Zori / Dimineață / Amiază / După-amiază / Apus / Noapte) chosen from the clock, stars + crescent moon at night, solid-white clouds, `--dart-define=SKY_PERIOD=…` for deterministic demo builds | `lib/core/widgets/sky_background.dart`, `test/sky_period_test.dart` |
 | **DevTools screen**: wrench icon on login → preview all six looks, live server health (Ollama/STT/WSS/tickets), force a 5-second override ticket, reset store, account-scope matrix | `lib/features/dev/dev_tools_screen.dart` |
 | **Desktop control room in Waterfox**: zero-dependency HTML dashboard (no CanvasKit/WebGL), trusted via private CA + dedicated Waterfox profile, opened from disk; `-Flutter` variant for Chromium | `scripts/serve_dashboard.ps1`, `scripts/dashboard/` |
-| **Progress gallery**: 49 screenshots organised into `Hackathon\ProgressPics\Steep_01…09` (per-milestone folders + README) | `D:\Hackathon\ProgressPics\` |
+| **Progress gallery**: 18 curated screenshots in `D:\Hackathon\Screenshots` (categorised folders + README); duplicates/failed experiments deleted | `D:\Hackathon\Screenshots\` |
+| **Demo roles expanded**: reporter account deleted; **Fred Firefighter** (`firefighter123`, fire/rescue) and **Gina Guard** (`guard123`, security) added; login shows 5 accounts; alerts verified per scope (Guard sees SF-FIRE + SC-BAG, Firefighter sees SF-FIRE) | `lib/core/auth/demo_accounts.dart`, `test/demo_accounts_test.dart` |
+| **AI takes all available info — app side fixed**: the reporter's local conversation brain no longer invents "detail" questions when the server says the report is complete. On-device: typing „o femeie a luat foc la poarta 2" goes **straight to verification** (SF-FIRE, Poarta 2, Persoane în pericol: Da, Critică, 95%) with **zero questions** | `lib/features/reporter/brain/conversation_brain.dart`, `test/conversation_brain_test.dart` (6 tests) |
+| **Admin screen mobile layout fixed**: phone dispatcher got a slim LIVE/urgency row, no big banners/department strip; a full ticket is now visible and the queue scrolls | `lib/features/dispatcher/dispatcher_screen.dart` (`_CompactUrgencyRow`) |
+| **PC report form** rebuilt: no dropdowns — free-text terminal + zone inputs, bigger textarea, quick-fill chips (Scurgere / Bagaj / Persoană / Incendiu), N + Ctrl+Enter shortcuts | `scripts/dashboard/index.html` |
 | **Department-scoped notifications**: high-importance local notifications on the phone; a ticket alerts only accounts whose scope intersects its primary departments. Verified on-device: fuel/spill (maintenance+terminal) alerted the janitor, security-only bag did not | `lib/core/notifications/ticket_notifier.dart`, `test/notifications_test.dart` (4 tests) |
 | **Reporting from anywhere**: crew + dispatcher app bars get a Raportează action; the PC Waterfox dashboard gets a report form (N / Ctrl+Enter) with location fields; verified admin report on PC → live dashboard ticket → phone notification | `scripts/dashboard/index.html`, dispatcher/crew screens |
-| **S24 Ultra fit**: compact login (all 4 accounts + resume card fit), shortened reporter title, notification test on 1080×2340 | screenshots `D:\Hackathon\ProgressPics\Steep_10_Reporting_Notifications` |
+| **S24 Ultra fit**: compact login (all 5 accounts + resume card fit), shortened reporter title, notification test on 1080×2340 | screenshots `D:\Hackathon\Screenshots\01_Login_and_Roles` |
 | **Plane silhouette** redrawn as a real top-down airliner (fuselage, swept wings, tailplane, engines); crescent moon via transparent cutout | `lib/core/widgets/sky_background.dart` |
 | **Conversational AI fix — no redundant questions**: person-harm phrasings („un copil a luat foc", „pasagerul a leșinat") now imply `people_at_risk=true`, and an already-given location is never asked again. `Un copil a luat foc la poarta 4` → SF-FIRE/critical/Poarta 4, **ready immediately, no questions**. Smoke **65/65** | `backend/app/ai.py`, `scripts/smoke_test.py` [10c], parity fix for `force_override` |
 
@@ -65,35 +69,16 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 
 | Item | Owner | Notes |
 |---|---|---|
-| Demo rehearsal on 2-3 phones + desktop | **user + Lead** | sign in as Rita/Earl/John/Andy per `docs/demo-script.md`, run the 3-min flow, time it |
-| Physical microphone check (human step) | **user** | hold the mic on Rita's reporter screen and speak; the code path is verified by the live WAV test, this only confirms the device mic |
+| Demo rehearsal on 2-3 phones + desktop | **user + Lead** | sign in as **Fred/Gina/Earl/John/Andy** per `docs/demo-script.md`, run the 3-min flow, time it |
+| Physical microphone check (human step) | **user** | hold the mic on a friend's report screen and speak; the code path is verified by the live WAV test + typed device test |
 | Desktop dashboard polish | Lead | add ticket age/live feed highlights if time permits |
 | Location gate (on-airport-only) | Lead | designed in `docs/backlog.md`; after the demo flow is stable |
 
 ## Next
 
-1. Rehearse the 3-minute script with the new accounts (Rita reporter → Andy admin desktop →
-   Earl engineer → John janitor) and the desktop control room open on the laptop.
-2. Real-mic test on the reporter account.
-3. Optional: project the dashboard on the big screen while phones act (F11 fullscreen in Edge).
+1. Rehearse the 3-minute script: PC admin report (N → type → Ctrl+Enter) → phone notification →
+   crew Preia/Rezolvat; switch phones between Earl/John/Fred/Gina to show scoped alerts.
+2. Real-mic test on any report screen (voice button) — the typed path is already verified.
+3. Optional: project the Waterfox control room on the big screen (F11).
 4. iOS stays **cloud Mac later** (Apple Developer account needed for device installs).
 
-## Next (H0–H4 remaining)
-
-1. **Phone test (user, 2 min):** Safari/Chrome on one Android → `https://192.168.0.170:8443/`.
-   - Page loads (after accepting the cert warning) → network path works.
-   - Timeout → guest Wi-Fi client isolation → switch phones + laptop to the laptop hotspot and
-     re-run `.\scripts\gen_certs.ps1 -Force` (documented in `docs/laptop-setup.md`).
-2. **Plug one Android phone via USB, enable Developer options → USB debugging.**
-3. Build + install: `.\scripts\build_demo_apks.ps1` (produces TLS + emergency HTTP APKs).
-4. Run the app: role picker → reporter → report → dispatcher/crew screens (stubs for now).
-5. Send `Wingman-repo.zip` (or a git remote) to F1/F2/F3 with `CONTRACTS.md` §1–§7.
-6. Verify the AI path: `python scripts\smoke_test.py --ca backend\certs\ca.crt` after the model
-   pull finishes — reports should show `ai_source: ollama`, not `fallback`.
-7. iOS (decision: **cloud Mac later**): needs an Apple Developer account for device installs;
-   keep it out of the critical path until the H24 contract freeze.
-
-## Demo-riskiest item right now
-
-`HACKATHON-GUEST` is a guest SSID. If phones cannot reach the laptop, the whole live demo
-depends on the hotspot fallback — test it **today**, not at H36.

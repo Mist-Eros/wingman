@@ -209,7 +209,13 @@ Severity assessSeverity({
     reasons.add('fell');
   }
   if (peopleInDanger) {
-    level = level < Urgency.high.level ? Urgency.high.level : level + 1;
+    // "someone fell on the escalator" sets both flags from the same phrase;
+    // don't double-escalate it to critical just because a person is mentioned.
+    if (signals.fell) {
+      if (level < Urgency.high.level) level = Urgency.high.level;
+    } else {
+      level = level < Urgency.high.level ? Urgency.high.level : level + 1;
+    }
     reasons.add('people');
   }
   final urgency = _urgencyOf(level);

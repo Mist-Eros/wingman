@@ -210,12 +210,14 @@ void main() {
           ready: true,
         );
 
-    test('the server type wins; details still come from the reporter', () {
+    test('the server type wins; a ready server means no local questions', () {
       final c = Conversation(
         'ceva s-a vărsat',
         server: serverKnows(code: 'SF-SPILL', location: 'Poarta 12'),
       );
-      expect(c.run(<String>['mare']), <String>['size']);
+      // The server already extracted everything; the app must not ask the local
+      // "size" detail after a complete report.
+      expect(c.run(<String>['mare']), isEmpty);
       expect(c.last.result.fields.incidentCode, 'SF-SPILL');
       expect(c.last.result.fields.confidence, 0.91);
       expect(c.last.result.fields.urgency, Urgency.critical);

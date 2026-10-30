@@ -218,15 +218,17 @@ deterministic build use `--dart-define=SKY_PERIOD=night` (`dawn`, `morning`, `mi
 `afternoon`, `sunset`).
 
 **Demo accounts** (hardcoded, passwords stored as salted SHA-256; scope decides alerts):
-`admin/admin123` (everything), `engineer/engineer123` (maintenance/IT/baggage/airside),
-`janitor/janitor123` (terminal only), `reporter/reporter123` (reports incidents).
+`admin/admin123` (Andy Admin — everything + dispatcher), `engineer/engineer123` (Earl Engineer —
+maintenance/IT/baggage/airside), `janitor/janitor123` (John Janitor — terminal only),
+`firefighter/firefighter123` (Fred Firefighter — fire/rescue), `guard/guard123` (Gina Guard —
+security). The separate "reporter" account was removed: **anyone can report** from any account.
 Back from a role screen returns to the login screen (no more app exit).
 
 ### Reporting & alerting (who reports, who gets pinged)
 
-**Anyone can report.** The reporter role has the full voice/typed flow, the crew and dispatcher
-screens have a **Raportează** action (mic icon / overflow menu), and the PC dashboard has
-**＋ Raportează** (or press **N**; **Ctrl+Enter** submits).
+**Anyone can report.** The crew and dispatcher screens have a **Raportează** action (campaign
+icon / overflow menu), and the PC dashboard has **＋ Raportează** (or press **N**; **Ctrl+Enter**
+submits). There is no separate reporter role.
 
 **Only the involved departments get notified.** A ticket alerts an account when the ticket's
 **primary departments** intersect that account's scope:
@@ -234,8 +236,15 @@ screens have a **Raportează** action (mic icon / overflow menu), and the PC das
 | Incident (taxonomy) | Primary departments | Alerts |
 |---|---|---|
 | Fuel / liquid leak `SF-SPILL` | maintenance + terminal | **Earl Engineer AND John Janitor** |
-| Unattended bag `SC-BAG` | security | security only (neither engineer nor janitor) |
+| Fire / smoke `SF-FIRE` | fire_rescue + security | **Fred Firefighter AND Gina Guard** |
+| Unattended bag `SC-BAG` | security | Gina Guard only |
 | Belt fault `MT-BELT` | baggage + maintenance | Earl Engineer |
+
+**The AI extracts everything it can before asking.** `„o femeie a luat foc la poarta 2"` is
+classified as SF-FIRE/critical with location *Poarta 2* and people-at-risk **true** — the app
+goes straight to the verification card with **no follow-up questions**. Questions only appear
+for information that is genuinely missing (e.g. no place mentioned). The server owns the
+conversation; the app's local brain only fills gaps when the server is unreachable.
 
 Alerts are real Android notifications (high-importance channel, sound + vibration) showing
 `🚨 <code> · <label>` and `<location> · <departments>`. Notifications are local (no cloud push):

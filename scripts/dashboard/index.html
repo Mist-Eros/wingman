@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ro">
 <head>
 <meta charset="utf-8" />
@@ -183,25 +183,33 @@
 </div>
 
 <div class="modal-bg" id="reportBg">
-  <div class="modal">
+  <div class="modal" style="width:560px">
     <h3>Raportează incident (PC · Andy Admin)</h3>
-    <div class="tiny">Scrie ce s-a întâmplat. AI-ul local îl clasifică și alertele pleacă doar către departamentele necesare (ex. inginer + femeie de serviciu pentru o scurgere).</div>
-    <textarea id="reportText" rows="3"
+    <div class="tiny">Scrie ce s-a întâmplat. AI-ul local ia automat tot ce poate (tip, locație, persoane), iar alertele pleacă doar către departamentele necesare.</div>
+    <textarea id="reportText" rows="4"
       placeholder="ex. Scurgere de carburant lângă poarta 5, terminal 1"
-      style="width:100%;margin-top:8px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:10px;font:inherit;resize:vertical"></textarea>
-    <div class="row" style="margin-top:8px">
-      <select id="reportTerminal" style="flex:0 0 150px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px">
-        <option value="T1">Terminal 1</option>
-        <option value="T2">Terminal 2</option>
-        <option value="PLATFORMA">Platformă</option>
-      </select>
+      style="width:100%;margin-top:10px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:12px;font:inherit;font-size:14px;resize:vertical"></textarea>
+    <div class="row" style="margin-top:8px;gap:8px">
+      <input id="reportTerminal" list="terminalOptions" placeholder="Terminal (ex. T1)"
+        title="Terminal — text liber"
+        style="flex:0 0 150px;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
+      <datalist id="terminalOptions">
+        <option value="T1"></option><option value="T2"></option><option value="Platformă"></option>
+      </datalist>
       <input id="reportZone" placeholder="Zonă / poartă (ex. Poarta 5)"
         style="flex:1;background:#132238;color:#e8f0fa;border:1px solid #22324a;border-radius:10px;padding:9px" />
     </div>
-    <div class="row" style="justify-content:flex-end;margin-top:8px">
+    <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
+      <button class="chip" onclick="fillReport('Scurgere de combustibil lângă poarta 5, terminal 1')">Scurgere</button>
+      <button class="chip" onclick="fillReport('Bagaj nesupravegheat lângă poarta 7')">Bagaj</button>
+      <button class="chip" onclick="fillReport('O femeie a leșinat la poarta 6')">Persoană leșinată</button>
+      <button class="chip" onclick="fillReport('Un copil a luat foc la poarta 4')">Incendiu</button>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px">
       <button class="btn" onclick="closeReport()">Anulează</button>
       <button class="btn primary" onclick="submitReport()">Trimite raportul</button>
     </div>
+    <div class="tiny" style="margin-top:6px">Ctrl+Enter trimite · N deschide formularul</div>
   </div>
 </div>
 
@@ -410,9 +418,14 @@ function openReport() {
   $('modalBg').style.display = 'none';
   $('reportBg').style.display = 'grid';
   $('reportText').value = '';
+  $('reportZone').value = '';
   setTimeout(() => $('reportText').focus(), 50);
 }
 function closeReport() { $('reportBg').style.display = 'none'; }
+function fillReport(text) {
+  $('reportText').value = text;
+  $('reportText').focus();
+}
 async function submitReport() {
   const text = $('reportText').value.trim();
   if (!text) { toast('Scrie descrierea incidentului.'); return; }
@@ -423,7 +436,7 @@ async function submitReport() {
         source: 'voice', transcript: text,
         reporter_id: 'admin-pc', reporter_name: 'Andy Admin', use_ai: true,
         location: {
-          terminal: $('reportTerminal').value,
+          terminal: $('reportTerminal').value.trim(),
           zone: $('reportZone').value.trim(),
         },
       }),
@@ -465,3 +478,4 @@ setInterval(() => loadTickets(false), 20000);
 </script>
 </body>
 </html>
+

@@ -286,6 +286,8 @@ class _AccountCard extends StatelessWidget {
     return switch (account.username) {
       'engineer' => Icons.engineering_outlined,
       'janitor' => Icons.cleaning_services_outlined,
+      'firefighter' => Icons.local_fire_department_outlined,
+      'guard' => Icons.security_outlined,
       _ => Icons.record_voice_over_outlined,
     };
   }
@@ -295,6 +297,8 @@ class _AccountCard extends StatelessWidget {
     return switch (account.username) {
       'engineer' => const Color(0xFF00695C),
       'janitor' => const Color(0xFF9A6A00),
+      'firefighter' => const Color(0xFFC62828),
+      'guard' => const Color(0xFF1B4F9C),
       _ => WingmanColors.seed,
     };
   }

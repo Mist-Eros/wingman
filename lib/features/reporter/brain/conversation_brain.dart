@@ -213,32 +213,40 @@ class ConversationBrain {
       if (location.isEmpty) 'location',
     ];
 
-    // ── what to ask next (each slot at most once) ───────────────────────────
-    final candidates = <PlannedQuestion>[];
-    if (type == null && category == null) candidates.add(_typeQuestion());
-    if (location.isEmpty) candidates.add(_locationQuestion());
-    for (final slot in slotsForType) {
-      if (!details.containsKey(slot)) candidates.add(_detailQuestion(slot, type));
-    }
-    // The server asked "anyone in danger?" for a type we have no detail for.
-    final serverQuestion = server?.question;
-    if (serverQuestion != null &&
-        normalizeText(serverQuestion).contains('pericol') &&
-        !slotsForType.contains('people')) {
-      candidates.add(_detailQuestion('people', type));
-    }
-    final unmapped = _unmappedServerQuestion(server);
-    if (unmapped != null) candidates.add(unmapped);
-
+    // ── what to ask next ─────────────────────────────────────────────────────
+    // The server owns the conversation when it actually knows something: it
+    // classified the incident or it explicitly asks for a slot. If it says the
+    // report is ready, everything it could extract is already in (`o femeie a
+    // luat foc la poarta 2` → type + location + people_at_risk) and the local
+    // brain must NOT invent extra "detail" questions. A dumb/empty server
+    // answer (no code, no question) falls back to the local brain as before.
+    final serverAuthoritative = server != null &&
+        (server.fields.incidentCode != null || server.needsMoreInfo);
     PlannedQuestion? next;
-    if (_asked.length < maxQuestions) {
-      for (final candidate in candidates) {
-        if (!_asked.contains(candidate.slot)) {
-          next = candidate;
-          break;
+    if (serverAuthoritative) {
+      if (!server.ready && _asked.length < maxQuestions) {
+        next = _plannedFromServer(server, type);
+      }
+    } else {
+      // Offline / server could not classify: the local brain fills the gaps.
+      final candidates = <PlannedQuestion>[];
+      if (type == null && category == null) candidates.add(_typeQuestion());
+      if (location.isEmpty) candidates.add(_locationQuestion());
+      for (final slot in slotsForType) {
+        if (!details.containsKey(slot)) {
+          candidates.add(_detailQuestion(slot, type));
+        }
+      }
+      if (_asked.length < maxQuestions) {
+        for (final candidate in candidates) {
+          if (!_asked.contains(candidate.slot)) {
+            next = candidate;
+            break;
+          }
         }
       }
     }
+    if (next != null && _asked.contains(next.slot)) next = null;
 
     return Assessment(
       result: AnalyzeResult(
@@ -309,6 +317,20 @@ class ConversationBrain {
     if (server.asksForLocation || server.asksForType) return null;
     if (normalizeText(question).contains('pericol')) return null;
     return PlannedQuestion(slot: 'server', ro: question, en: question);
+  }
+
+  /// Maps the server's Romanian question to the matching planned question, so
+  /// the app asks exactly what the server wants and nothing more.
+  PlannedQuestion? _plannedFromServer(AnalyzeResult server, IncidentType? type) {
+    final question = server.question;
+    if (question == null || question.isEmpty) return null;
+    if (server.asksForLocation) return _locationQuestion();
+    if (server.asksForType) return _typeQuestion();
+    if (normalizeText(question).contains('pericol')) {
+      return _detailQuestion('people', type);
+    }
+    return _unmappedServerQuestion(server) ??
+        PlannedQuestion(slot: 'server', ro: question, en: question);
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────

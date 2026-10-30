@@ -219,8 +219,18 @@ final RegExp _peopleYes = RegExp(
   r'(?:inauntru|inside|blocat\w*|prins\w*|stuck))\b',
 );
 
+// Person + harm phrasing ("o femeie a luat foc", "un copil a lesinat") already
+// means someone is in danger — don't ask about it later.
+final RegExp _personHarm = RegExp(
+  r'\b(copil\w*|baiat\w*|fat[ae]\w*|femeie|barbat\w*|persoan\w*|pasager\w*|'
+  r'angajat\w*|victim\w*|pacient\w*|cineva|om|oameni)\b.{0,70}?\b'
+  r'(a luat foc|au luat foc|luat foc|in flacari|ars|arse|ranit\w*|cazut\w*|'
+  r'lesinat\w*|sanger\w*|in pericol|evacuat|atacat)\b',
+);
+
 String? _findPeople(String norm) {
   if (_peopleNo.hasMatch(norm)) return 'Nu';
+  if (_personHarm.hasMatch(norm)) return 'Da';
   if (_peopleYes.hasMatch(norm)) return 'Da';
   return null;
 }

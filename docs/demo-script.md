@@ -14,9 +14,11 @@
    → 5 tickets: fire/smoke (critical), unattended bag, belt fault (menu), spill (janitor),
    forced-override.
 4. **Accounts** (hardcoded, hashed passwords): `admin/admin123` (Andy Admin — sees and
-   decides everything), `engineer/engineer123` (Earl Engineer — only maintenance/IT/baggage/
-   airside), `janitor/janitor123` (John Janitor — only terminal incidents), `reporter/reporter123`
-   (Rita Reporter). Sign in on the phones with the right scope for the story.
+   decides everything), `engineer/engineer123` (Earl Engineer — maintenance/IT/baggage/airside),
+   `janitor/janitor123` (John Janitor — terminal only), `firefighter/firefighter123`
+   (Fred Firefighter — fire/rescue), `guard/guard123` (Gina Guard — security).
+   There is no reporter account; **anyone can report** from the crew/dispatcher screens or the
+   PC dashboard.
 5. Phones: install `D:\Hackathon\dist\wingman-tls-release.apk`, sign in as **Earl Engineer** and
    **John Janitor**, confirm **„Server conectat"**, and allow notifications on the first sign-in
    (system prompt). Keep charger connected, **Stay awake** ON, app open on the crew screen —

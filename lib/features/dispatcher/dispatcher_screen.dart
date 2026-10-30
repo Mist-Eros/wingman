@@ -695,6 +695,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   loading: board.loading && !demo,
                   lastError: demo ? null : board.lastError,
                   lastActionError: demo ? null : board.lastActionError,
+                  compact: compact,
                   onFiltersChanged: (next) => setState(() => _filters = next),
                   onSelectTicket: (id) =>
                       setState(() => _selectedTicketId = id),
@@ -773,6 +774,7 @@ class _FeedPane extends StatelessWidget {
     required this.loading,
     required this.lastError,
     required this.lastActionError,
+    required this.compact,
     required this.onFiltersChanged,
     required this.onSelectTicket,
     required this.onConfirm,
@@ -798,6 +800,10 @@ class _FeedPane extends StatelessWidget {
   final bool loading;
   final String? lastError;
   final String? lastActionError;
+
+  /// Phone layout: skip the big banners/department strip so full tickets fit.
+  final bool compact;
+
   final ValueChanged<DispatcherFilters> onFiltersChanged;
   final ValueChanged<String> onSelectTicket;
   final Future<void> Function(String id) onConfirm;
@@ -816,7 +822,9 @@ class _FeedPane extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (loading) const LinearProgressIndicator(minHeight: 2),
-        if (demoMode)
+        // The big WSS/demo banners are desktop-only: on the phone they ate half
+        // the screen and pushed the ticket cards out of view.
+        if (!compact && demoMode)
           _Banner(
             color: const Color(0xFFE0F2FE),
             text:
@@ -827,12 +835,13 @@ class _FeedPane extends StatelessWidget {
             actionLabel: 'Încarcă scenă demo',
             onAction: onLoadDemoScene,
           ),
-        _Banner(
-          color: connected ? const Color(0xFFECFDF3) : const Color(0xFFFEE4E2),
-          text:
-              '${connected ? 'WSS OK' : 'WSS DOWN'} · Ultimul eveniment: $lastEventLabel',
-          icon: connected ? Icons.bolt : Icons.link_off,
-        ),
+        if (!compact)
+          _Banner(
+            color: connected ? const Color(0xFFECFDF3) : const Color(0xFFFEE4E2),
+            text:
+                '${connected ? 'WSS OK' : 'WSS DOWN'} · Ultimul eveniment: $lastEventLabel',
+            icon: connected ? Icons.bolt : Icons.link_off,
+          ),
         if (lastError != null)
           _Banner(
             color: theme.colorScheme.errorContainer,
@@ -846,55 +855,69 @@ class _FeedPane extends StatelessWidget {
             icon: Icons.warning_amber_outlined,
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              UrgencySummaryBar(
-                tickets: allTickets,
-                selected: filters.urgency,
-                onSelect: (urgency) => onFiltersChanged(
-                  urgency == null
-                      ? filters.copyWith(clearUrgency: true)
-                      : filters.copyWith(urgency: urgency),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: <Widget>[
-                  FilterChip(
-                    label: const Text('Doar nerezolvate'),
-                    selected: filters.unresolvedOnly,
-                    onSelected: (v) =>
-                        onFiltersChanged(filters.copyWith(unresolvedOnly: v)),
+              if (compact)
+                _CompactUrgencyRow(
+                  tickets: allTickets,
+                  pendingCount: pending.length,
+                  connected: connected,
+                  onSelect: (urgency) => onFiltersChanged(
+                    urgency == null
+                        ? filters.copyWith(clearUrgency: true)
+                        : filters.copyWith(urgency: urgency),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Densitate: ${density.labelRo}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                )
+              else
+                UrgencySummaryBar(
+                  tickets: allTickets,
+                  selected: filters.urgency,
+                  onSelect: (urgency) => onFiltersChanged(
+                    urgency == null
+                        ? filters.copyWith(clearUrgency: true)
+                        : filters.copyWith(urgency: urgency),
+                  ),
+                ),
+              if (!compact) ...<Widget>[
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    FilterChip(
+                      label: const Text('Doar nerezolvate'),
+                      selected: filters.unresolvedOnly,
+                      onSelected: (v) =>
+                          onFiltersChanged(filters.copyWith(unresolvedOnly: v)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Densitate: ${density.labelRo}',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Distribuție pe departamente',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DepartmentQueueStrip(
+                  tickets: allTickets,
+                  selected: filters.department,
+                  onSelect: (dept) => onFiltersChanged(
+                    filters.copyWith(
+                      department: dept,
+                      clearDepartment: dept == null,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Distribuție pe departamente',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
                 ),
-              ),
-              const SizedBox(height: 8),
-              DepartmentQueueStrip(
-                tickets: allTickets,
-                selected: filters.department,
-                onSelect: (dept) => onFiltersChanged(
-                  filters.copyWith(
-                    department: dept,
-                    clearDepartment: dept == null,
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -1364,6 +1387,125 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Phone-sized replacement for [UrgencySummaryBar]: one slim row so the ticket
+/// list keeps almost the whole screen (the big cards were cutting tickets off).
+class _CompactUrgencyRow extends StatelessWidget {
+  const _CompactUrgencyRow({
+    required this.tickets,
+    required this.pendingCount,
+    required this.connected,
+    required this.onSelect,
+  });
+
+  final List<Ticket> tickets;
+  final int pendingCount;
+  final bool connected;
+  final ValueChanged<Urgency?> onSelect;
+
+  int _count(Urgency urgency) => tickets
+      .where((ticket) => ticket.urgency == urgency && ticket.status.isActive)
+      .length;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE4E7EC)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            Icons.circle,
+            size: 9,
+            color: connected ? const Color(0xFF027A48) : const Color(0xFFD92D20),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            connected ? 'LIVE' : 'OFF',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+              color: Color(0xFF475467),
+            ),
+          ),
+          const SizedBox(width: 10),
+          for (final urgency in Urgency.values) ...<Widget>[
+            _pill(urgency),
+            const SizedBox(width: 6),
+          ],
+          if (pendingCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE4E2),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$pendingCount în 5s',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFB42318),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill(Urgency urgency) {
+    final color = switch (urgency) {
+      Urgency.critical => const Color(0xFFD92D20),
+      Urgency.high => const Color(0xFFDC6803),
+      Urgency.medium => const Color(0xFFB54708),
+      Urgency.low => const Color(0xFF027A48),
+    };
+    final background = switch (urgency) {
+      Urgency.critical => const Color(0xFFFEF3F2),
+      Urgency.high => const Color(0xFFFFFAEB),
+      Urgency.medium => const Color(0xFFFFFAEB),
+      Urgency.low => const Color(0xFFECFDF3),
+    };
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onSelect(urgency),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                '${_count(urgency)}',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+              Text(
+                urgency.labelRo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: color, fontSize: 8, height: 1.2),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
