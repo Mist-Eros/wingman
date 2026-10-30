@@ -287,6 +287,10 @@ class Ticket {
   /// events.
   final int version;
 
+  /// Server timestamps (UTC). Used for sorting and "acum 2 min" chips.
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   // ── Derived helpers used by all three feature teams ──────────────────────
 
   bool get isPendingOverride => status == TicketStatus.pendingOverride;

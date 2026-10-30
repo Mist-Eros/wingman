@@ -135,14 +135,14 @@ class TicketBoard extends ChangeNotifier {
             dispatcherId: dispatcherId,
           ));
 
-  Future<bool> override(
+  Future<bool> reclassify(
     String ticketId, {
     required String incidentCode,
     Urgency? urgency,
     String? reason,
     String? dispatcherId,
   }) =>
-      _run(() => _api.override(
+      _run(() => _api.reclassify(
             ticketId,
             incidentCode: incidentCode,
             urgency: urgency,

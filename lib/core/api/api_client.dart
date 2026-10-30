@@ -223,7 +223,7 @@ class ApiClient {
         'dispatcher_id': dispatcherId,
       });
 
-  Future<Ticket> override(
+  Future<Ticket> reclassify(
     String ticketId, {
     required String incidentCode,
     Urgency? urgency,
@@ -260,7 +260,9 @@ class ApiClient {
   Future<Map<String, dynamic>> health() => _send('GET', '/api/health');
 
   /// Clears the in-memory store (demo rehearsals). Server may 404 if disabled.
-  Future<void> devReset() => _send('POST', '/api/dev/reset');
+  Future<void> devReset() async {
+    await _send('POST', '/api/dev/reset');
+  }
 
   // ── WSS ───────────────────────────────────────────────────────────────────
 
@@ -270,7 +272,8 @@ class ApiClient {
   Stream<ServerEvent> connectEvents() {
     final existing = _events;
     if (existing != null) return existing;
-    final controller = StreamController<ServerEvent>.broadcast(
+    late final StreamController<ServerEvent> controller;
+    controller = StreamController<ServerEvent>.broadcast(
       onListen: () {
         final channel = _channel ??= _RealtimeChannel(this, controller);
         channel.start();
@@ -298,7 +301,7 @@ class ApiClient {
 
   Uri _resolve(String path) => Uri.parse('$_baseUrl$path');
 
-  Future<Map<String, dynamic>> _mutate(
+  Future<Ticket> _mutate(
     String method,
     String path,
     Map<String, dynamic> body,

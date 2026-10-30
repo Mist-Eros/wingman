@@ -79,7 +79,7 @@ CoreScope.of(context).onSignOut();            // back to the role picker
 | `find(id)` | one ticket or null |
 | `connected` / `loading` / `lastError` / `lastActionError` | banner state |
 | `refresh()` | pull-to-refresh |
-| `confirm(id)`, `deny(id, reason:)`, `override(id, incidentCode:)`, `join(id, crewId:)`, `vote(id, crewId:)` | call API, update cache, return `bool`; on `false` read `lastActionError` |
+| `confirm(id)`, `deny(id, reason:)`, `reclassify(id, incidentCode:)`, `join(id, crewId:)`, `vote(id, crewId:)` | call API, update cache, return `bool`; on `false` read `lastActionError` |
 
 Always render inside `ListenableBuilder(listenable: board, builder: ...)`.
 

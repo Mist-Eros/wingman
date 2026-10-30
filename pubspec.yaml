@@ -1,0 +1,22 @@
+name: wingman
+description: "Wingman - airport incident reporting: closed taxonomy, local AI classification, live dispatch."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Token persistence (optional at hour 0; see lib/core/auth/secure_token_store.dart)
+  flutter_secure_storage: ^9.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/certs/ca.crt

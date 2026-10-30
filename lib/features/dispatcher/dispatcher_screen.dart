@@ -11,7 +11,7 @@
 // Suggested flow: `board.pendingOverrides` at the top with a 5-second
 // countdown (`ticket.remainingOverrideSeconds()` + a 250ms Ticker/Timer),
 // buttons Confirm / Deny / Reclassify (call `board.confirm(ticket.id)`,
-// `board.deny(...)`, `board.override(...)` — each returns bool and sets
+// `board.deny(...)`, `board.reclassify(...)` — each returns bool and sets
 // `board.lastActionError` on failure). Then the active list with
 // urgency/confidence chips and department filters
 // (`board.forDepartment(Department.security)`).

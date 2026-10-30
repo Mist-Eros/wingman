@@ -84,6 +84,9 @@ PASS = 0
 FAIL = 0
 FAILURES: list[str] = []
 
+# Set from --ca: when provided, TLS is verified against this CA file.
+_CA_FILE: str | None = None
+
 
 def check(name: str, condition: bool, detail: str = "") -> bool:
     global PASS, FAIL
@@ -98,6 +101,9 @@ def check(name: str, condition: bool, detail: str = "") -> bool:
 
 
 def _ssl_context(insecure: bool) -> ssl.SSLContext | None:
+    if _CA_FILE:
+        # Strict: validate chain + hostname against the project CA (real TLS test).
+        return ssl.create_default_context(cafile=_CA_FILE)
     if not insecure:
         return None
     context = ssl.create_default_context()
@@ -153,10 +159,7 @@ async def _ws_listen(
         return
     context = None
     if uri.startswith("wss"):
-        context = ssl.create_default_context()
-        if insecure:
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+        context = _ssl_context(insecure) or ssl.create_default_context()
     try:
         async with websockets.connect(uri, ssl=context, open_timeout=10) as socket:
             async for raw in socket:
@@ -391,12 +394,19 @@ def main() -> int:
         help="verify the server certificate (default: accept self-signed)",
     )
     parser.add_argument(
+        "--ca",
+        default=None,
+        help="verify TLS against this CA PEM (implicitly disables --insecure)",
+    )
+    parser.add_argument(
         "--skip-override-wait",
         action="store_true",
         help="do not wait 5 s for the auto-dispatch check (fast runs)",
     )
     args = parser.parse_args()
-    args.insecure = not args.strict_tls
+    global _CA_FILE
+    _CA_FILE = args.ca
+    args.insecure = not args.strict_tls and not args.ca
     try:
         return asyncio.run(run(args))
     except KeyboardInterrupt:

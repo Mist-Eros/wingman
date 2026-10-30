@@ -28,6 +28,13 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
+
+# Freshly installed tools are not on the PATH of an already-open shell, so pull
+# the machine/user PATH from the registry before probing the toolchain.
+$machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+$userPath = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+if ($machinePath -or $userPath) { $env:Path = ($machinePath + ';' + $userPath) }
+
 $script:Passed = 0
 $script:Failed = 0
 $script:Warned = 0
@@ -62,6 +69,86 @@ function Section([string]$Title) {
     Write-Host ('== ' + $Title) -ForegroundColor Cyan
 }
 
+# Windows' built-in curl.exe uses Schannel and cannot consume --cacert, so we
+# validate TLS in .NET instead: build a chain that trusts ONLY our project CA.
+function Enable-CaValidation([string]$CaPath) {
+    if (-not $CaPath -or -not (Test-Path $CaPath)) { return $false }
+    try {
+        # Windows PowerShell 5.1 does not enable TLS 1.2 by default for HttpWebRequest.
+        try {
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
+        } catch { }
+        $script:TrustedCa = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2((Resolve-Path $CaPath).Path)
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {
+            param($sender, $certificate, $chain, $sslPolicyErrors)
+            if ($sslPolicyErrors -eq [System.Net.Security.SslPolicyErrors]::None) { return $true }
+            if (($sslPolicyErrors -band [System.Net.Security.SslPolicyErrors]::RemoteCertificateNameMismatch) -ne 0) { return $false }
+            try {
+                $leaf = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificate)
+                $testChain = New-Object System.Security.Cryptography.X509Certificates.X509Chain
+                $testChain.ChainPolicy.TrustMode = [System.Security.Cryptography.X509Certificates.X509ChainTrustMode]::CustomRootTrust
+                [void]$testChain.ChainPolicy.CustomTrustStore.Add($script:TrustedCa)
+                [void]$testChain.ChainPolicy.ExtraStore.Add($script:TrustedCa)
+                $testChain.ChainPolicy.RevocationMode = [System.Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+                return $testChain.Build($leaf)
+            } catch {
+                return $false
+            }
+        }
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Get-JsonEndpoint([string]$Url, [string]$BearerToken) {
+    # Prefer Python: its TLS stack accepts --cacert-equivalent CA files, while
+    # Windows PowerShell 5.1 / built-in curl go through Schannel, which cannot
+    # pin a custom CA and is blocked in some restricted sessions.
+    if ($script:PythonExe -and (Test-Path $caFile)) {
+        $probe = @'
+import json, ssl, sys, urllib.request
+url, token, ca = sys.argv[1], sys.argv[2], sys.argv[3]
+if token == "-":
+    token = ""
+try:
+    ctx = ssl.create_default_context(cafile=ca)
+    req = urllib.request.Request(url)
+    if token:
+        req.add_header("Authorization", "Bearer " + token)
+    with urllib.request.urlopen(req, context=ctx, timeout=8) as response:
+        payload = response.read().decode("utf-8")
+    json.loads(payload)
+    print(payload)
+except Exception as exc:
+    print("ERROR: " + type(exc).__name__ + ": " + str(exc))
+    sys.exit(1)
+'@
+        $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ('wingman-probe-' + [guid]::NewGuid().ToString('N') + '.py')
+        try {
+            [System.IO.File]::WriteAllText($tempFile, $probe, (New-Object System.Text.UTF8Encoding($false)))
+            $raw = (& $script:PythonExe $tempFile $Url $BearerToken $caFile 2>&1) -join "`n"
+            if ($LASTEXITCODE -eq 0 -and $raw -match '^\s*\{') {
+                return @{ ok = $true; data = ($raw | ConvertFrom-Json); error = '' }
+            }
+            return @{ ok = $false; data = $null; error = $raw }
+        } finally {
+            Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    # Fallback: .NET (works when Schannel is healthy; validates via project CA).
+    if (-not $script:CaValidationReady) { [void](Enable-CaValidation $caFile) }
+    $headers = @{}
+    if ($BearerToken) { $headers['Authorization'] = 'Bearer ' + $BearerToken }
+    try {
+        $data = Invoke-RestMethod -Uri $Url -Headers $headers -TimeoutSec 8 -ErrorAction Stop
+        return @{ ok = $true; data = $data; error = '' }
+    } catch {
+        return @{ ok = $false; data = $null; error = $_.Exception.Message }
+    }
+}
+
 # ── LAN IPv4 ─────────────────────────────────────────────────────────────────
 function Get-LanIpv4 {
     $ips = @()
@@ -90,6 +177,7 @@ function Get-LanIpv4 {
 
 $lanIps = @(Get-LanIpv4)
 $primaryIp = if ($lanIps.Count -gt 0) { $lanIps[0] } else { '' }
+$apiBaseExplicit = [bool]$ApiBase
 if (-not $ApiBase) {
     if ($primaryIp) { $ApiBase = 'https://' + $primaryIp + ':' + $Port }
     else { $ApiBase = 'https://127.0.0.1:' + $Port }
@@ -105,31 +193,49 @@ Write-Host '============================================================' -Foreg
 # ── 1. toolchain ─────────────────────────────────────────────────────────────
 Section 'Toolchain'
 
-$python = $null
+$pythonCandidates = New-Object System.Collections.ArrayList
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-if ($pythonCmd) { $python = $pythonCmd.Source }
-if ($python) {
-    $pyVersion = & $python -c "import sys; print('%d.%d.%d' % sys.version_info[:3])" 2>$null
-    if ($LASTEXITCODE -eq 0 -and $pyVersion) {
-        $parts = $pyVersion.Split('.')
-        if ([int]$parts[0] -ge 3 -and [int]$parts[1] -ge 10) {
-            Pass ("Python " + $pyVersion + " (" + $python + ")")
-        } else {
-            Fail ("Python " + $pyVersion + " is too old (need 3.10+)")
-        }
-    } else {
-        Fail "python found but not runnable (Microsoft Store stub?) - install Python 3.12"
+if ($pythonCmd) { [void]$pythonCandidates.Add($pythonCmd.Source) }
+$backendVenv = Join-Path $backendDir '.venv\Scripts\python.exe'
+if (Test-Path $backendVenv) { [void]$pythonCandidates.Add($backendVenv) }
+[void]$pythonCandidates.Add((Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'))
+[void]$pythonCandidates.Add('C:\Program Files\Python312\python.exe')
+
+$python = $null
+$pyVersion = $null
+foreach ($candidate in $pythonCandidates) {
+    if (-not (Test-Path $candidate)) { continue }
+    $probe = & $candidate -c "import sys; print('%d.%d.%d' % sys.version_info[:3])" 2>$null
+    if ($LASTEXITCODE -eq 0 -and $probe -match '^3\.(\d+)\.') {
+        if ([int]$Matches[1] -ge 10) { $python = $candidate; $pyVersion = $probe; break }
     }
+}
+if ($python) {
+    Pass ("Python " + $pyVersion + " (" + $python + ")")
+    $script:PythonExe = $python
 } else {
-    Fail "python not found - winget install --id Python.Python.3.12 -e"
+    Fail "no working Python 3.10+ found - winget install --id Python.Python.3.12 -e"
 }
 
 $openssl = Get-Command openssl -ErrorAction SilentlyContinue
+if (-not $openssl) {
+    foreach ($candidate in @(
+        'C:\Program Files\OpenSSL-Win64\bin\openssl.exe',
+        'C:\Program Files\OpenSSL-Win32\bin\openssl.exe',
+        'C:\Program Files\Git\usr\bin\openssl.exe'
+    )) {
+        if (Test-Path $candidate) {
+            $openssl = Get-Item $candidate
+            $env:Path = (Split-Path $candidate) + ';' + $env:Path
+            break
+        }
+    }
+}
 if ($openssl) {
     $sslVersion = (& openssl version) 2>$null
     Pass ("OpenSSL: " + $sslVersion)
 } else {
-    Warn "openssl not on PATH - cert generation/verification commands will not work"
+    Warn "openssl not found - run: winget install --id ShiningLight.OpenSSL.Light -e"
 }
 
 # ── 2. files + SAN ───────────────────────────────────────────────────────────
@@ -168,6 +274,24 @@ if ($lanIps.Count -eq 0) {
     Warn "could not read the SAN (openssl missing?)"
 }
 
+# Prefer a LAN IP that the certificate actually covers (skips virtual adapters
+# such as VirtualBox/Hyper-V host-only networks that phones cannot reach).
+if ($sanLine) {
+    foreach ($ip in $lanIps) {
+        if ($ip -notlike '127.*' -and $sanLine -match [regex]::Escape($ip)) {
+            $primaryIp = $ip
+            break
+        }
+    }
+}
+
+# If the API base was auto-derived from the wrong adapter (VirtualBox/Hyper-V),
+# point it at the certificate-covered address instead.
+if (-not $apiBaseExplicit -and $primaryIp) {
+    $ApiBase = 'https://' + $primaryIp + ':' + $Port
+    Write-Host ('  [info] API base uses the certificate-covered address: ' + $ApiBase) -ForegroundColor DarkGray
+}
+
 if ((Test-Path $serverCrt) -and (Test-Path $caFile) -and $openssl) {
     $verify = (& openssl verify -CAfile $caFile $serverCrt 2>&1) -join ' '
     if ($verify -match 'OK') { Pass "leaf verifies against the CA" }
@@ -188,80 +312,63 @@ try {
 if ($listening) { Pass ("port " + $Port + " is listening") }
 else { Fail ("nothing listening on port " + $Port + " - start backend: cd backend; .\run.ps1") }
 
-$curl = Get-Command curl.exe -ErrorAction SilentlyContinue
-if ($listening -and (Test-Path $caFile) -and $curl) {
+$tlsValidation = Test-Path $caFile
+if ($listening -and $tlsValidation) {
     $healthUrl = $ApiBase.TrimEnd('/') + '/healthz'
-    $raw = (& curl.exe -sS --max-time 8 --cacert $caFile $healthUrl 2>&1) -join "`n"
-    if ($LASTEXITCODE -eq 0 -and $raw -match '"status"') {
+    $public = Get-JsonEndpoint $healthUrl '-'
+    if ($public.ok -and ([string]$public.data.status -eq 'ok')) {
         Pass ("HTTPS + certificate validation OK: " + $healthUrl)
-        try {
-            $publicHealth = $raw | ConvertFrom-Json
-            Pass ("public health: taxonomy v" + $publicHealth.taxonomy_version + ", tickets=" + $publicHealth.tickets + ", ws_clients=" + $publicHealth.ws_clients)
-        } catch {
-            Warn "could not parse /healthz JSON"
-        }
+        Pass ("public health: taxonomy v" + $public.data.taxonomy_version + ", tickets=" + $public.data.tickets + ", ws_clients=" + $public.data.ws_clients)
     } else {
-        Fail ("TLS health check failed (" + $healthUrl + "): " + $raw)
+        Fail ("TLS health check failed (" + $healthUrl + "): " + $public.error)
     }
-} elseif (-not $curl) {
-    Warn "curl.exe not found - cannot do the validated HTTPS check"
+} elseif ($listening -and -not $tlsValidation) {
+    Warn "CA file missing - cannot validate HTTPS (run .\scripts\gen_certs.ps1 -Force)"
 }
 
-if ($listening) {
+if ($listening -and $tlsValidation) {
     $healthUrl = $ApiBase.TrimEnd('/') + '/api/health'
-    $authRaw = ''
-    if ($curl) {
-        $authRaw = (& curl.exe -sS --max-time 8 --cacert $caFile -H ('Authorization: Bearer ' + $Token) $healthUrl 2>&1) -join "`n"
-    }
-    if ($authRaw -match '"status"') {
-        try {
-            $health = $authRaw | ConvertFrom-Json
-            Pass ("authenticated /api/health OK (token '" + $Token + "')")
-            if ([string]$health.taxonomy_version -ne '') {
-                Pass ("taxonomy v" + $health.taxonomy_version + ", " + $health.incident_types + " incident types")
-            }
-            if ($health.ollama -ne $null) {
-                if ($health.ollama.last_ok -eq $true -or $health.ollama.reachable -eq $true) {
-                    Pass ("backend sees Ollama (" + $health.ollama.model + ", last ok: " + $health.ollama.last_ok + ")")
-                } else {
-                    Warn ("backend cannot use Ollama: " + $health.ollama.last_error + " - fallback classifier will be used")
-                }
-            }
-        } catch {
-            Warn "could not parse /api/health JSON"
+    $healthResult = Get-JsonEndpoint $healthUrl $Token
+    if ($healthResult.ok) {
+        $health = $healthResult.data
+        Pass ("authenticated /api/health OK (token '" + $Token + "')")
+        if ([string]$health.taxonomy_version -ne '') {
+            Pass ("taxonomy v" + $health.taxonomy_version + ", " + $health.incident_types + " incident types")
         }
-    } elseif ($authRaw -match '401|Invalid') {
+        if ($null -ne $health.ollama) {
+            if ($health.ollama.last_ok -eq $true -or $health.ollama.reachable -eq $true) {
+                Pass ("backend sees Ollama (" + $health.ollama.model + ", last ok: " + $health.ollama.last_ok + ")")
+            } else {
+                Warn ("backend cannot use Ollama: " + $health.ollama.last_error + " - fallback classifier will be used")
+            }
+        }
+    } elseif ($healthResult.error -match '401|Unauthorized|Invalid') {
         Fail ("auth rejected - API_TOKEN mismatch (tried '" + $Token + "')")
     } else {
-        Fail ("/api/health failed: " + $authRaw)
+        Fail ("/api/health failed: " + $healthResult.error)
     }
 }
 
 # ── 4. Ollama ───────────────────────────────────────────────────────────────
 if (-not $SkipOllama) {
     Section 'Ollama'
-    if ($curl) {
-        $tagsRaw = (& curl.exe -sS --max-time 5 'http://127.0.0.1:11434/api/tags' 2>&1) -join "`n"
-        if ($LASTEXITCODE -eq 0 -and $tagsRaw -match '"models"') {
-            Pass "Ollama /api/tags reachable"
-            $modelFound = $false
-            try {
-                $tags = $tagsRaw | ConvertFrom-Json
-                $names = @($tags.models | ForEach-Object { $_.name })
-                $base = ($Model -split ':')[0]
-                foreach ($name in $names) {
-                    if (($name -split ':')[0] -eq $base) { $modelFound = $true }
-                }
-                if ($modelFound) { Pass ("model '" + $Model + "' is pulled") }
-                else { Fail ("model '" + $Model + "' is NOT pulled. Available: " + ($names -join ', ') + " - run: ollama pull " + $Model) }
-            } catch {
-                Warn "could not parse /api/tags"
+    $tagsResult = Get-JsonEndpoint 'http://127.0.0.1:11434/api/tags' '-'
+    if ($tagsResult.ok) {
+        Pass "Ollama /api/tags reachable"
+        $modelFound = $false
+        try {
+            $names = @($tagsResult.data.models | ForEach-Object { $_.name })
+            $base = ($Model -split ':')[0]
+            foreach ($name in $names) {
+                if (($name -split ':')[0] -eq $base) { $modelFound = $true }
             }
-        } else {
-            Fail ("Ollama not reachable on 127.0.0.1:11434 - run: ollama serve (" + $tagsRaw + ")")
+            if ($modelFound) { Pass ("model '" + $Model + "' is pulled") }
+            else { Fail ("model '" + $Model + "' is NOT pulled. Available: " + ($names -join ', ') + " - run: ollama pull " + $Model) }
+        } catch {
+            Warn "could not parse /api/tags"
         }
     } else {
-        Warn "curl.exe missing - skipped Ollama probe"
+        Fail ("Ollama not reachable on 127.0.0.1:11434 - run: ollama serve (" + $tagsResult.error + ")")
     }
 }
 
