@@ -172,6 +172,8 @@ Full index: **[docs/README.md](docs/README.md)**. Most useful now:
 | [docs/airport-zones.md](docs/airport-zones.md) | Craiova zone catalog (map sources) |
 | [docs/design-tokens.md](docs/design-tokens.md) | Design system / theme tokens |
 | [docs/reporter.md](docs/reporter.md) | Reporter flow, local brain, STT integration |
+| [docs/team-timeline.md](docs/team-timeline.md) | How the team worked: timeline + per-person showcase |
 | [CONTRACTS.md](CONTRACTS.md) | Frozen Dart ↔ FastAPI wire contracts |
 | [scripts/README.md](scripts/README.md) | Every automation script, what it does |
+
 

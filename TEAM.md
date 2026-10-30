@@ -1,4 +1,4 @@
-# Wingman — team
+﻿# Wingman — team
 
 Fill in full names (GitHub handles are known from the repo collaborators). The Lead
 should confirm which handle belongs to Friend 1 / Friend 3; commit authors tell us
@@ -7,9 +7,9 @@ Friend 1 pushed as `rarescu08` and Friend 2 as `Radu <radu.fita2000@gmail.com>`.
 | # | Name | GitHub | Owns | What they built (one line) |
 |---|---|---|---|---|
 | Lead | _fill in_ | @Mist-Eros | `lib/core/**`, `main.dart`, `backend/**`, `scripts/**`, `docs/**` | Contracts, taxonomy, FastAPI + WSS backend, local Qwen2.5 classification, faster-whisper STT, TLS/CA pinning, design system, APK/deploy pipeline, verification gates |
-| Friend 1 | _fill in_ | @rarescu08 (confirm) | `lib/features/reporter/**` | Hold-to-talk reporter: recording → Whisper → conversation brain (max 3 follow-ups) → confirmation → submit, plus menu and typed fallbacks |
+| Friend 1 | _fill in_ | @rarescu08 (confirmed by commit `5b7e2c9`) | `lib/features/reporter/**` | Hold-to-talk reporter: recording → Whisper → conversation brain (max 3 follow-ups) → confirmation → submit, plus menu and typed fallbacks |
 | Friend 2 | Radu Fita | @RaduFita23 | `lib/features/dispatcher/**` | Dispatcher dashboard: live/demo modes, urgency counters, department strip, 5-second override card, timeline, zones, filters, history, Windows runner |
-| Friend 3 | _fill in_ | @raresr29 or @RaresCut (confirm) | `lib/features/crew/**` | Crew flows: Preia (join), Rezolvat (vote), quorum progress, live resolution, airport-ops UI polish, widget tests |
+| Friend 3 | _fill in_ | @raresr29 or @RaresCut (confirm; feature commits 0440163/5de1d6a/5fee0df were authored under the shared demo-machine identity) | `lib/features/crew/**` | Crew flows: Preia (join), Rezolvat (vote), quorum progress, live resolution, airport-ops UI polish, widget tests |
 
 ## What to say in the pitch (30 seconds)
 
@@ -21,8 +21,15 @@ Friend 1 pushed as `rarescu08` and Friend 2 as `Radu <radu.fita2000@gmail.com>`.
 Demo speaking order: Friend 1 reports → Friend 2 decides (5 s override) → Friend 3 joins
 and votes → Lead closes with the local-AI / offline / hardening story.
 
+## Showcase & timeline
+
+A visual per-person showcase and the work timeline live in **docs/team-timeline.md**; the rendered
+cards are in `D:\Hackathon\Screenshots\Team` (timeline.png, lead.png, friend1-reporter.png,
+friend2-dispatcher.png, friend3-crew.png).
+
 ## Attribution note
 
 Before submitting, each teammate should add their own commit (or a line here) using their
 own `git config user.name/user.email`; the demo machine's identity was reused, so the
 commit history alone does not attribute the feature work.
+

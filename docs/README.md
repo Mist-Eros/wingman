@@ -1,4 +1,4 @@
-# Documentation index
+﻿# Documentation index
 
 Current docs are the ones you need for the demo; **historical** docs are kept for context only.
 
@@ -16,6 +16,7 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 | [laptop-setup.md](laptop-setup.md) | Laptop toolchain, network, firewall, Ollama/Whisper setup |
 | [phone-testing.md](phone-testing.md) | Install/test APKs on the phones |
 | [progress.md](progress.md) | Build log: what was done, evidence, current next steps |
+| [team-timeline.md](team-timeline.md) | How the four of us worked: commit timeline, per-person contributions, showcases |
 | [backlog.md](backlog.md) | Deferred ideas (e.g. location gate, real push notifications) |
 
 ## Historical (context only)
@@ -32,3 +33,4 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 * App architecture + layout: top-level [README.md](../README.md).
 * Automation scripts: [scripts/README.md](../scripts/README.md).
 * Wire contracts: [CONTRACTS.md](../CONTRACTS.md).
+
