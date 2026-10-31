@@ -1,5 +1,5 @@
 // =============================================================================
-// OWNER: Lica Rares Adelin (lib/features/crew/).
+// OWNER: Lica Rares Adelin — GitHub @Raress299 (lib/features/crew/).
 //
 // FROZEN CONTRACT (main.dart depends on it):
 //   • class name: CrewScreen
