@@ -72,14 +72,13 @@ class _TicketMediaPanelState extends State<TicketMediaPanel> {
                   spacing: 6,
                   runSpacing: 6,
                   children: <Widget>[
-                    if (_hasPhoto)
-                      _MediaChip(
-                        icon: Icons.photo_camera_outlined,
-                        label: 'Foto',
-                        selected: _activeView == TicketMediaView.photo,
-                        onTap: () =>
-                            setState(() => _view = TicketMediaView.photo),
-                      ),
+                    _MediaChip(
+                      icon: Icons.photo_camera_outlined,
+                      label: 'Foto',
+                      selected: _activeView == TicketMediaView.photo,
+                      onTap: () =>
+                          setState(() => _view = TicketMediaView.photo),
+                    ),
                     _MediaChip(
                       icon: Icons.map_outlined,
                       label: 'Hartă',
@@ -111,8 +110,13 @@ class _TicketMediaPanelState extends State<TicketMediaPanel> {
             child: SizedBox(
               height: widget.height,
               width: double.infinity,
-              child: _activeView == TicketMediaView.photo && _hasPhoto
-                  ? _PhotoView(base64: ticket.photoBase64!)
+              child: _activeView == TicketMediaView.photo
+                  ? (_hasPhoto
+                      ? _PhotoView(base64: ticket.photoBase64!)
+                      : const _MediaError(
+                          icon: Icons.no_photography_outlined,
+                          text: 'Nicio fotografie atașată la acest tichet.',
+                        ))
                   : _TicketMap(
                       ticket: ticket,
                       center: hasCoords

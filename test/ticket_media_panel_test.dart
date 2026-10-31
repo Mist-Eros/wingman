@@ -87,8 +87,12 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Foto'), findsNothing);
+    expect(find.text('Foto'), findsOneWidget);
     expect(find.text('Hartă'), findsOneWidget);
     expect(find.byType(FlutterMap), findsOneWidget);
+
+    await tester.tap(find.text('Foto'));
+    await tester.pump();
+    expect(find.textContaining('Nicio fotografie'), findsOneWidget);
   });
 }

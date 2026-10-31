@@ -528,8 +528,8 @@ function renderDetail() {
   const hasMap = lat !== null && lng !== null;
   const mediaTabs = (hasPhoto || hasMap)
     ? '<div class="media-tabs">' +
-      (hasPhoto ? '<button class="media-tab" data-media-view="photo" onclick="renderTicketMedia(\'photo\')">📷 Foto</button>' : '') +
-      (hasMap ? '<button class="media-tab" data-media-view="map" onclick="renderTicketMedia(\'map\')">🗺️ Hartă</button>' : '') +
+      '<button class="media-tab" data-media-view="photo" onclick="renderTicketMedia(\'photo\')">📷 Foto</button>' +
+      '<button class="media-tab" data-media-view="map" onclick="renderTicketMedia(\'map\')">🗺️ Hartă</button>' +
       '</div><div id="detailMedia" class="media-body"></div>'
     : '';
   const initialMedia = hasPhoto ? 'photo' : (hasMap ? 'map' : null);
@@ -561,14 +561,21 @@ function renderTicketMedia(view) {
   document.querySelectorAll('[data-media-view]').forEach((b) => {
     b.classList.toggle('on', b.dataset.mediaView === view);
   });
-  if (view === 'photo' && t.photo_base64) {
-    el.innerHTML = '<img src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">';
-  } else if (view === 'map' && lat !== null && lng !== null) {
-    const bbox = (lng - 0.004).toFixed(5) + ',' + (lat - 0.003).toFixed(5) + ',' +
-                 (lng + 0.004).toFixed(5) + ',' + (lat + 0.003).toFixed(5);
-    const src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox +
-                '&layer=mapnik&marker=' + lat + ',' + lng;
-    el.innerHTML = '<iframe class="media-map" src="' + src + '" title="Harta incidentului" loading="lazy"></iframe>';
+  if (view === 'photo') {
+    el.innerHTML = t.photo_base64
+      ? '<img src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">'
+      : '<div class="media-empty">📷 Nicio fotografie atașată la acest tichet.</div>';
+  } else if (view === 'map') {
+    if (lat !== null && lng !== null) {
+      const bbox = (lng - 0.004).toFixed(5) + ',' + (lat - 0.003).toFixed(5) + ',' +
+                   (lng + 0.004).toFixed(5) + ',' + (lat + 0.003).toFixed(5);
+      const src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox +
+                  '&layer=mapnik&marker=' + lat + ',' + lng;
+      el.innerHTML = '<iframe class="media-map" src="' + src + '" title="Harta incidentului" loading="lazy"></iframe>';
+    } else {
+      el.innerHTML = '<div class="media-empty">🗺️ Fără coordonate GPS pe tichet. Locația textuală: ' +
+        esc((t.location?.zone || t.location?.terminal || 'nespecificată')) + '</div>';
+    }
   } else {
     el.innerHTML = '<div class="media-empty">Nu există media pentru acest tichet.</div>';
   }

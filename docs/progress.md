@@ -225,3 +225,5 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Centralized **`TicketTargeting`**: only primary departments are called/alerted; standby departments are displayed but not woken. | `core/targeting/ticket_targeting.dart`, crew queue, notifier | Mandy gets OP-MED; fire/security/terminal do not |
 | Visible **required-team tags** ("Necesar: Medical / Pompieri / ...") on dispatcher cards/detail, crew cards, sent screen and dashboard. | `required_teams_bar.dart`, cards, dashboard JS | tags visible; dashboard detail "Echipe necesare" |
 | Seed now includes a medical scenario so Mandy has a live job in the demo. | `backend/seed_demo.py` | 6 seeded scenarios |
+
+- Media toggle refinement: **Foto** and **Hartă** tabs are now always visible next to each other; missing media shows an explicit empty state instead of hiding the tab.
