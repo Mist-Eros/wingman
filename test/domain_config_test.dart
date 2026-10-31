@@ -69,7 +69,9 @@ void main() {
     test('missing nested objects fall back safely', () {
       final config = DomainConfig.fromJson(<String, dynamic>{'id': 'empty'});
       expect(config.branding.appName, 'Wingman');
-      expect(config.rewards.attendedPoints, 2);
+      expect(config.rewards.attendedPoints, 0);
+      expect(config.rewards.reportPoints, 2);
+      expect(config.rewards.resolvedBonus, 5);
       expect(config.quorum.minimum, 1);
     });
   });

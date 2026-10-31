@@ -289,3 +289,19 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Added `OP-RESCUE` (Descarcerare / persoană blocată) to the closed taxonomy and backend copy; primary **Pompieri / Salvare**, standby Medical/Security. | `taxonomy.dart`, `backend/taxonomy.json`, sync script | 16 types; API report primary `fire_rescue` |
 | Deterministic guards: knife/stab/bleeding words → `OP-MED`; blocked/trapped/captive person → `OP-RESCUE`; generic "în pericol" stays `SC-BEHAV` (Security). | `backend/app/ai.py` | `test_classification.py` + live `/api/reports` checks |
 | Menu subcategory "Persoane în pericol" now maps to `OP-RESCUE`. | `incident_menu_data.dart` | Flutter tests |
+
+---
+
+## 2026-10-31 — reward points: 2 report / 5 join+solve
+
+| Rule | Points |
+|---|---|
+| File a report | **2** |
+| Join only / in progress | **0** (there is a joined-but-unresolved state) |
+| Join + resolve | **5** |
+| Report + join + resolve | **7** |
+| Report-only ticket resolved by someone else | **2** (no resolver bonus) |
+| Self-report + self-resolve alone, non-dangerous | **0** (anti-farming) |
+| Self-report + self-resolve alone, high/critical | **7** |
+
+Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backend ledgers, account copy and tests.

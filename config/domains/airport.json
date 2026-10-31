@@ -31,11 +31,11 @@
   },
   "rewards": {
     "strategy": "rule_based",
-    "attendedPoints": 2,
-    "resolvedBonus": 10,
+    "attendedPoints": 0,
+    "resolvedBonus": 5,
     "deniedPoints": 0,
     "pointsLabel": "PUNCTE",
-    "reportPoints": 3
+    "reportPoints": 2
   },
   "notifications": {
     "roles": [

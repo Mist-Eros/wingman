@@ -43,9 +43,9 @@ class QuorumConfig:
 @dataclass(frozen=True)
 class RewardConfig:
     strategy: str = "rule_based"
-    report_points: int = 3
-    attended_points: int = 2
-    resolved_bonus: int = 10
+    report_points: int = 2
+    attended_points: int = 0
+    resolved_bonus: int = 5
     denied_points: int = 0
     points_label: str = "PUNCTE"
 
@@ -138,16 +138,20 @@ class DomainConfig:
                 reported += 1
                 reasons.append("reported")
             if is_attending:
-                points += self.rewards.attended_points
                 attended += 1
-                reasons.append("attended")
-            if is_resolved:
-                points += self.rewards.resolved_bonus
-                resolved += 1
-                reasons.append("resolved")
-            elif ticket.get("status") == "denied" and is_attending:
-                points += self.rewards.denied_points
-                reasons.append("denied")
+                # Join alone: 0. The 5 points require joined + resolved.
+                if is_resolved:
+                    points += self.rewards.resolved_bonus
+                    resolved += 1
+                    reasons.append("joined_solved")
+                elif ticket.get("status") == "denied":
+                    points += self.rewards.denied_points
+                    reasons.append("denied")
+                else:
+                    reasons.append("joined_pending")
+            elif is_resolved:
+                # Reporter-only, resolved by someone else: report points only.
+                reasons.append("reported_only")
 
             total += points
             entries.append(

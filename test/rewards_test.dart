@@ -97,18 +97,21 @@ void main() {
     test('applies join + resolved bonus + denied rules', () {
       const policy = RuleBasedRewardPolicy(
         rules: RewardRules(
-          attendedPoints: 2,
-          resolvedBonus: 10,
+          reportPoints: 2,
+          attendedPoints: 0,
+          resolvedBonus: 5,
           deniedPoints: 0,
         ),
       );
       final ledger = policy.ledgerFor(crewId: 'crew-1', tickets: tickets);
 
-      expect(ledger.totalPoints, 16); // 12 + 2 + 2
-      expect(ledger.entries[0].points, 12);
-      expect(ledger.entries[0].reason, 'attended+resolved');
-      expect(ledger.entries[1].points, 2);
-      expect(ledger.entries[2].points, 2);
+      expect(
+          ledger.totalPoints, 5); // 5 for joined + solved, 0 for pending/denied
+      expect(ledger.entries[0].points, 5);
+      expect(ledger.entries[0].reason, 'joined_solved');
+      expect(ledger.entries[1].points, 0);
+      expect(ledger.entries[2].points, 0);
+      expect(ledger.entries[2].reason, 'joined_pending');
     });
 
     test('different rules can be injected without touching UI', () {
@@ -122,7 +125,7 @@ void main() {
       );
       final ledger = policy.ledgerFor(crewId: 'crew-1', tickets: tickets);
 
-      expect(ledger.totalPoints, 11); // (1+5) + (1+3) + 1
+      expect(ledger.totalPoints, 8); // (5) + (3) + 0 pending
     });
 
     test('reporting alone earns report points', () {
@@ -140,7 +143,7 @@ void main() {
       );
       expect(ledger.reportedCount, 1);
       expect(ledger.attendedCount, 0);
-      expect(ledger.totalPoints, 3);
+      expect(ledger.totalPoints, 2);
     });
 
     test('self-report + self-resolve alone is blocked when not dangerous', () {
@@ -176,8 +179,27 @@ void main() {
           ),
         ],
       );
-      expect(ledger.totalPoints, 15);
+      expect(ledger.totalPoints, 7); // 2 report + 5 joined & solved
       expect(ledger.blockedSelfResolutions, 0);
+    });
+
+    test('a reporter-only ticket resolved by someone else gets only 2 points',
+        () {
+      final ledger = const RuleBasedRewardPolicy().ledgerFor(
+        crewId: 'crew-1',
+        tickets: <Ticket>[
+          _ticket(
+            id: 'reported-elsewhere',
+            status: TicketStatus.resolved,
+            joinedCrewIds: const <String>['crew-2'],
+            reporterId: 'crew-1',
+            urgency: 'low',
+          ),
+        ],
+      );
+      expect(ledger.totalPoints, 2);
+      expect(ledger.resolvedCount, 0);
+      expect(ledger.entries.single.reason, 'reported+reported_only');
     });
 
     test('users who attended nothing get an empty ledger', () {

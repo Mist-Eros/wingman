@@ -30,9 +30,9 @@ class ReportingRewardTests(unittest.TestCase):
     def setUp(self) -> None:
         self.domain = DomainConfig(
             rewards=RewardConfig(
-                report_points=3,
-                attended_points=2,
-                resolved_bonus=10,
+                report_points=2,
+                attended_points=0,
+                resolved_bonus=5,
                 denied_points=0,
             )
         )
@@ -51,7 +51,7 @@ class ReportingRewardTests(unittest.TestCase):
         self.assertEqual(ledger["reportedCount"], 2)
         self.assertEqual(ledger["attendedCount"], 1)
         self.assertEqual(ledger["resolvedCount"], 1)
-        self.assertEqual(ledger["totalPoints"], 3 + 2 + 10 + 3)
+        self.assertEqual(ledger["totalPoints"], 2 + 5 + 2)
 
     def test_self_report_self_resolve_non_dangerous_is_blocked(self) -> None:
         tickets = [
@@ -81,7 +81,7 @@ class ReportingRewardTests(unittest.TestCase):
             )
         ]
         ledger = self.domain.reward_ledger("crew-1", tickets)
-        self.assertEqual(ledger["totalPoints"], 3 + 2 + 10)
+        self.assertEqual(ledger["totalPoints"], 2 + 5)
         self.assertEqual(ledger["blockedSelfResolutions"], 0)
 
 

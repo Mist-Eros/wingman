@@ -14,9 +14,9 @@ import '../models/ticket.dart';
 
 class RewardRules {
   const RewardRules({
-    this.reportPoints = 3,
-    this.attendedPoints = 2,
-    this.resolvedBonus = 10,
+    this.reportPoints = 2,
+    this.attendedPoints = 0,
+    this.resolvedBonus = 5,
     this.deniedPoints = 0,
     this.pointsLabel = 'PUNCTE',
   });
@@ -138,17 +138,23 @@ class RuleBasedRewardPolicy implements RewardPolicy {
         reasons.add('reported');
       }
       if (isAttending) {
-        points += rules.attendedPoints;
         attended++;
-        reasons.add('attended');
-      }
-      if (isResolved) {
-        points += rules.resolvedBonus;
-        resolved++;
-        reasons.add('resolved');
-      } else if (ticket.status == TicketStatus.denied && isAttending) {
-        points += rules.deniedPoints;
-        reasons.add('denied');
+        // Taking a ticket alone is worth 0: points are only for joining AND
+        // solving. A joined-but-unresolved ticket stays at 0 until resolution.
+        if (isResolved) {
+          points += rules.resolvedBonus;
+          resolved++;
+          reasons.add('joined_solved');
+        } else if (ticket.status == TicketStatus.denied) {
+          points += rules.deniedPoints;
+          reasons.add('denied');
+        } else {
+          reasons.add('joined_pending');
+        }
+      } else if (isResolved) {
+        // Reporting a ticket that somebody else resolved earns the report
+        // points only; it must not earn the resolver bonus.
+        reasons.add('reported_only');
       }
       total += points;
       entries.add(

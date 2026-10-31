@@ -63,8 +63,9 @@ class RewardPolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.domain = DomainConfig(
             rewards=RewardConfig(
-                attended_points=2,
-                resolved_bonus=10,
+                report_points=2,
+                attended_points=0,
+                resolved_bonus=5,
                 denied_points=0,
                 points_label="PUNCTE",
             )
@@ -83,7 +84,7 @@ class RewardPolicyTests(unittest.TestCase):
 
     def test_ledger_totals_and_order(self) -> None:
         ledger = self.domain.reward_ledger("crew-1", self.tickets)
-        self.assertEqual(ledger["totalPoints"], 16)
+        self.assertEqual(ledger["totalPoints"], 5)
         self.assertEqual(ledger["attendedCount"], 3)
         self.assertEqual(ledger["resolvedCount"], 1)
         self.assertEqual(ledger["inProgressCount"], 2)
@@ -107,7 +108,7 @@ class RewardPolicyTests(unittest.TestCase):
             )
         )
         ledger = domain.reward_ledger("crew-1", self.tickets)
-        self.assertEqual(ledger["totalPoints"], 11)
+        self.assertEqual(ledger["totalPoints"], 8)
         self.assertEqual(ledger["pointsLabel"], "CREDITE")
 
 

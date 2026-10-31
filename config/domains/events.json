@@ -31,7 +31,7 @@
   },
   "rewards": {
     "strategy": "rule_based",
-    "attendedPoints": 1,
+    "attendedPoints": 0,
     "resolvedBonus": 5,
     "deniedPoints": 0,
     "pointsLabel": "CREDITE",

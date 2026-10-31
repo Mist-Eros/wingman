@@ -52,7 +52,7 @@ policies themselves.
 | `features.accessibility` | hides the accessibility entry point |
 | `features.history` | hides the admin History tab |
 | `features.demoReset` | hides the demo-reset action |
-| `rewards.attendedPoints`, `resolvedBonus`, `deniedPoints`, `pointsLabel` | reward ledger and account header |
+| `rewards.reportPoints` (2), `attendedPoints` (0), `resolvedBonus` (5 = join+solve), `deniedPoints`, `pointsLabel` | reward ledger and account header |
 | `quorum.strategy`, `minimum`, `fixed` | responder count required by the server |
 | `notifications.roles` | which roles may receive alerts (`crew`, `dispatcher`) |
 | `demo.seedTickets`, `demo.resetEnabled` | reserved for seed tooling / reset UI |
