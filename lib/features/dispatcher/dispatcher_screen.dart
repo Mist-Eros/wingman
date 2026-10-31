@@ -15,6 +15,7 @@ import '../../core/incidents/taxonomy.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import '../../core/widgets/report_action_bar.dart';
 import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
@@ -498,6 +499,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
       onKeyEvent: (node, event) => _onKey(session, board, event),
       child: Scaffold(
         backgroundColor: kDispatcherCanvas,
+        bottomNavigationBar: ReportActionBar(onPressed: _openReporter),
         appBar: AppBar(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
@@ -586,11 +588,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             if (!compact) ...<Widget>[
               IconButton(
-                tooltip: 'Raportează incident',
-                icon: const Icon(Icons.campaign_outlined),
-                onPressed: _openReporter,
-              ),
-              IconButton(
                 tooltip: 'Încarcă scenă demo',
                 icon: const Icon(Icons.movie_filter_outlined),
                 onPressed: _reloadDemo,
@@ -621,8 +618,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                     board.refresh();
                   } else if (value == 'demo') {
                     _reloadDemo();
-                  } else if (value == 'report') {
-                    _openReporter();
                   } else {
                     setState(() {
                       final values = DispatcherDensity.values;
@@ -631,10 +626,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   }
                 },
                 itemBuilder: (context) => const <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'report',
-                    child: Text('Raportează incident'),
-                  ),
                   PopupMenuItem<String>(
                     value: 'refresh',
                     child: Text('Reîmprospătează live'),

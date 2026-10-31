@@ -4,7 +4,7 @@ All four people worked on **2026-10-30**. The Lead froze the contract layer and 
 the three feature branches were built in parallel against it and merged in one integration pass.
 Times are commit times from the git history.
 
-> Visual version (rendered PNG): `D:\Hackathon\Screenshots\Team\timeline.png`
+> Visual version (rendered PNG): `D:\Hackathon\Screenshots\Team\team-grid.png`
 > Per-person cards: `D:\Hackathon\Screenshots\Team\furtuna-lead.png`, `cutulescu-reporter.png`,
 > `fita-dispatcher.png`, `lica-crew.png`.
 

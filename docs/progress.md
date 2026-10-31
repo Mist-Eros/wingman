@@ -109,3 +109,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Fallback classifier uses the catalog**: when Ollama is unavailable and base keywords are weak, catalog aliases refine the code (e.g. drone → SC-ACCESS, unruly passenger → SC-BEHAV, dangerous goods → SC-ITEM). | `backend/app/ai.py` | direct fallback checks; normal AI path unchanged |
 | **Generated documentation** with source links, mapping to Wingman's 14 codes and per-domain tables. | `docs/occurrence-catalog.md`, `scripts/render_occurrence_catalog.py` | regenerated from JSON; docs index updated |
 | Gates after catalog: app **160 tests**, backend smoke **96/96**, wire parity OK. | repo | analyze clean + smoke pass |
+
+---
+
+## 2026-10-31 — bottom report bar + refreshed screenshots + equal team cards
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Large bottom report bar** on crew and dispatcher: full-width 60 px button, SafeArea, max-width 760 on desktop; app-bar report icons removed. | `lib/core/widgets/report_action_bar.dart`, `lib/features/crew/crew_screen.dart`, `lib/features/dispatcher/dispatcher_screen.dart` | verified on S24: bar visible on queue, crew and reporter return; content no longer covered |
+| **Fresh screenshot set** — login, reporter (voice/menu/typed/verification), dispatcher (queue/low/demo), crew (queue/joined), notification shade, Waterfox control room + modal, DevTools. Old design folders removed. | `D:\Hackathon\Screenshots\Wingman\`, `Screenshots/README.md` | 15 new real captures |
+| **Equal team cards** — same 1600×1450 template, 3 screenshots, 3 stats, 4 bullets each; 2×2 grid. | `D:\Hackathon\Screenshots\Team\` | `furtuna-lead.png`, `cutulescu-reporter.png`, `fita-dispatcher.png`, `lica-crew.png`, `team-grid.png` |

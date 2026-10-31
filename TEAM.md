@@ -14,7 +14,7 @@ Names from the hackathon team page; GitHub handles from the repo history.
 Per-person rendered cards and the work timeline are in **docs/team-timeline.md** and in
 `D:\Hackathon\Screenshots\Team`:
 
-- `timeline.png` — one-page timeline for all four people
+- `team-grid.png` — one-page timeline for all four people
 - `furtuna-lead.png` — Furtuna-Cola Andrei-Alexandru: core, backend, AI, design system, control room
 - `cutulescu-reporter.png` — Cutulescu Andrei-Rares: hold-to-talk flow, brain, verification card
 - `fita-dispatcher.png` — Fita Redu Mihai: live board, filters

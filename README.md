@@ -114,6 +114,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 * **Locations** are free text and matched against a Craiova airport catalog (Terminal 2,
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
+* **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
   local (no cloud push): keep the phone connected and awake during the demo.
