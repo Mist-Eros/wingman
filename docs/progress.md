@@ -333,3 +333,11 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 |---|---|---|
 | Tickets now persist in **SQLite** (`backend/data/wingman.db`). Every create/update/delete/reset writes through; startup reloads the database. `/healthz` exposes `database`, `database_rows`, `database_path`. | `backend/app/database.py`, `store.py`, `config.py` | seed 6 → backend restart → 6 tickets; `test_database.py` |
 | Location gate retry is forced/queued so a tap on **Reîncearcă** cannot be swallowed by an in-flight periodic GPS check. | `location_gate.dart` | Android: GPS off → on → retry unlocks |
+
+---
+
+## 2026-10-31 — location reliability fallback
+
+- Location gate now tries **last-known → low accuracy → medium accuracy → first stream tick**, and keeps the last good fix for 5 minutes instead of flapping to “unavailable” on one timeout.
+- If the phone’s location service is on and permission is granted, but the device simply has no GPS fix indoors, the lock screen offers **„Continuă fără verificarea locației”**; service-off/outside/permission-denied remain hard locks.
+- Retry is forced/queued so an in-flight periodic check cannot swallow the button tap.

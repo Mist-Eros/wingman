@@ -81,7 +81,10 @@ class _LocationGateState extends State<LocationGate>
   double? _distance;
   bool _inFlight = false;
   bool _retryQueued = false;
+  Position? _lastGoodPosition;
+  DateTime? _lastGoodAt;
   bool _askedPermission = false;
+  bool _allowWithoutLocation = false;
   Timer? _timer;
 
   @override
@@ -134,28 +137,24 @@ class _LocationGateState extends State<LocationGate>
         _set(_GateStatus.permissionDenied);
         return;
       }
-      Position? position;
-      try {
-        position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 10),
-          ),
-        );
-      } on TimeoutException {
-        // Indoors/at a desk a fresh GPS fix can take longer; use a recent
-        // network/provider fix as a fallback instead of trapping the user.
-        final last = await Geolocator.getLastKnownPosition();
-        if (last != null &&
-            DateTime.now().difference(last.timestamp).abs() <
-                const Duration(minutes: 30)) {
-          position = last;
+      Position? position = await _acquirePosition();
+      if (position == null) {
+        // Keep a recently successful fix instead of flapping the lock on a
+        // transient 10 s timeout while the phone is indoors.
+        final good = _lastGoodPosition;
+        final at = _lastGoodAt;
+        if (good != null &&
+            at != null &&
+            DateTime.now().difference(at) < const Duration(minutes: 5)) {
+          position = good;
         }
       }
       if (position == null) {
         _set(_GateStatus.unavailable);
         return;
       }
+      _lastGoodPosition = position;
+      _lastGoodAt = DateTime.now();
       final distance = AirportGeofence.distanceMeters(
         lat: position.latitude,
         lng: position.longitude,
@@ -193,14 +192,70 @@ class _LocationGateState extends State<LocationGate>
     await _check(force: true);
   }
 
+  Future<Position?> _acquirePosition() async {
+    // 1) Fresh cached fix (network/fused) — instant when available.
+    try {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null &&
+          DateTime.now().difference(last.timestamp).abs() <
+              const Duration(minutes: 5)) {
+        return last;
+      }
+    } on Object catch (error) {
+      debugPrint('[gate] last-known failed: $error');
+    }
+
+    // 2) Current fix, low accuracy first (network/cell is enough for a 2 km
+    // geofence and works better indoors than a GPS-only high-accuracy fix).
+    for (final accuracy in <LocationAccuracy>[
+      LocationAccuracy.low,
+      LocationAccuracy.medium,
+    ]) {
+      try {
+        return await Geolocator.getCurrentPosition(
+          locationSettings: LocationSettings(
+            accuracy: accuracy,
+            timeLimit: const Duration(seconds: 8),
+          ),
+        );
+      } on Object catch (error) {
+        debugPrint('[gate] current ($accuracy) failed: $error');
+      }
+    }
+
+    // 3) First stream tick (some devices only wake the fused provider when a
+    // listener is attached).
+    try {
+      return await Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          distanceFilter: 0,
+        ),
+      ).first.timeout(const Duration(seconds: 10));
+    } on Object catch (error) {
+      debugPrint('[gate] stream failed: $error');
+    }
+    return null;
+  }
+
   void _set(_GateStatus status) {
     if (!mounted) return;
-    setState(() => _status = status);
+    setState(() {
+      _status = status;
+      if (status == _GateStatus.serviceOff ||
+          status == _GateStatus.permissionDenied ||
+          status == _GateStatus.outside) {
+        _allowWithoutLocation = false;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (_status == _GateStatus.ok) return widget.child;
+    if (_status == _GateStatus.unavailable && _allowWithoutLocation) {
+      return widget.child;
+    }
     return Scaffold(
       backgroundColor: WingmanColors.navy,
       body: SafeArea(
@@ -327,6 +382,20 @@ class _LocationGateState extends State<LocationGate>
                         ),
                       ),
                     ],
+                  ],
+                  if (_status == _GateStatus.unavailable) ...<Widget>[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () =>
+                          setState(() => _allowWithoutLocation = true),
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      label: const Text(
+                        'Continuă fără verificarea locației',
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
                   ],
                   if (widget.onSignOut != null) ...[
                     const SizedBox(height: 12),
