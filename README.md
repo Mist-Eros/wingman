@@ -94,16 +94,20 @@ The database lives at `backend/data/wingman.db`. It is created automatically, gi
 
 ## Demo accounts
 
-Anyone can report — there is no separate reporter account. The account scope decides who receives alerts.
+Anyone can report — there is no separate reporter account. The account scope decides who receives alerts. There is **one dedicated crew account for every department** in the taxonomy, plus the admin.
 
 | Account | Password | Scope |
 |---|---|---|
 | **Andy Admin** | `admin123` | everything + dispatcher |
-| **Earl Engineer** | `engineer123` | maintenance · IT · baggage · airside |
-| **John Janitor** | `janitor123` | terminal services |
-| **Fred Firefighter** | `firefighter123` | fire / rescue |
 | **Gina Guard** | `guard123` | security |
+| **Fred Firefighter** | `firefighter123` | fire / rescue |
 | **Mandy Medic** | `medic123` | medical |
+| **Earl Engineer** | `engineer123` | maintenance |
+| **Olivia Operations** | `operations123` | operations |
+| **John Janitor** | `janitor123` | terminal services |
+| **Ivan IT** | `it123` | IT / communications |
+| **Betty Baggage** | `baggage123` | baggage |
+| **Aero Airside** | `airside123` | platform / airside |
 
 ## Project map
 
@@ -152,7 +156,7 @@ Wingman/
 
 ## Quality
 
-- **192 Flutter tests**
+- **193 Flutter tests**
 - **23 backend tests**
 - **108/108** live smoke checks (TLS + WSS)
 - `flutter analyze` clean

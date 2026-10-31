@@ -358,3 +358,11 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 |---|---|---|
 | Every ticket card shows a live **since-posted timer** (`MM:SS` / `H:MM:SS`), frozen at resolution/denial. Used in dispatcher, crew, history and the desktop dashboard. | `ticket_timer.dart`, feed/crew/history cards, dashboard JS | timer formatter tests; dashboard 1 s tick |
 | Admin stats expose **AHT** for day/week/month/year: average `resolved_at - created_at` over resolved tickets, plus `handled_count`; phone + dashboard show it as a KPI. | `stats.py`, `TicketStats`, `StatsPane`, dashboard JS | backend 23 tests; live API returned `AHT 2, handled 1` after resolving a ticket |
+
+---
+
+## 2026-10-31 — one account per response team
+
+- Split the former multi-department `engineer` account: **Earl Engineer** is maintenance only.
+- Added dedicated crew accounts for **operations, IT, baggage and airside**, joining security, fire/rescue, medical, maintenance and terminal.
+- The demo account list now has **one admin + nine department accounts**; each department has exactly one scoped account so alerts/quorum testing maps 1:1.

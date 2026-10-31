@@ -54,12 +54,29 @@ void main() {
           isFalse);
       expect(janitor.seesDepartments(<Department>[Department.it]), isFalse);
 
-      // Engineer: technical departments only.
+      // Engineer: maintenance only; IT now has its own account.
       expect(engineer.seesDepartments(<Department>[Department.maintenance]),
           isTrue);
-      expect(engineer.seesDepartments(<Department>[Department.it]), isTrue);
+      expect(engineer.seesDepartments(<Department>[Department.it]), isFalse);
       expect(
           engineer.seesDepartments(<Department>[Department.terminal]), isFalse);
+      final it = demoAccountByUsername('it')!.toSession();
+      expect(it.seesDepartments(<Department>[Department.it]), isTrue);
+    });
+
+    test('every department has exactly one dedicated crew account', () {
+      for (final department in Department.values) {
+        final accounts = demoAccounts
+            .where((account) =>
+                !account.isAdmin && account.departments.contains(department))
+            .toList();
+        expect(accounts, hasLength(1),
+            reason: '${department.wire} must be covered by one team account');
+      }
+      expect(
+        demoAccounts.where((account) => account.isAdmin),
+        hasLength(1),
+      );
     });
 
     test('session round-trips the account scope', () {
