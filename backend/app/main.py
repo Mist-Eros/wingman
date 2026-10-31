@@ -441,9 +441,14 @@ async def create_report(report: schemas.ReportIn) -> dict:
         )
         if existing is not None:
             logger.info(
-                "Duplicate report ignored → existing ticket %s (%s)",
+                "Duplicate report merged into existing ticket %s (%s)",
                 existing["id"],
                 existing["incident_code"],
+            )
+            existing = await store.attach_media(
+                existing["id"],
+                photo_base64=report.photo_base64,
+                location=location,
             )
             return {
                 "ticket": existing,

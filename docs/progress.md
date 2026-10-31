@@ -227,3 +227,14 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Seed now includes a medical scenario so Mandy has a live job in the demo. | `backend/seed_demo.py` | 6 seeded scenarios |
 
 - Media toggle refinement: **Foto** and **Hartă** tabs are now always visible next to each other; missing media shows an explicit empty state instead of hiding the tab.
+
+---
+
+## 2026-10-31 — photo attach fix
+
+| Fix | Where | Evidence |
+|---|---|---|
+| Root cause: `submitMenu`/`submit` received `photoBase64` but did not put it into `ReportDraft`, so the backend stored no photo. | `lib/features/reporter/reporter_controller.dart` | regression test `menu report carries the optional photo into ReportDraft`; app logs `[photo] read ... bytes` |
+| Duplicate reports now **enrich the existing ticket** with photo/GPS instead of returning an old ticket without them (broadcasts `ticket.updated`). | `backend/app/store.py` (`attach_media`), `main.py` duplicate path | API test: second duplicate returned same id with 65 KB photo |
+| Camera prompt now explains Samsung's **OK** confirmation; a cancelled/unconfirmed capture no longer auto-sends, it offers retry / send without photo. | `lib/features/reporter/photo_prompt.dart` | manual S24 flow; photo persisted and shown under Foto |
+| Debug logs retained for diagnostics (`[photo] launching/returned/read`). | `photo_prompt.dart` | logcat |

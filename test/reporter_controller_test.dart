@@ -506,6 +506,17 @@ void main() {
   });
 
   group('menu', () {
+    test('menu report carries the optional photo into ReportDraft', () async {
+      final h = Harness();
+      final type = IncidentTaxonomy.all.first;
+      await h.controller.submitMenu(
+        type,
+        locationText: 'Poarta 12',
+        photoBase64: 'cGhvdG8=',
+      );
+      expect(h.reports.single.photoBase64, 'cGhvdG8=');
+    });
+
     test('menu report: no questions, no AI, hint code + typed place', () async {
       final h = Harness();
       final type = IncidentTaxonomy.all.first;

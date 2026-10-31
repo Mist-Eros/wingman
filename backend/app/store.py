@@ -267,6 +267,34 @@ class TicketStore:
         return None
 
     # ── dispatcher actions ────────────────────────────────────────────────────
+    async def attach_media(
+        self,
+        ticket_id: str,
+        *,
+        photo_base64: str | None = None,
+        location: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Attach photo/GPS from a duplicate report to the existing ticket."""
+        changed = False
+        async with self._lock:
+            ticket = self._require_ticket(ticket_id)
+            if photo_base64 and not ticket.get("photo_base64"):
+                ticket["photo_base64"] = photo_base64
+                changed = True
+            if location:
+                dest = ticket.setdefault("location", {})
+                for key in ("terminal", "zone", "lat", "lng", "note"):
+                    new_value = location.get(key)
+                    if new_value not in (None, "") and dest.get(key) in (None, ""):
+                        dest[key] = new_value
+                        changed = True
+            if changed:
+                self._bump(ticket)
+            snapshot = copy.deepcopy(ticket)
+        if changed:
+            await self._hub.broadcast("ticket.updated", {"ticket": snapshot})
+        return snapshot
+
     async def confirm(
         self,
         ticket_id: str,

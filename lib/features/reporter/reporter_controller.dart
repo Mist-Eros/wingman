@@ -490,6 +490,7 @@ class ReporterController extends ChangeNotifier {
           note: _detailsNote(),
         ),
         hintCode: _hintCode,
+        photoBase64: photoBase64,
         // A type the reporter picked is trusted (no AI wait); otherwise the AI
         // classifies the full transcript.
         useAi: _hintCode == null,
@@ -549,6 +550,7 @@ class ReporterController extends ChangeNotifier {
         ),
         hintCode: type.code,
         useAi: false,
+        photoBase64: photoBase64,
       ));
       if (_stale(epoch)) return;
       _sent = ticket;

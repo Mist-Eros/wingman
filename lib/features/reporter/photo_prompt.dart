@@ -30,6 +30,7 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
   Timer? _timer;
   int _secondsLeft = 5;
   bool _picking = false;
+  bool _attempted = false;
   String? _error;
 
   @override
@@ -58,27 +59,36 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
       _error = null;
     });
     try {
+      debugPrint('[photo] launching camera');
       final file = await _picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1280,
         imageQuality: 60,
       );
+      debugPrint('[photo] picker returned ${file?.path}');
       if (!mounted) return;
       if (file == null) {
-        setState(() => _picking = false);
-        _startCountdown();
+        setState(() {
+          _picking = false;
+          _attempted = true;
+          _error = 'Poza nu a fost confirmată. În camera Samsung apasă OK '
+              'după shutter, apoi revino aici.';
+        });
+        // Do not auto-send after an attempted capture: let the reporter retry
+        // or explicitly choose "Trimite fără poză".
         return;
       }
       final bytes = await file.readAsBytes();
+      debugPrint('[photo] read ${bytes.length} bytes');
       if (!mounted) return;
       Navigator.of(context).pop(bytes);
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _picking = false;
+        _attempted = true;
         _error = 'Camera indisponibilă: $error';
       });
-      _startCountdown();
     }
   }
 
@@ -105,30 +115,43 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: WingmanColors.criticalFill,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              '$_secondsLeft s',
-              style: const TextStyle(
-                color: WingmanColors.critical,
-                fontWeight: FontWeight.w900,
+          if (!_attempted)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: WingmanColors.criticalFill,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$_secondsLeft s',
+                style: const TextStyle(
+                  color: WingmanColors.critical,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
-          ),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const Text(
-            'Opțional. Dacă situația e periculoasă, sari peste — raportul '
-            'pleacă oricum după 5 secunde.',
+          Text(
+            _attempted
+                ? 'Apasă OK în camera Samsung după ce faci poza, apoi '
+                    'revino aici. Poți încerca din nou sau trimite fără poză.'
+                : 'Opțional. Dacă situația e periculoasă, sari peste — raportul '
+                    'pleacă oricum după 5 secunde.',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          Text(
+            'După shutter, apasă OK în camera Samsung.',
+            style: TextStyle(
+              color: theme.colorScheme.primary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
           InkWell(
             onTap: _picking ? null : _takePhoto,
             borderRadius: BorderRadius.circular(18),
@@ -148,7 +171,9 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _picking ? 'Se deschide camera…' : 'Fă poza acum',
+                    _picking
+                        ? 'Se deschide camera…'
+                        : (_attempted ? 'Reîncearcă poza' : 'Fă poza acum'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 19,
