@@ -9,6 +9,8 @@ void main() {
       'total_reports': 6,
       'resolved': 2,
       'active': 1,
+      'average_handling_seconds': 125,
+      'handled_count': 2,
       'by_code': <Map<String, dynamic>>[
         <String, dynamic>{
           'code': 'OP-MED',
@@ -29,6 +31,8 @@ void main() {
     });
     expect(stats.period, 'week');
     expect(stats.totalReports, 6);
+    expect(stats.averageHandlingSeconds, 125);
+    expect(stats.handledCount, 2);
     expect(stats.byCode.single.code, 'OP-MED');
     expect(stats.byCode.single.reports, 5);
     expect(stats.byDepartment.single.department, 'medical');

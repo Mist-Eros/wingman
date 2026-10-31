@@ -122,6 +122,8 @@ def build_stats(
     by_department: dict[str, int] = {}
     status_counts: dict[str, int] = {}
     series = [0 for _ in buckets]
+    series_handling = [[] for _ in buckets]
+    handling_seconds: list[int] = []
     total_reports = 0
 
     for ticket in selected:
@@ -150,11 +152,25 @@ def build_stats(
             by_department[key] = by_department.get(key, 0) + 1
 
         created = _parse(ticket.get("created_at"))
+        resolved_at = _parse(ticket.get("resolved_at"))
+        handling_duration: int | None = None
+        if status == "resolved" and created is not None and resolved_at is not None:
+            handling_duration = max(0, int((resolved_at - created).total_seconds()))
+            handling_seconds.append(handling_duration)
+
         if created is not None:
             for index, (_, start, end) in enumerate(buckets):
                 if start <= created < end:
                     series[index] += 1
+                    if handling_duration is not None:
+                        series_handling[index].append(handling_duration)
                     break
+
+    average_handling = (
+        round(sum(handling_seconds) / len(handling_seconds))
+        if handling_seconds
+        else None
+    )
 
     return {
         "period": period,
@@ -177,8 +193,17 @@ def build_stats(
                 by_department.items(), key=lambda item: (-item[1], item[0])
             )
         ],
+        "average_handling_seconds": average_handling,
+        "handled_count": len(handling_seconds),
         "series": [
-            {"label": label, "count": count}
-            for (label, _, _), count in zip(buckets, series)
+            {
+                "label": label,
+                "count": count,
+                "handled_count": len(handling),
+                "average_handling_seconds": (
+                    round(sum(handling) / len(handling)) if handling else None
+                ),
+            }
+            for (label, _, _), count, handling in zip(buckets, series, series_handling)
         ],
     }

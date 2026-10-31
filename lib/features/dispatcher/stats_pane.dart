@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/core_scope.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket_stats.dart';
+import '../../core/widgets/ticket_timer.dart';
 import '../../core/theme/wingman_theme.dart';
 
 /// Admin statistics: what happens, how many and how often, by day/week/month/year.
@@ -97,8 +98,21 @@ class _StatsBody extends StatelessWidget {
             _Kpi(value: '${stats.totalReports}', label: 'raportări'),
             _Kpi(value: '${stats.resolved}', label: 'rezolvate'),
             _Kpi(value: '${stats.active}', label: 'active'),
+            _Kpi(
+              value: formatAverageHandling(stats.averageHandlingSeconds),
+              label: 'timp mediu',
+            ),
           ],
         ),
+        if (stats.handledCount > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Timp mediu de la raportare la rezolvare, '
+              'pe ${stats.handledCount} tichete rezolvate.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
         const SizedBox(height: 18),
         Text('Frecvență', style: _section(theme)),
         const SizedBox(height: 8),

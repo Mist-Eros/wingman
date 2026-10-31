@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
 import '../../core/widgets/reporter_count_chip.dart';
+import '../../core/widgets/ticket_timer.dart';
 import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 
@@ -240,6 +241,7 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                                 color: const Color(0xFF64748B),
                               ),
                               ReporterCountChip(ticket: _ticket),
+                              TicketTimerChip(ticket: _ticket),
                             ],
                           ),
                           const SizedBox(height: 12),

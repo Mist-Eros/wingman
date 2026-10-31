@@ -36,8 +36,8 @@ An airport employee reports an incident by **voice** or through a deterministic 
 | **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. Standby teams are not woken for nothing. |
 | **One ticket, many reporters** | Duplicate reports merge into one ticket, increment the report count and keep the distinct reporters visible with a 👥 counter. |
 | **Real persistence** | Tickets, photos, votes and history live in SQLite and survive backend restarts. |
-| **Live everywhere** | One WSS connection keeps phones and the control room in sync, with a versioned `TicketBoard` cache. |
-| **Statistics that mean something** | What happens, how often, and where — by day, week, month or year. |
+| **Live everywhere** | One WSS connection keeps phones and the control room in sync, with a versioned `TicketBoard` cache. Every ticket carries a live **since-posted timer**. |
+| **Statistics that mean something** | What happens, how often, and where — by day, week, month or year, plus **average handling time**. |
 | **Rewards with a spine** | 2 points for a report, 5 for join + resolve. Self-report → self-resolve on a non-dangerous incident earns **0**. |
 | **Location-aware** | The signed-in app requires location on and a position within **2 km** of the airport. GPS-off and known out-of-range are hard locks; no-fix indoors offers an explicit continue. |
 
@@ -152,8 +152,8 @@ Wingman/
 
 ## Quality
 
-- **190 Flutter tests**
-- **22 backend tests**
+- **192 Flutter tests**
+- **23 backend tests**
 - **108/108** live smoke checks (TLS + WSS)
 - `flutter analyze` clean
 - `.\scripts\verify_all.ps1 -Live` → all gates

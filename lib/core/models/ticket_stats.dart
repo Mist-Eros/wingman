@@ -7,6 +7,8 @@ class TicketStats {
     required this.resolved,
     required this.denied,
     required this.active,
+    required this.averageHandlingSeconds,
+    required this.handledCount,
     required this.byCode,
     required this.byUrgency,
     required this.byDepartment,
@@ -19,6 +21,10 @@ class TicketStats {
   final int resolved;
   final int denied;
   final int active;
+
+  /// Average created→resolved time for tickets in this period; null when none.
+  final int? averageHandlingSeconds;
+  final int handledCount;
   final List<CodeStat> byCode;
   final Map<String, int> byUrgency;
   final List<DepartmentStat> byDepartment;
@@ -32,6 +38,8 @@ class TicketStats {
       resolved: _int(json['resolved']),
       denied: _int(json['denied']),
       active: _int(json['active']),
+      averageHandlingSeconds: _nullableInt(json['average_handling_seconds']),
+      handledCount: _int(json['handled_count']),
       byCode: <CodeStat>[
         if (json['by_code'] is List)
           for (final raw in json['by_code'] as List)
@@ -106,4 +114,10 @@ int _int(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return 0;
+}
+
+int? _nullableInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return null;
 }

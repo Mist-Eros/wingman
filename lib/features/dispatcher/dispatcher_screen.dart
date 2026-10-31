@@ -17,6 +17,7 @@ import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
 import '../../core/widgets/reporter_count_chip.dart';
+import '../../core/widgets/ticket_timer.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 import '../rewards/account_screen.dart';
 import '../reporter/reporter_screen.dart';
@@ -1907,6 +1908,8 @@ class _HistoryCard extends StatelessWidget {
               ),
               const Spacer(),
               ReporterCountChip(ticket: ticket),
+              const SizedBox(width: 6),
+              TicketTimerChip(ticket: ticket),
               const SizedBox(width: 8),
               Text(
                 ticket.incidentCode,

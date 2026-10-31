@@ -203,6 +203,11 @@
   .reporters { display:inline-flex; align-items:center; gap:3px; padding:2px 7px;
                 border:1px solid #E2E8F0; border-radius:7px; background:#F8FAFC;
                 color:#0F4C81; font-size:11px; font-weight:800; }
+  .ticket-timer { display:inline-flex; align-items:center; padding:2px 7px;
+                  border:1px solid #E2E8F0; border-radius:7px; background:#F8FAFC;
+                  color:#1565C0; font-size:11px; font-weight:800;
+                  font-variant-numeric: tabular-nums; }
+  .stats-aht { margin-top:6px; color:var(--muted); font-size:11px; }
   .detail { background:#fff; }
   .toast { background:#0F172A; color:#fff; border-color:#0F172A; }
   .modal { background:#fff; border-color:#E2E8F0; color:#0F172A; }
@@ -471,6 +476,60 @@ function ago(iso) {
   return 'acum ' + Math.floor(s / 3600) + 'h';
 }
 
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function formatElapsed(totalSeconds) {
+  let total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (days > 0) return days + 'd ' + pad2(hours) + ':' + pad2(minutes);
+  if (hours > 0) return hours + ':' + pad2(minutes) + ':' + pad2(seconds);
+  return pad2(minutes) + ':' + pad2(seconds);
+}
+
+function formatAht(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+  let total = Math.max(0, Math.floor(Number(value)));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) return hours + 'h ' + pad2(minutes) + 'm';
+  if (minutes > 0) return minutes + 'm ' + pad2(seconds) + 's';
+  return seconds + 's';
+}
+
+function ticketTimerText(t) {
+  const end = t.status === 'resolved'
+    ? t.resolved_at
+    : (t.status === 'denied' ? t.updated_at : null);
+  const startMs = new Date(t.created_at).getTime();
+  const endMs = end ? new Date(end).getTime() : Date.now();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return '--:--';
+  return formatElapsed((endMs - startMs) / 1000);
+}
+
+function ticketTimerHtml(t) {
+  const end = t.status === 'resolved'
+    ? (t.resolved_at || '')
+    : (t.status === 'denied' ? (t.updated_at || '') : '');
+  return '<span class="ticket-timer" data-created="' + esc(t.created_at) +
+    '" data-end="' + esc(end) + '">⏱ ' + ticketTimerText(t) + '</span>';
+}
+
+function updateTicketTimers() {
+  document.querySelectorAll('.ticket-timer').forEach(el => {
+    const created = el.getAttribute('data-created');
+    const end = el.getAttribute('data-end');
+    const startMs = new Date(created).getTime();
+    const endMs = end ? new Date(end).getTime() : Date.now();
+    if (Number.isFinite(startMs) && Number.isFinite(endMs)) {
+      el.textContent = '⏱ ' + formatElapsed((endMs - startMs) / 1000);
+    }
+  });
+}
+
 function badge(text, color) {
   return '<span class="badge" style="color:' + color + ';border-color:' + color +
          ';background:rgba(255,255,255,.03)">' + esc(text) + '</span>';
@@ -532,6 +591,7 @@ function render() {
         badge(t.incident_code, uc) + badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
         badge(STATUS_LABEL[t.status] || t.status, sc) +
         '<span class="reporters">👥 ' + peopleCount(t) + '</span>' +
+        ticketTimerHtml(t) +
         '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
         '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' +
@@ -686,7 +746,10 @@ function renderStats() {
   $('list').innerHTML = periodButtons +
     '<div class="stats-kpis">' +
     statsKpi(d.total_tickets, 'tichete') + statsKpi(d.total_reports, 'raportări') +
-    statsKpi(d.resolved, 'rezolvate') + statsKpi(d.active, 'active') + '</div>' +
+    statsKpi(d.resolved, 'rezolvate') + statsKpi(d.active, 'active') +
+    statsKpi(formatAht(d.average_handling_seconds), 'AHT') + '</div>' +
+    '<div class="stats-aht">Media timpului de la raportare la rezolvare, pe ' +
+    (d.handled_count || 0) + ' tichete rezolvate.</div>' +
     '<div class="stats-section-title">Frecvență</div>' +
     '<div class="stats-chart">' + bars + '</div>' +
     '<div class="stats-section-title">Ce probleme apar</div>' +

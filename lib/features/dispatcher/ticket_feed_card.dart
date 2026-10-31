@@ -4,6 +4,7 @@ import '../../core/incidents/likelihood.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
 import '../../core/widgets/reporter_count_chip.dart';
+import '../../core/widgets/ticket_timer.dart';
 import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 import 'dispatcher_density.dart';
@@ -226,6 +227,7 @@ class TicketFeedCard extends StatelessWidget {
                                       likelihood: ticket.craiovaLikelihood),
                                   _StatusChip(status: ticket.status),
                                   ReporterCountChip(ticket: ticket),
+                                  TicketTimerChip(ticket: ticket),
                                   Text(
                                     _ageLabel(ticket.ageSeconds()),
                                     style:

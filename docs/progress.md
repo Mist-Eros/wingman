@@ -349,3 +349,12 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 - If the **initial** voice transcript is unusable (best word < 0.60, or at least half of words < 0.55), the app asks exactly **one** repeat.
 - If the second attempt is still unusable, it does not keep asking: it opens the deterministic **8×8×8 menu** and shows a snackbar.
 - Silence remains `noSpeech`; typed/menu input never enters this path. State resets after submit/reset.
+
+---
+
+## 2026-10-31 — per-ticket timer + average handling time
+
+| Change | Where | Evidence |
+|---|---|---|
+| Every ticket card shows a live **since-posted timer** (`MM:SS` / `H:MM:SS`), frozen at resolution/denial. Used in dispatcher, crew, history and the desktop dashboard. | `ticket_timer.dart`, feed/crew/history cards, dashboard JS | timer formatter tests; dashboard 1 s tick |
+| Admin stats expose **AHT** for day/week/month/year: average `resolved_at - created_at` over resolved tickets, plus `handled_count`; phone + dashboard show it as a KPI. | `stats.py`, `TicketStats`, `StatsPane`, dashboard JS | backend 23 tests; live API returned `AHT 2, handled 1` after resolving a ticket |
