@@ -25,6 +25,7 @@ import 'dart:io';
 import '../incidents/taxonomy.dart';
 import '../models/analyze_result.dart';
 import '../models/ticket.dart';
+import '../models/ticket_stats.dart';
 import '../models/transcription_result.dart';
 
 /// Server-enforced override window for low-confidence classifications.
@@ -170,6 +171,12 @@ class ApiClient {
       timeout: const Duration(seconds: 45),
     );
     return _ticketFrom(json);
+  }
+
+  /// Admin statistics: top problems/counts/frequency for a period.
+  Future<TicketStats> stats({String period = 'week'}) async {
+    final json = await _send('GET', '/api/stats?period=$period');
+    return TicketStats.fromJson(json);
   }
 
   Future<List<Ticket>> listTickets({TicketStatus? status}) async {

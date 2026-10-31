@@ -11,7 +11,8 @@
     "Quorum: 1 vote for low/medium, 2 votes for high/critical.",
     "Accessibility profiles: blind, mute, deaf, colorblind, motor, cognitive.",
     "Quorum is one responder per primary department involved (not a fixed 2).",
-    "Ticket photo + GPS location are persisted and shown via a Foto/Hartă toggle in dispatcher, crew, history and dashboard."
+    "Ticket photo + GPS location are persisted and shown via a Foto/Hartă toggle in dispatcher, crew, history and dashboard.",
+    "Admin statistics are available in the desktop dashboard and the admin phone (Zi/Saptamana/Luna/An)."
   ],
   "images": [
     {
@@ -153,6 +154,16 @@
       "file": "22_ticket_media_map.png",
       "caption": "Ticket detail media toggle — location on a real map (persistent)",
       "slide": "Ticket media"
+    },
+    {
+      "file": "23_dashboard_statistics.png",
+      "caption": "Desktop statistics: KPI, frequency and top problems by day/week/month/year",
+      "slide": "Statistics"
+    },
+    {
+      "file": "24_phone_statistics.png",
+      "caption": "Phone admin statistics: same data on the dispatcher phone",
+      "slide": "Statistics"
     }
   ]
 }

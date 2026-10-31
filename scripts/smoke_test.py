@@ -955,6 +955,23 @@ async def run(args: argparse.Namespace) -> int:
     )
 
     # 12 ── reset (leave a clean store for the next run) ────────────────────
+    # 11b ── admin statistics ────────────────────────────────────────────────
+    print("[11b] admin statistics")
+    status, stats = http_call(base, token, "/api/stats?period=week", insecure=insecure)
+    check("/api/stats returns 200", status == 200, f"status={status}")
+    check(
+        "stats period is week with 7 buckets",
+        status == 200
+        and stats.get("period") == "week"
+        and len(stats.get("series") or []) == 7,
+        str(stats.get("series")),
+    )
+    check(
+        "stats exposes top problem codes",
+        status == 200 and isinstance(stats.get("by_code"), list),
+        str(stats.get("by_code")),
+    )
+
     print("[12] dev reset")
     status, body = http_call(
         base, token, "/api/dev/reset", method="POST", insecure=insecure

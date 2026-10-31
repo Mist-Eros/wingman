@@ -44,6 +44,7 @@ from .ai import (
 )
 from .config import BASE_DIR, settings
 from .domain import load_domain_config
+from .stats import PERIODS as STATS_PERIODS, build_stats
 from .stt import (
     merge_corrected_transcript,
     stt_available,
@@ -265,6 +266,21 @@ async def download_ca():
 
 
 # ── REST ──────────────────────────────────────────────────────────────────────
+@api.get("/stats")
+async def stats(
+    period: str = "week",
+    _: None = Depends(require_token),
+) -> dict:
+    """Admin statistics: top problems, counts and frequency by period."""
+    if period not in STATS_PERIODS:
+        raise HTTPException(
+            status_code=400,
+            detail="period must be one of: " + ", ".join(STATS_PERIODS),
+        )
+    tickets = await store.list_tickets()
+    return build_stats(tickets, period=period)
+
+
 @api.get("/health")
 async def health() -> dict:
     return {

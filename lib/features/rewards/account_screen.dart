@@ -57,26 +57,36 @@ class AccountScreen extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: _Stat(
+                      value: '${ledger.reportedCount}',
+                      label: 'raportate',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _Stat(
                       value: '${ledger.attendedCount}',
                       label: 'intervenții',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _Stat(
                       value: '${ledger.resolvedCount}',
                       label: 'rezolvate',
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Stat(
-                      value: '${ledger.inProgressCount}',
-                      label: 'în curs',
-                    ),
-                  ),
                 ],
               ),
+              if (ledger.blockedSelfResolutions > 0) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  '${ledger.blockedSelfResolutions} raportări auto-rezolvate '
+                  'nu au primit puncte (incident nepericulos).',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: WingmanColors.pending,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               Text(
                 'Istoricul meu',

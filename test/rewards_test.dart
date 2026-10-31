@@ -7,6 +7,9 @@ Ticket _ticket({
   required TicketStatus status,
   required List<String> joinedCrewIds,
   DateTime? updatedAt,
+  String reporterId = 'reporter-1',
+  String urgency = 'critical',
+  List<String> voterIds = const <String>[],
 }) {
   final now = (updatedAt ?? DateTime.utc(2026, 1, 1, 12)).toUtc();
   return Ticket.fromJson(<String, dynamic>{
@@ -14,10 +17,10 @@ Ticket _ticket({
     'incident_code': 'SF-FIRE',
     'label_ro': 'Foc sau fum în terminal',
     'category': 'safety_fire',
-    'urgency': 'critical',
+    'urgency': urgency,
     'status': status.wire,
     'source': 'voice',
-    'reporter_id': 'reporter-1',
+    'reporter_id': reporterId,
     'reporter_name': 'Reporter',
     'transcript': 'fum',
     'photo_base64': null,
@@ -35,7 +38,7 @@ Ticket _ticket({
     'standby_departments': <String>[],
     'joined_crew_ids': joinedCrewIds,
     'resolve_votes': 0,
-    'resolve_voter_ids': <String>[],
+    'resolve_voter_ids': voterIds,
     'quorum': 1,
     'override_deadline': null,
     'dispatched_at': now.toIso8601String(),
@@ -103,7 +106,7 @@ void main() {
 
       expect(ledger.totalPoints, 16); // 12 + 2 + 2
       expect(ledger.entries[0].points, 12);
-      expect(ledger.entries[0].reason, 'resolved');
+      expect(ledger.entries[0].reason, 'attended+resolved');
       expect(ledger.entries[1].points, 2);
       expect(ledger.entries[2].points, 2);
     });
@@ -120,6 +123,61 @@ void main() {
       final ledger = policy.ledgerFor(crewId: 'crew-1', tickets: tickets);
 
       expect(ledger.totalPoints, 11); // (1+5) + (1+3) + 1
+    });
+
+    test('reporting alone earns report points', () {
+      final ledger = const RuleBasedRewardPolicy().ledgerFor(
+        crewId: 'crew-1',
+        tickets: <Ticket>[
+          _ticket(
+            id: 'my-report',
+            status: TicketStatus.dispatched,
+            joinedCrewIds: const <String>[],
+            reporterId: 'crew-1',
+            urgency: 'low',
+          ),
+        ],
+      );
+      expect(ledger.reportedCount, 1);
+      expect(ledger.attendedCount, 0);
+      expect(ledger.totalPoints, 3);
+    });
+
+    test('self-report + self-resolve alone is blocked when not dangerous', () {
+      final ledger = const RuleBasedRewardPolicy().ledgerFor(
+        crewId: 'crew-1',
+        tickets: <Ticket>[
+          _ticket(
+            id: 'farm',
+            status: TicketStatus.resolved,
+            joinedCrewIds: const <String>['crew-1'],
+            reporterId: 'crew-1',
+            urgency: 'low',
+            voterIds: const <String>['crew-1'],
+          ),
+        ],
+      );
+      expect(ledger.totalPoints, 0);
+      expect(ledger.blockedSelfResolutions, 1);
+      expect(ledger.entries.single.reason, 'self_resolution_blocked');
+    });
+
+    test('self-report + self-resolve is allowed for a dangerous incident', () {
+      final ledger = const RuleBasedRewardPolicy().ledgerFor(
+        crewId: 'crew-1',
+        tickets: <Ticket>[
+          _ticket(
+            id: 'danger',
+            status: TicketStatus.resolved,
+            joinedCrewIds: const <String>['crew-1'],
+            reporterId: 'crew-1',
+            urgency: 'critical',
+            voterIds: const <String>['crew-1'],
+          ),
+        ],
+      );
+      expect(ledger.totalPoints, 15);
+      expect(ledger.blockedSelfResolutions, 0);
     });
 
     test('users who attended nothing get an empty ledger', () {

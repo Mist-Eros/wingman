@@ -30,6 +30,7 @@ import 'dispatcher_history.dart';
 import 'override_countdown_card.dart';
 import 'ticket_feed_card.dart';
 import 'ticket_timeline.dart';
+import 'stats_pane.dart';
 import 'urgency_style.dart';
 import 'zone_board.dart';
 
@@ -741,6 +742,12 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                         onTap: () =>
                             setState(() => _adminTab = _AdminTab.history),
                       ),
+                      _AdminTabButton(
+                        label: 'Statistici',
+                        selected: _adminTab == _AdminTab.stats,
+                        onTap: () =>
+                            setState(() => _adminTab = _AdminTab.stats),
+                      ),
                     ],
                   ),
                 );
@@ -759,6 +766,10 @@ class _DispatcherScreenState extends State<DispatcherScreen>
               final feed = _feed(board);
               final selected = _findTicket(board, _selectedTicketId);
               final liveCount = board.tickets.length;
+
+              if (_adminTab == _AdminTab.stats) {
+                return const StatsPane();
+              }
 
               if (_adminTab == _AdminTab.history) {
                 final historyTickets = (demo ? _demoTickets : board.tickets)
@@ -1701,7 +1712,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-enum _AdminTab { queue, history }
+enum _AdminTab { queue, history, stats }
 
 class _AdminTabButton extends StatelessWidget {
   const _AdminTabButton({

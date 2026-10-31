@@ -20,6 +20,7 @@ class RewardService {
       pointsLabel: domain.rewards.pointsLabel,
       policy: RuleBasedRewardPolicy(
         rules: RewardRules(
+          reportPoints: domain.rewards.reportPoints,
           attendedPoints: domain.rewards.attendedPoints,
           resolvedBonus: domain.rewards.resolvedBonus,
           deniedPoints: domain.rewards.deniedPoints,

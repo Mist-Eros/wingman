@@ -67,6 +67,28 @@
           font-weight: 700; cursor: pointer; }
   .chip.on { background: rgba(91,167,255,.2); border-color: var(--accent);
              color: var(--accent); }
+  .stats-periods { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .stats-kpis { display:flex; gap:8px; flex-wrap:wrap; }
+  .stats-kpi { flex:1 1 100px; background:#fff; border:1px solid var(--line); border-radius:12px;
+               padding:10px; text-align:center; }
+  .stats-kpi .n { font-size:24px; font-weight:900; color:var(--ink); }
+  .stats-kpi .label { font-size:11px; color:var(--muted); }
+  .stats-section-title { margin:16px 0 8px; font-size:13px; font-weight:900; color:var(--ink); }
+  .stats-chart { display:flex; align-items:flex-end; gap:4px; overflow-x:auto; min-height:122px;
+                 padding:8px; background:#fff; border:1px solid var(--line); border-radius:12px; }
+  .stats-bar { min-width:24px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .stats-bar-count { font-size:8px; color:var(--muted); }
+  .stats-bar-fill { width:17px; background:#0F4C81; border-radius:3px 3px 0 0; }
+  .stats-bar-label { font-size:8px; color:var(--muted); white-space:nowrap; }
+  .stats-codes { background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; }
+  .stats-code { display:grid; grid-template-columns:62px 1fr 34px; gap:4px; align-items:center;
+                margin-bottom:8px; position:relative; }
+  .stats-code .code { font-size:10px; font-weight:800; color:#0F4C81; }
+  .stats-code .label { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stats-code .n { font-size:12px; font-weight:900; text-align:right; }
+  .stats-code-bar { grid-column:1 / -1; height:4px; background:#EEF2F8; border-radius:2px; overflow:hidden; }
+  .stats-code-bar span { display:block; height:100%; background:#0F4C81; }
+  .stats-depts { display:flex; gap:6px; flex-wrap:wrap; }
   .list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
           padding-right: 4px; }
   .ticket { display: flex; gap: 12px; background: var(--card);
@@ -251,6 +273,7 @@
       <div class="tabs">
         <button id="tabQueue" class="chip on" onclick="setTab('queue')">Coadă</button>
         <button id="tabHistory" class="chip" onclick="setTab('history')">Istoric <span class="tab-count" id="historyCount">0</span></button>
+        <button id="tabStats" class="chip" onclick="setTab('stats')">Statistici</button>
       </div>
       <button id="clearHistory" class="btn danger" style="display:none" onclick="clearHistory()">🗑 Golește istoricul</button>
       <button class="chip" onclick="openReport()">＋ Raportează</button>
@@ -336,6 +359,9 @@ const STATUS_LABEL = { dispatched: 'Dispecerizat', in_progress: 'În lucru', res
 let tickets = new Map();
 let selected = null;
 let activeTab = 'queue';
+let statsPeriod = 'week';
+let statsData = null;
+let statsLoading = false;
 let ws = null;
 let wsRetry = null;
 let taxonomy = [];
@@ -403,7 +429,15 @@ function connectWs() {
 
 function isActive(t) { return ['dispatched', 'in_progress'].includes(t.status); }
 function isTerminal(t) { return ['resolved', 'denied'].includes(t.status); }
-function setTab(tab) { activeTab = tab; selected = null; render(); }
+function setTab(tab) {
+  activeTab = tab;
+  selected = null;
+  if (tab === 'stats') {
+    loadStats();
+  } else {
+    render();
+  }
+}
 
 function airportLikelihood(t) {
   const byCode = {
@@ -443,6 +477,10 @@ function badge(text, color) {
 }
 
 function render() {
+  if (activeTab === 'stats') {
+    renderStats();
+    return;
+  }
   const list = visibleTickets();
   const activeList = [...tickets.values()].filter(isActive);
   const historyList = [...tickets.values()].filter(isTerminal);
@@ -451,6 +489,7 @@ function render() {
   $('feedTitle').textContent = activeTab === 'queue' ? 'Coadă incidente' : 'Istoric';
   $('tabQueue').classList.toggle('on', activeTab === 'queue');
   $('tabHistory').classList.toggle('on', activeTab === 'history');
+  $('tabStats').classList.toggle('on', activeTab === 'stats');
   $('historyCount').textContent = historyList.length;
   $('clearHistory').style.display =
     activeTab === 'history' && historyList.length ? 'inline-flex' : 'none';
@@ -584,6 +623,80 @@ function renderTicketMedia(view) {
   } else {
     el.innerHTML = '<div class="media-empty">Nu există media pentru acest tichet.</div>';
   }
+}
+
+async function loadStats() {
+  statsLoading = true;
+  renderStats();
+  try {
+    statsData = await request('/api/stats?period=' + encodeURIComponent(statsPeriod));
+    statsLoading = false;
+    renderStats();
+  } catch (err) {
+    statsLoading = false;
+    toast('Statisticile nu au putut fi încărcate: ' + err.message);
+    renderStats();
+  }
+}
+
+function setStatsPeriod(period) {
+  statsPeriod = period;
+  loadStats();
+}
+
+function renderStats() {
+  $('tabQueue').classList.toggle('on', false);
+  $('tabHistory').classList.toggle('on', false);
+  $('tabStats').classList.toggle('on', true);
+  $('feedTitle').textContent = 'Statistici';
+  $('queueCount').textContent = statsData ? statsData.total_tickets : 0;
+  $('clearHistory').style.display = 'none';
+  $('total').textContent = [...tickets.values()].filter(isActive).length;
+
+  const periods = [['day','Zi'],['week','Săptămână'],['month','Lună'],['year','An']];
+  const periodButtons = '<div class="stats-periods">' + periods.map(([key,label]) =>
+    '<button class="chip ' + (statsPeriod === key ? 'on' : '') + '" onclick="setStatsPeriod(\'' + key + '\')">' + label + '</button>'
+  ).join('') + '</div>';
+
+  if (statsLoading || !statsData) {
+    $('list').innerHTML = periodButtons + '<div class="empty"><div class="big">📊</div><div style="margin-top:8px">' +
+      (statsLoading ? 'Se calculează statisticile…' : 'Alege o perioadă.') + '</div></div>';
+    return;
+  }
+
+  const d = statsData;
+  const maxSeries = Math.max(1, ...d.series.map(p => p.count));
+  const byCode = d.by_code || [];
+  const maxCode = Math.max(1, ...byCode.map(c => c.count));
+  const bars = d.series.map(p =>
+    '<div class="stats-bar"><div class="stats-bar-count">' + p.count + '</div>' +
+    '<div class="stats-bar-fill" style="height:' + Math.max(3, Math.round(90 * p.count / maxSeries)) + 'px"></div>' +
+    '<div class="stats-bar-label">' + esc(p.label) + '</div></div>'
+  ).join('');
+  const codes = byCode.slice(0, 10).map(c =>
+    '<div class="stats-code"><span class="code">' + esc(c.code) + '</span>' +
+    '<span class="label">' + esc(c.labelRo) + '</span>' +
+    '<span class="n">' + c.count + '</span>' +
+    '<div class="stats-code-bar"><span style="width:' + Math.round(100 * c.count / maxCode) + '%"></span></div></div>'
+  ).join('');
+  const depts = (d.by_department || []).slice(0, 8).map(x =>
+    '<span class="badge">' + esc(DEPT_LABEL[x.department] || x.department) + ' · ' + x.count + '</span>'
+  ).join('');
+
+  $('list').innerHTML = periodButtons +
+    '<div class="stats-kpis">' +
+    statsKpi(d.total_tickets, 'tichete') + statsKpi(d.total_reports, 'raportări') +
+    statsKpi(d.resolved, 'rezolvate') + statsKpi(d.active, 'active') + '</div>' +
+    '<div class="stats-section-title">Frecvență</div>' +
+    '<div class="stats-chart">' + bars + '</div>' +
+    '<div class="stats-section-title">Ce probleme apar</div>' +
+    '<div class="stats-codes">' + codes + '</div>' +
+    '<div class="stats-section-title">Departamente implicate</div>' +
+    '<div class="stats-depts">' + depts + '</div>';
+}
+
+function statsKpi(value, label) {
+  return '<div class="stats-kpi"><div class="n">' + value + '</div><div class="label">' + label + '</div></div>';
 }
 
 async function clearHistory() {

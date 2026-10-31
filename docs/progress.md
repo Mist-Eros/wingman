@@ -268,3 +268,14 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Duplicate reports still resolve to one ticket, but now increment `report_count`, keep distinct `reporter_ids`/`reporter_names`, and broadcast `ticket.updated`; photos/GPS from the duplicate are still merged. | `backend/app/store.py` (`attach_media`), `main.py` | smoke check: second report same id, `report_count=2`, two distinct reporters |
 | Ticket header now shows a **👥 N** chip (N = distinct people); tooltip also shows total reports ("2 raportări · 2 persoane"). | `reporter_count_chip.dart`, dispatcher/crew/history cards, dashboard JS | widget test; dashboard card/detail |
 | Wire/model fields added: `report_count`, `reporter_ids`, `reporter_names`. | `ticket.dart`, smoke `TICKET_KEYS`, sample contract | Flutter contract tests |
+
+---
+
+## 2026-10-31 — stats, report rewards, anti-farming, second phone
+
+| Change | Where | Evidence |
+|---|---|---|
+| Admin statistics for **day/week/month/year**: KPI, frequency series, top problems and departments; available in the phone dispatcher and Waterfox dashboard. | `backend/app/stats.py`, `/api/stats`, `stats_pane.dart`, dashboard JS | Android + dashboard captures `23/24`; smoke 108/108 |
+| Rewards now cover **reporting + attending + resolving** (`reportPoints=3`, attended 2, resolved 10), config-driven. | `reward_policy.dart`, `domain.py`, domain JSON | reward tests |
+| Anti-farming: self-report + self-resolve **alone** on a low/medium incident gives 0 points; high/critical incidents still count. UI reports blocked self-resolutions. | reward policy + account UI | Dart/backend tests |
+| **Samsung A52s** (`R5CT22RJNZF`) set up as second crew phone: final APK, USB reverse, location/audio/notifications permissions, Mandy Medic logged in, WSS connected. | device setup | A52s screenshot + logcat |

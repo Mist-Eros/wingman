@@ -34,7 +34,8 @@
     "attendedPoints": 1,
     "resolvedBonus": 5,
     "deniedPoints": 0,
-    "pointsLabel": "CREDITE"
+    "pointsLabel": "CREDITE",
+    "reportPoints": 2
   },
   "notifications": {
     "roles": [

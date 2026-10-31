@@ -9,15 +9,20 @@
 // replacing the whole reward scheme does not touch account UI or ticket code.
 // =============================================================================
 
-import '../../core/models/ticket.dart';
+import '../incidents/taxonomy.dart';
+import '../models/ticket.dart';
 
 class RewardRules {
   const RewardRules({
+    this.reportPoints = 3,
     this.attendedPoints = 2,
     this.resolvedBonus = 10,
     this.deniedPoints = 0,
     this.pointsLabel = 'PUNCTE',
   });
+
+  /// Points for filing the initial report.
+  final int reportPoints;
 
   /// Points for taking/attending a ticket.
   final int attendedPoints;
@@ -52,13 +57,17 @@ class RewardLedger {
     required this.entries,
     required this.totalPoints,
     required this.attendedCount,
+    required this.reportedCount,
     required this.resolvedCount,
+    this.blockedSelfResolutions = 0,
   });
 
   final List<RewardEntry> entries;
   final int totalPoints;
   final int attendedCount;
+  final int reportedCount;
   final int resolvedCount;
+  final int blockedSelfResolutions;
 
   int get inProgressCount => attendedCount - resolvedCount;
   bool get isEmpty => entries.isEmpty;
@@ -81,38 +90,83 @@ class RuleBasedRewardPolicy implements RewardPolicy {
     required String crewId,
     required Iterable<Ticket> tickets,
   }) {
-    final attended = tickets
-        .where((ticket) => ticket.joinedCrewIds.contains(crewId))
+    final relevant = tickets
+        .where(
+          (ticket) =>
+              ticket.reporterId == crewId ||
+              ticket.joinedCrewIds.contains(crewId),
+        )
         .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     final entries = <RewardEntry>[];
     var total = 0;
+    var attended = 0;
+    var reported = 0;
     var resolved = 0;
+    var blocked = 0;
 
-    for (final ticket in attended) {
-      var points = rules.attendedPoints;
-      var reason = 'attended';
-      switch (ticket.status) {
-        case TicketStatus.resolved:
-          points += rules.resolvedBonus;
-          reason = 'resolved';
-          resolved++;
-        case TicketStatus.denied:
-          points += rules.deniedPoints;
-          reason = 'denied';
-        default:
-          break;
+    for (final ticket in relevant) {
+      final isReporter = ticket.reporterId == crewId;
+      final isAttending = ticket.joinedCrewIds.contains(crewId);
+      final isResolved = ticket.status == TicketStatus.resolved;
+      final resolvedAlone = isResolved &&
+          ticket.resolveVoterIds.length == 1 &&
+          ticket.resolveVoterIds.contains(crewId);
+      final dangerous = ticket.urgency.level >= Urgency.high.level;
+
+      // Anti-farming: a reporter cannot report a non-dangerous incident and
+      // resolve it alone just to collect points.
+      if (isReporter && isAttending && resolvedAlone && !dangerous) {
+        blocked++;
+        total += 0;
+        entries.add(
+          RewardEntry(
+            ticket: ticket,
+            points: 0,
+            reason: 'self_resolution_blocked',
+          ),
+        );
+        continue;
+      }
+
+      var points = 0;
+      final reasons = <String>[];
+      if (isReporter) {
+        points += rules.reportPoints;
+        reported++;
+        reasons.add('reported');
+      }
+      if (isAttending) {
+        points += rules.attendedPoints;
+        attended++;
+        reasons.add('attended');
+      }
+      if (isResolved) {
+        points += rules.resolvedBonus;
+        resolved++;
+        reasons.add('resolved');
+      } else if (ticket.status == TicketStatus.denied && isAttending) {
+        points += rules.deniedPoints;
+        reasons.add('denied');
       }
       total += points;
-      entries.add(RewardEntry(ticket: ticket, points: points, reason: reason));
+      entries.add(
+        RewardEntry(
+          ticket: ticket,
+          points: points,
+          reason: reasons.isEmpty ? 'reported' : reasons.join('+'),
+        ),
+      );
     }
 
     return RewardLedger(
       entries: entries,
       totalPoints: total,
-      attendedCount: entries.length,
+      attendedCount: attended,
+      reportedCount: reported,
       resolvedCount: resolved,
+      blockedSelfResolutions: blocked,
     );
   }
 }

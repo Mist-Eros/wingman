@@ -61,6 +61,8 @@ istoric cu clear-all.
 | `16_devtools.png` | DevTools: AI/STT/WSS/quorum |\n| `17_accessibility.png` | Accessibility profiles (blind/mute/deaf/colorblind/motor/cognitive) |\n| `18_live_gps.png` | Live GPS map on OpenStreetMap tiles, marker + accuracy + coordinates |\n| `19_photo_prompt.png` | Optional 5-second photo prompt |\n| `20_account_points.png` | Employee account: points + attended incidents |
 | `21_ticket_media_photo.png` | Dispatcher detail with attached photo (toggle Foto) |
 | `22_ticket_media_map.png` | Same ticket, toggled to Hartă |
+| `23_dashboard_statistics.png` | Desktop admin statistics |
+| `24_phone_statistics.png` | Phone admin statistics |
 | `team/*.png` | carduri egale + grid 2×2 |
 
 ## Note pentru slide design

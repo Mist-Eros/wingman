@@ -34,10 +34,14 @@
     "attendedPoints": 2,
     "resolvedBonus": 10,
     "deniedPoints": 0,
-    "pointsLabel": "PUNCTE"
+    "pointsLabel": "PUNCTE",
+    "reportPoints": 3
   },
   "notifications": {
-    "roles": ["crew", "dispatcher"],
+    "roles": [
+      "crew",
+      "dispatcher"
+    ],
     "scope": "primary_departments"
   },
   "demo": {

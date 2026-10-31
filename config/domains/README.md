@@ -62,6 +62,7 @@ If the file is missing/invalid, both sides fall back to the airport profile.
   },
   "rewards": {
     "strategy": "rule_based",
+    "reportPoints": 3,
     "attendedPoints": 2,
     "resolvedBonus": 10,
     "deniedPoints": 0,

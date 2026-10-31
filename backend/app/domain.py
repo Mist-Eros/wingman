@@ -43,6 +43,7 @@ class QuorumConfig:
 @dataclass(frozen=True)
 class RewardConfig:
     strategy: str = "rule_based"
+    report_points: int = 3
     attended_points: int = 2
     resolved_bonus: int = 10
     denied_points: int = 0
@@ -88,37 +89,75 @@ class DomainConfig:
         crew_id: str,
         tickets: Iterable[dict[str, Any]],
     ) -> dict[str, Any]:
-        """Pure reward policy — mirrors the Dart RuleBasedRewardPolicy."""
-        attended = [
+        """Rewards for reporting + attending + resolving, with anti-farming."""
+        relevant = [
             ticket
             for ticket in tickets
-            if crew_id in (ticket.get("joined_crew_ids") or [])
+            if ticket.get("reporter_id") == crew_id
+            or crew_id in (ticket.get("joined_crew_ids") or [])
         ]
-        attended.sort(key=lambda ticket: ticket.get("updated_at") or "", reverse=True)
+        relevant.sort(key=lambda ticket: ticket.get("updated_at") or "", reverse=True)
 
         entries: list[dict[str, Any]] = []
         total = 0
+        attended = 0
+        reported = 0
         resolved = 0
-        for ticket in attended:
-            points = self.rewards.attended_points
-            reason = "attended"
-            status = ticket.get("status")
-            if status == "resolved":
+        blocked = 0
+
+        for ticket in relevant:
+            is_reporter = ticket.get("reporter_id") == crew_id
+            is_attending = crew_id in (ticket.get("joined_crew_ids") or [])
+            is_resolved = ticket.get("status") == "resolved"
+            resolved_alone = (
+                is_resolved
+                and len(ticket.get("resolve_voter_ids") or []) == 1
+                and crew_id in (ticket.get("resolve_voter_ids") or [])
+            )
+            dangerous = ticket.get("urgency") in ("high", "critical")
+
+            if is_reporter and is_attending and resolved_alone and not dangerous:
+                blocked += 1
+                entries.append(
+                    {
+                        "ticketId": ticket.get("id"),
+                        "incidentCode": ticket.get("incident_code"),
+                        "labelRo": ticket.get("label_ro"),
+                        "status": ticket.get("status"),
+                        "points": 0,
+                        "reason": "self_resolution_blocked",
+                        "updatedAt": ticket.get("updated_at"),
+                    }
+                )
+                continue
+
+            points = 0
+            reasons: list[str] = []
+            if is_reporter:
+                points += self.rewards.report_points
+                reported += 1
+                reasons.append("reported")
+            if is_attending:
+                points += self.rewards.attended_points
+                attended += 1
+                reasons.append("attended")
+            if is_resolved:
                 points += self.rewards.resolved_bonus
-                reason = "resolved"
                 resolved += 1
-            elif status == "denied":
+                reasons.append("resolved")
+            elif ticket.get("status") == "denied" and is_attending:
                 points += self.rewards.denied_points
-                reason = "denied"
+                reasons.append("denied")
+
             total += points
             entries.append(
                 {
                     "ticketId": ticket.get("id"),
                     "incidentCode": ticket.get("incident_code"),
                     "labelRo": ticket.get("label_ro"),
-                    "status": status,
+                    "status": ticket.get("status"),
                     "points": points,
-                    "reason": reason,
+                    "reason": "+".join(reasons) or "reported",
                     "updatedAt": ticket.get("updated_at"),
                 }
             )
@@ -126,9 +165,11 @@ class DomainConfig:
         return {
             "crewId": crew_id,
             "totalPoints": total,
-            "attendedCount": len(entries),
+            "attendedCount": attended,
+            "reportedCount": reported,
             "resolvedCount": resolved,
-            "inProgressCount": len(entries) - resolved,
+            "inProgressCount": attended - resolved,
+            "blockedSelfResolutions": blocked,
             "pointsLabel": self.rewards.points_label,
             "entries": entries,
         }
@@ -151,6 +192,7 @@ class DomainConfig:
             },
             "rewards": {
                 "strategy": self.rewards.strategy,
+                "reportPoints": self.rewards.report_points,
                 "attendedPoints": self.rewards.attended_points,
                 "resolvedBonus": self.rewards.resolved_bonus,
                 "deniedPoints": self.rewards.denied_points,
@@ -213,6 +255,7 @@ def _build(raw: dict[str, Any]) -> DomainConfig:
         ),
         rewards=RewardConfig(
             strategy=str(rewards.get("strategy") or "rule_based"),
+            report_points=int_value(rewards.get("reportPoints"), 3),
             attended_points=int_value(rewards.get("attendedPoints"), 2),
             resolved_bonus=int_value(rewards.get("resolvedBonus"), 10),
             denied_points=int_value(rewards.get("deniedPoints"), 0),

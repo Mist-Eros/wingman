@@ -75,6 +75,7 @@ class DomainConfig {
     ),
     rewards: RewardConfig(
       strategy: 'rule_based',
+      reportPoints: 3,
       attendedPoints: 2,
       resolvedBonus: 10,
       deniedPoints: 0,
@@ -139,6 +140,7 @@ class DomainConfig {
       ),
       rewards: RewardConfig(
         strategy: _string(rewards['strategy'], 'rule_based'),
+        reportPoints: _int(rewards['reportPoints'], 3),
         attendedPoints: _int(rewards['attendedPoints'], 2),
         resolvedBonus: _int(rewards['resolvedBonus'], 10),
         deniedPoints: _int(rewards['deniedPoints'], 0),
@@ -291,6 +293,7 @@ class QuorumConfig {
 class RewardConfig {
   const RewardConfig({
     required this.strategy,
+    required this.reportPoints,
     required this.attendedPoints,
     required this.resolvedBonus,
     required this.deniedPoints,
@@ -298,6 +301,7 @@ class RewardConfig {
   });
 
   final String strategy;
+  final int reportPoints;
   final int attendedPoints;
   final int resolvedBonus;
   final int deniedPoints;
@@ -305,6 +309,7 @@ class RewardConfig {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'strategy': strategy,
+        'reportPoints': reportPoints,
         'attendedPoints': attendedPoints,
         'resolvedBonus': resolvedBonus,
         'deniedPoints': deniedPoints,
