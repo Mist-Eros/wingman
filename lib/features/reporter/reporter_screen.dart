@@ -375,9 +375,36 @@ class _ReporterScreenState extends State<ReporterScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
+        if (c.transcriptCorrected)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.auto_fix_high,
+                  size: 15,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  tr(
+                    'Text corectat automat de AI',
+                    'Transcript corrected by AI',
+                  ),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
+          ),
         TranscriptChips(
           words: c.words,
           confidences: c.wordConfidences,
+          lowConfidence: c.lowConfidenceFlags,
+          editable: c.wordEditability,
           onTap: (i) => _editWord(c, i),
         ),
         const SizedBox(height: 4),
@@ -387,10 +414,15 @@ class _ReporterScreenState extends State<ReporterScreen> {
                   'Cuvintele subliniate au încredere mică — atinge-le ca să le corectezi.',
                   'Underlined words have low confidence — tap them to correct them.',
                 )
-              : tr(
-                  'Textul are încredere bună. Dacă totuși ceva e greșit, reia înregistrarea.',
-                  'The transcript is confident. If something is still wrong, record again.',
-                ),
+              : c.transcriptConfidenceLow
+                  ? tr(
+                      'Whisper a avut încredere generală mică — poți corecta orice cuvânt.',
+                      'Whisper was generally unsure — you can correct any word.',
+                    )
+                  : tr(
+                      'Textul are încredere bună. Dacă totuși ceva e greșit, reia înregistrarea.',
+                      'The transcript is confident. If something is still wrong, record again.',
+                    ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),

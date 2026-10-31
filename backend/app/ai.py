@@ -486,10 +486,21 @@ def fallback_classify(
     )
 
 
+_CORRECTION_SYSTEM = (
+    "Ești un corector ASR pentru rapoarte de incidente aeroportuare. "
+    "Corectează DOAR erori evidente de transcriere: ortografie, diacritice, "
+    "cuvinte omofone, delimitare de cuvinte, punctuație. Păstrează exact "
+    "sensul, limba, faptele, numerele, locațiile și numele. Nu adăuga "
+    "informații, nu elimina informații, nu clasifica, nu explica. "
+    "Răspunde doar cu propoziția corectată."
+)
+
+
 class OllamaClient:
     def __init__(self, base_url: str, model: str, timeout_seconds: float) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
+        self.timeout_seconds = timeout_seconds
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout_seconds, connect=4.0),
@@ -562,6 +573,60 @@ class OllamaClient:
             self.last_ok = False
             self.last_error = f"{type(exc).__name__}: {exc}"
             logger.warning("Ollama warm-up failed: %s", exc)
+
+    async def correct_transcript(
+        self,
+        transcript: str,
+        language: str,
+        timeout: float | None = None,
+    ) -> str | None:
+        """Fix only obvious ASR errors. Never raises; None means keep raw text."""
+        text = " ".join((transcript or "").split()).strip()
+        if not text:
+            return None
+        try:
+            response = await self._client.post(
+                "/api/chat",
+                json={
+                    "model": self.model,
+                    "stream": False,
+                    "messages": [
+                        {"role": "system", "content": _CORRECTION_SYSTEM},
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Limbă: {language or 'ro'}. " f"Transcript: {text}"
+                            ),
+                        },
+                    ],
+                    "options": {
+                        "temperature": 0.0,
+                        "top_p": 0.1,
+                        "num_predict": 160,
+                    },
+                },
+                timeout=timeout or self.timeout_seconds,
+            )
+            response.raise_for_status()
+            content = str(response.json().get("message", {}).get("content", "")).strip()
+            # Strip common wrappers/prefixes without rewriting the content.
+            content = content.strip().strip('"').strip("`").strip()
+            for prefix in ("Corectat:", "Corectat", "Corrected:", "Corrected"):
+                if content.lower().startswith(prefix.lower()):
+                    content = content[len(prefix) :].lstrip(" :")
+            content = " ".join(content.split()).strip()
+            # Refuse hallucinated expansions/summaries.
+            if not content:
+                return None
+            if len(content) > max(80, int(len(text) * 2.2) + 40):
+                logger.warning("transcript correction rejected: too long")
+                return None
+            if "\n" in content:
+                return None
+            return content
+        except Exception as error:  # noqa: BLE001 - must never block the report
+            logger.warning("transcript correction failed: %s", error)
+            return None
 
     async def classify(self, transcript: str, location_label: str) -> dict[str, Any]:
         taxonomy = get_taxonomy()

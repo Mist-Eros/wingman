@@ -248,3 +248,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Enabled faster-whisper `word_timestamps=True`; `/api/transcribe` now returns `words[]` with per-word `probability`, `start`, `end`. | `backend/app/stt.py` | real WAV: 9 words; low-confidence `gate` = 0.599 |
 | Reporter confirmation underlines low-confidence words (`probability < 0.70`) and makes **only those** editable; high-confidence words are read-only. | `transcription_result.dart`, `speech_service.dart`, `reporter_controller.dart`, `reporter_widgets.dart`, reporter screen | controller/widget tests |
 | Typed transcripts / old servers keep the editable-all fallback. | controller `isWordEditable` | transcript chips tests |
+
+---
+
+## 2026-10-31 — relative confidence + safe LLM transcript correction
+
+| Change | Where | Evidence |
+|---|---|---|
+| All words were yellow because a fixed 0.70 threshold was applied to every word. Replaced with a relative rule: only clear outliers get underlined; uniformly low sentences show a warning and allow editing all words without yellow. | `reporter_controller.dart`, `reporter_widgets.dart` | widget/controller tests, including all-low case |
+| Added Ollama ASR correction before display/classification. Safe merge: only low-confidence words/diacritics may change; high-confidence words, numbers and inserted facts are preserved. Falls back to raw on timeout/error. | `backend/app/ai.py`, `stt.py`, `main.py`, config/env | direct correction + merge tests; API returns `corrected`/`raw_text` |
+| App shows a small "Text corectat automat de AI" indicator when the LLM changed the transcript. | reporter confirmation | Flutter tests |

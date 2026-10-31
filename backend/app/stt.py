@@ -21,6 +21,7 @@ import asyncio
 import importlib.util
 import logging
 import tempfile
+import unicodedata
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -62,10 +63,14 @@ class Transcription:
     provider: str = "faster-whisper"
     latency_ms: int = 0
     words: tuple[dict[str, Any], ...] = ()
+    raw_text: str = ""
+    corrected: bool = False
 
     def to_wire(self) -> dict[str, Any]:
         return {
             "text": self.text,
+            "raw_text": self.raw_text,
+            "corrected": self.corrected,
             "words": list(self.words),
             "language": self.language,
             "language_probability": round(self.language_probability, 3),
@@ -208,6 +213,206 @@ def _transcribe_sync(
     finally:
         if path is not None:
             path.unlink(missing_ok=True)
+
+
+def align_words_to_corrected(
+    raw_words: tuple[dict[str, Any], ...],
+    corrected_text: str,
+) -> tuple[dict[str, Any], ...]:
+    """Map raw Whisper word probabilities onto the LLM-corrected sentence.
+
+    Unchanged words keep their model probability; replaced/inserted words are
+    marked low-confidence (0.35), so the reporter sees exactly what the LLM
+    changed and can edit it. Pure deletions are dropped.
+    """
+    import difflib
+
+    raw_tokens = [str(word.get("text") or "") for word in raw_words if word.get("text")]
+    corrected_tokens = [token for token in corrected_text.split() if token]
+    if not raw_tokens or not corrected_tokens:
+        return raw_words
+    matcher = difflib.SequenceMatcher(a=raw_tokens, b=corrected_tokens)
+    aligned: list[dict[str, Any]] = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for offset, token in enumerate(corrected_tokens[j1:j2]):
+                source = raw_words[i1 + offset]
+                aligned.append(
+                    {
+                        "text": token,
+                        "probability": source.get("probability", 0.0),
+                        "start": source.get("start", 0.0),
+                        "end": source.get("end", 0.0),
+                    }
+                )
+        elif tag in ("replace", "insert"):
+            for token in corrected_tokens[j1:j2]:
+                aligned.append(
+                    {
+                        "text": token,
+                        "probability": 0.35,
+                        "start": 0.0,
+                        "end": 0.0,
+                    }
+                )
+    return tuple(aligned)
+
+
+_NUMBER_WORDS = {
+    "zero",
+    "unu",
+    "doi",
+    "două",
+    "doua",
+    "trei",
+    "patru",
+    "cinci",
+    "șase",
+    "sase",
+    "șapte",
+    "sapte",
+    "opt",
+    "nouă",
+    "noua",
+    "zece",
+    "unsprezece",
+    "doisprezece",
+    "treisprezece",
+    "paisprezece",
+    "cincisprezece",
+    "șaisprezece",
+    "saisprezece",
+    "șaptesprezece",
+    "saptesprezece",
+    "optsprezece",
+    "nouăsprezece",
+    "nouasprezece",
+    "douăzeci",
+    "douazeci",
+    "o",
+    "un",
+    "una",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+    "twenty",
+}
+
+
+def _plain(text: str) -> str:
+    return (
+        unicodedata.normalize("NFKD", text)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .lower()
+    )
+
+
+def _is_number_token(token: str) -> bool:
+    stripped = token.strip(".,!?;:()[]{}")
+    return any(ch.isdigit() for ch in stripped) or stripped.lower() in _NUMBER_WORDS
+
+
+def merge_corrected_transcript(
+    raw_text: str,
+    raw_words: tuple[dict[str, Any], ...],
+    corrected_text: str,
+) -> tuple[str, tuple[dict[str, Any], ...]]:
+    """Apply only safe LLM corrections to a Whisper transcript.
+
+    The small LLM is allowed to fix low-confidence words and diacritics. It may
+    not replace high-confidence words, numbers, or insert/delete facts; those
+    are the common hallucinations of a 1.5B model on short ASR text.
+    """
+    import difflib
+
+    raw_tokens = raw_text.split()
+    corrected_tokens = corrected_text.split()
+    if not raw_tokens or not corrected_tokens:
+        return raw_text, raw_words
+
+    probabilities: list[float] = []
+    for index in range(len(raw_tokens)):
+        if index < len(raw_words):
+            try:
+                probabilities.append(float(raw_words[index].get("probability", 0.0)))
+            except (TypeError, ValueError):
+                probabilities.append(0.0)
+        else:
+            probabilities.append(0.0)
+
+    matcher = difflib.SequenceMatcher(a=raw_tokens, b=corrected_tokens)
+    out_tokens: list[str] = []
+    out_words: list[dict[str, Any]] = []
+    changed = False
+
+    def append(token: str, probability: float) -> None:
+        out_tokens.append(token)
+        out_words.append(
+            {
+                "text": token,
+                "probability": round(max(0.0, min(1.0, probability)), 3),
+                "start": 0.0,
+                "end": 0.0,
+            }
+        )
+
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for offset, token in enumerate(raw_tokens[i1:i2]):
+                append(token, probabilities[i1 + offset])
+            continue
+        if tag == "insert":
+            # Never let the LLM add new facts/words.
+            continue
+        if tag == "delete":
+            # Keep high-confidence words; a low-confidence deletion is also kept
+            # to avoid silently dropping information.
+            for offset, token in enumerate(raw_tokens[i1:i2]):
+                append(token, probabilities[i1 + offset])
+            continue
+        # replace: only low-confidence words or diacritic-only fixes
+        corrected = corrected_tokens[j1:j2]
+        cursor = 0
+        for offset, raw_token in enumerate(raw_tokens[i1:i2]):
+            probability = probabilities[i1 + offset]
+            replacement = corrected[cursor] if cursor < len(corrected) else None
+            if replacement is None:
+                append(raw_token, probability)
+                continue
+            diacritic_only = _plain(replacement) == _plain(raw_token)
+            number_change = _is_number_token(replacement) or _is_number_token(raw_token)
+            if diacritic_only and not number_change:
+                append(replacement, probability)
+                changed = changed or replacement != raw_token
+                cursor += 1
+            elif probability < 0.75 and not number_change:
+                append(replacement, 0.45)
+                changed = True
+                cursor += 1
+            else:
+                append(raw_token, probability)
+                cursor += 1
+
+    if not changed:
+        return raw_text, raw_words
+    return " ".join(out_tokens), tuple(out_words)
 
 
 async def transcribe_audio(

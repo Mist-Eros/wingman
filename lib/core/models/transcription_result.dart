@@ -18,6 +18,8 @@ class TranscriptionResult {
     this.model = '',
     this.provider = 'faster-whisper',
     this.latencyMs = 0,
+    this.rawText = '',
+    this.corrected = false,
   });
 
   /// Transcribed text; may be empty when the clip had no speech (VAD trim).
@@ -44,6 +46,12 @@ class TranscriptionResult {
   /// Server-side transcription time, excluding upload.
   final int latencyMs;
 
+  /// Raw Whisper text before the optional LLM correction.
+  final String rawText;
+
+  /// True when [text] was rewritten by the LLM preprocessing step.
+  final bool corrected;
+
   bool get isEmpty => text.trim().isEmpty;
 
   factory TranscriptionResult.fromJson(Map<String, dynamic> json) {
@@ -64,6 +72,8 @@ class TranscriptionResult {
           ? json['provider'] as String
           : 'faster-whisper',
       latencyMs: _int(json['latency_ms']),
+      rawText: json['raw_text'] is String ? json['raw_text'] as String : '',
+      corrected: json['corrected'] == true,
     );
   }
 }

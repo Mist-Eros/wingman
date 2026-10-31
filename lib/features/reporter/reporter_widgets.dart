@@ -190,6 +190,8 @@ class TranscriptChips extends StatelessWidget {
     required this.words,
     required this.onTap,
     this.confidences = const <double?>[],
+    this.lowConfidence = const <bool>[],
+    this.editable = const <bool>[],
   });
 
   final List<String> words;
@@ -197,6 +199,12 @@ class TranscriptChips extends StatelessWidget {
 
   /// Parallel to [words]; null = no metadata (typed/legacy server).
   final List<double?> confidences;
+
+  /// Relative low-confidence flags from ReporterController.
+  final List<bool> lowConfidence;
+
+  /// Parallel editability flags (whole-sentence low-confidence can allow all).
+  final List<bool> editable;
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +215,14 @@ class TranscriptChips extends StatelessWidget {
         for (var i = 0; i < words.length; i++)
           _WordChip(
             word: words[i],
-            confidence: i < confidences.length ? confidences[i] : null,
+            low: i < lowConfidence.length
+                ? lowConfidence[i]
+                : (i < confidences.length &&
+                    confidences[i] != null &&
+                    confidences[i]! < 0.70),
+            editable: i < editable.length
+                ? editable[i]
+                : (i >= confidences.length || confidences[i] == null),
             onTap: () => onTap(i),
           ),
       ],
@@ -218,18 +233,18 @@ class TranscriptChips extends StatelessWidget {
 class _WordChip extends StatelessWidget {
   const _WordChip({
     required this.word,
-    required this.confidence,
+    required this.low,
+    required this.editable,
     required this.onTap,
   });
 
   final String word;
-  final double? confidence;
+  final bool low;
+  final bool editable;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final low = confidence != null && confidence! < 0.70;
-    final editable = confidence == null || low;
     final theme = Theme.of(context);
     return Semantics(
       button: editable,

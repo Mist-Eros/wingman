@@ -120,6 +120,7 @@ class ReporterController extends ChangeNotifier {
   ReporterError? _error;
   String? _errorDetail;
   Ticket? _sent;
+  bool _transcriptCorrected = false;
   LocationFix? _fix;
 
   /// Bumped by every reset; async work started before the bump is ignored.
@@ -159,6 +160,9 @@ class ReporterController extends ChangeNotifier {
   Ticket? get sentTicket => _sent;
   LocationFix? get fix => _fix;
 
+  /// True when the LLM fixed the Whisper sentence before it was shown.
+  bool get transcriptCorrected => _transcriptCorrected;
+
   List<String> get words => <String>[
         for (final turn in _turns)
           for (final word in turn.words) word.text,
@@ -170,28 +174,57 @@ class ReporterController extends ChangeNotifier {
           for (final word in turn.words) word.confidence,
       ];
 
-  /// True when Whisper was unsure about this word — the UI underlines it and
-  /// only these parts of the transcript are editable.
-  bool isLowConfidence(int index) {
+  /// Words that are genuinely uncertain *relative to the rest of this
+  /// sentence*. A fixed 0.70 cut-off painted every word yellow on noisy audio
+  /// (a small model often sits at 0.4–0.6 for the whole utterance), so we mark
+  /// only the clear outliers:
+  ///   - if the best word is >= 0.70: mark words below (best - 0.18);
+  ///   - if the whole sentence is low: no yellow; offer a general warning and
+  ///     make the text editable, instead of making everything look broken.
+  List<bool> get lowConfidenceFlags {
     final confidences = wordConfidences;
-    if (index < 0 || index >= confidences.length) return false;
-    final confidence = confidences[index];
-    return confidence != null && confidence < 0.70;
+    final known = confidences.whereType<double>().toList()..sort();
+    if (known.isEmpty) return List<bool>.filled(confidences.length, false);
+    final best = known.last;
+    final threshold =
+        best < 0.70 ? best * 0.65 : (best - 0.18).clamp(0.45, 0.70);
+    return <bool>[
+      for (final confidence in confidences)
+        confidence != null && confidence < threshold,
+    ];
+  }
+
+  /// True when the entire utterance looks uncertain (all values low), so the
+  /// reporter can fix any word but the UI does not underline the whole screen.
+  bool get transcriptConfidenceLow {
+    final known = wordConfidences.whereType<double>().toList()..sort();
+    return known.isNotEmpty && known.last < 0.70;
+  }
+
+  bool isLowConfidence(int index) {
+    final flags = lowConfidenceFlags;
+    return index >= 0 && index < flags.length && flags[index];
   }
 
   /// Words with no metadata (typed, old server) remain editable for backwards
-  /// compatibility; words with high confidence are read-only.
-  bool isWordEditable(int index) {
+  /// compatibility; low-confidence/whole-sentence-uncertain words are editable;
+  /// high-confidence words are read-only.
+  List<bool> get wordEditability {
     final confidences = wordConfidences;
-    if (index < 0 || index >= confidences.length) return false;
-    final confidence = confidences[index];
-    return confidence == null || confidence < 0.70;
+    final flags = lowConfidenceFlags;
+    final allLow = transcriptConfidenceLow;
+    return <bool>[
+      for (var i = 0; i < confidences.length; i++)
+        confidences[i] == null || flags[i] || allLow,
+    ];
   }
 
-  int get lowConfidenceCount {
-    final confidences = wordConfidences;
-    return confidences.where((c) => c != null && c < 0.70).length;
+  bool isWordEditable(int index) {
+    final editable = wordEditability;
+    return index >= 0 && index < editable.length && editable[index];
   }
+
+  int get lowConfidenceCount => lowConfidenceFlags.where((flag) => flag).length;
 
   bool get isBusy =>
       _phase == ReporterPhase.transcribing ||
@@ -320,6 +353,7 @@ class ReporterController extends ChangeNotifier {
       _fail(ReporterError.noSpeech);
       return;
     }
+    _transcriptCorrected = result.corrected;
     _addUtterance(heard, transcribedWords: result.words);
   }
 
@@ -641,6 +675,7 @@ class ReporterController extends ChangeNotifier {
   }
 
   void _resetConversation() {
+    _transcriptCorrected = false;
     _turns.clear();
     _pendingSlot = null;
     _brain.reset();

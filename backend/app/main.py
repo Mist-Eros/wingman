@@ -44,7 +44,12 @@ from .ai import (
 )
 from .config import BASE_DIR, settings
 from .domain import load_domain_config
-from .stt import stt_available, stt_error, transcribe_audio
+from .stt import (
+    merge_corrected_transcript,
+    stt_available,
+    stt_error,
+    transcribe_audio,
+)
 from .store import Conflict, Hub, NotFound, TicketStore, utc_now
 from .taxonomy import get_taxonomy
 
@@ -388,6 +393,30 @@ async def transcribe(body: schemas.TranscribeIn) -> dict:
         result.language or "?",
         result.latency_ms,
     )
+    # LLM preprocessing: fix only obvious ASR errors before the reporter sees/
+    # classifies the sentence. Word probabilities are re-aligned so LLM-changed
+    # words stay visibly editable.
+    if settings.transcript_correction and result.text.strip():
+        corrected = await ollama.correct_transcript(
+            result.text,
+            result.language,
+            timeout=settings.transcript_correction_timeout,
+        )
+        if corrected:
+            merged_text, merged_words = merge_corrected_transcript(
+                result.text,
+                result.words,
+                corrected,
+            )
+            if merged_text != result.text:
+                result = replace(
+                    result,
+                    text=merged_text,
+                    raw_text=result.text,
+                    corrected=True,
+                    words=merged_words,
+                )
+                logger.info("Transcript corrected with LLM (safe merge)")
     return result.to_wire()
 
 

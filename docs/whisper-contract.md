@@ -40,6 +40,8 @@ Content-Type: application/json
   "model": "small",
   "provider": "faster-whisper",
   "latency_ms": 1800,
+  "raw_text": "There is smoke near gate 12, in terminal 1.",
+  "corrected": false,
   "words": [
     {"text": "There", "probability": 0.882, "start": 0.0, "end": 0.32},
     {"text": "is", "probability": 0.994, "start": 0.32, "end": 0.48},
@@ -125,3 +127,32 @@ falls back to the legacy editable-all behaviour.
 
 Real fixture result (English, `small`): `gate` 0.599 is underlined; `There`
 0.882 / `smoke` 0.757 remain read-only.
+
+
+## LLM preprocessing (ASR correction)
+
+After Whisper, the backend asks Ollama (`qwen2.5:1.5b`) to fix only obvious ASR
+mistakes: spelling, diacritics, homophones, word boundaries and punctuation.
+It must preserve meaning/language/facts and is not allowed to add or remove
+information.
+
+The correction is **safe-merged**:
+- a word with low Whisper confidence may be replaced by the LLM;
+- a diacritic-only fix is allowed even when Whisper was confident;
+- high-confidence words, numbers and newly inserted words are kept from the
+  original transcript — the 1.5B model is not trusted to rewrite facts.
+
+If Ollama is down/slow (`TRANSCRIPT_CORRECTION_TIMEOUT`, default 12 s), the raw
+Whisper text is returned unchanged; transcription never fails because of the
+correction. `raw_text` is set only when the LLM changed something; `corrected`
+is then `true`.
+
+## Why aren't all words yellow?
+
+The UI uses a **relative** confidence rule, not a fixed 0.70 on every word:
+- if the best word is >= 0.70, words below `best - 0.18` are underlined;
+- if the whole sentence is low, **no word is painted yellow**; the UI warns
+  "Whisper a avut încredere generală mică" and allows editing all words without
+  making the transcript look broken.
+
+Only low-confidence words are editable; high-confidence words are read-only.

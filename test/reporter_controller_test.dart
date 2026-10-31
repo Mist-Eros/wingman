@@ -594,6 +594,26 @@ void main() {
           reason: 'a corrected word becomes trusted');
     });
 
+    test('uniformly low Whisper confidence does not paint every word yellow',
+        () async {
+      final h = Harness();
+      await h.speak(
+        'fum langa poarta',
+        words: const <TranscriptionWord>[
+          TranscriptionWord(text: 'fum', probability: 0.52),
+          TranscriptionWord(text: 'langa', probability: 0.48),
+          TranscriptionWord(text: 'poarta', probability: 0.50),
+        ],
+      );
+      final c = h.controller;
+      expect(c.transcriptConfidenceLow, isTrue);
+      expect(c.lowConfidenceCount, 0,
+          reason: 'no word is a clear outlier in a uniformly low sentence');
+      expect(c.wordEditability, everyElement(isTrue),
+          reason:
+              'the whole sentence is uncertain, so every word can be fixed');
+    });
+
     testWidgets('holding the mic records, releasing it ends the take',
         (tester) async {
       final h = Harness();
