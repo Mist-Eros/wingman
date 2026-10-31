@@ -341,3 +341,11 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 - Location gate now tries **last-known → low accuracy → medium accuracy → first stream tick**, and keeps the last good fix for 5 minutes instead of flapping to “unavailable” on one timeout.
 - If the phone’s location service is on and permission is granted, but the device simply has no GPS fix indoors, the lock screen offers **„Continuă fără verificarea locației”**; service-off/outside/permission-denied remain hard locks.
 - Retry is forced/queued so an in-flight periodic check cannot swallow the button tap.
+
+---
+
+## 2026-10-31 — Whisper retry then 8×8×8 fallback
+
+- If the **initial** voice transcript is unusable (best word < 0.60, or at least half of words < 0.55), the app asks exactly **one** repeat.
+- If the second attempt is still unusable, it does not keep asking: it opens the deterministic **8×8×8 menu** and shows a snackbar.
+- Silence remains `noSpeech`; typed/menu input never enters this path. State resets after submit/reset.

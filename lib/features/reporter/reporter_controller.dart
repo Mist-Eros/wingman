@@ -84,6 +84,7 @@ class ReporterController extends ChangeNotifier {
     ReporterLanguage language = ReporterLanguage.ro,
     this.minHold = const Duration(milliseconds: 400),
     this.maxQuestions = 3,
+    this.onLowConfidenceMenu,
   })  : _speech = speech,
         _tts = tts,
         _analyzeFn = analyze,
@@ -96,6 +97,10 @@ class ReporterController extends ChangeNotifier {
 
   /// Questions per report (the server enforces the same cap of 3).
   final int maxQuestions;
+
+  /// Called when the reporter's second voice attempt is still unusable. The
+  /// screen opens the 8×8×8 menu; tests can leave it null.
+  final Future<void> Function()? onLowConfidenceMenu;
 
   final SpeechService _speech;
   final TtsService _tts;
@@ -121,6 +126,8 @@ class ReporterController extends ChangeNotifier {
   String? _errorDetail;
   Ticket? _sent;
   bool _transcriptCorrected = false;
+  bool _lowConfidenceReaskUsed = false;
+  bool _manualMenuRequested = false;
   LocationFix? _fix;
 
   /// Bumped by every reset; async work started before the bump is ignored.
@@ -162,6 +169,9 @@ class ReporterController extends ChangeNotifier {
 
   /// True when the LLM fixed the Whisper sentence before it was shown.
   bool get transcriptCorrected => _transcriptCorrected;
+
+  /// True after the second unusable voice attempt; the 8×8×8 menu is required.
+  bool get manualMenuRequested => _manualMenuRequested;
 
   List<String> get words => <String>[
         for (final turn in _turns)
@@ -349,12 +359,75 @@ class ReporterController extends ChangeNotifier {
       return;
     }
     final heard = result.text.trim();
+    final firstTurn = _turns.isEmpty;
+
+    // Whisper was unusable on the initial report. Re-ask at most ONCE, then
+    // hand the report to the deterministic 8×8×8 menu (emergencies must not
+    // be delayed by an endless conversation).
+    if (firstTurn && heard.isNotEmpty && _isUnusableTranscription(result)) {
+      if (!_lowConfidenceReaskUsed) {
+        unawaited(_askAgain());
+        return;
+      }
+      unawaited(_openManualMenu());
+      return;
+    }
+
     if (heard.isEmpty) {
+      if (firstTurn && _lowConfidenceReaskUsed) {
+        // The second attempt produced no speech: same deterministic fallback.
+        unawaited(_openManualMenu());
+        return;
+      }
       _fail(ReporterError.noSpeech);
       return;
     }
     _transcriptCorrected = result.corrected;
     _addUtterance(heard, transcribedWords: result.words);
+  }
+
+  bool _isUnusableTranscription(TranscriptionResult result) {
+    if (result.words.isEmpty) return false;
+    final probabilities = <double>[
+      for (final word in result.words) word.probability,
+    ];
+    final best = probabilities.reduce((a, b) => a > b ? a : b);
+    final veryWeak = probabilities.where((value) => value < 0.55).length;
+    // A single uncertain word is fine (the UI lets the reporter edit it).
+    // Only a whole cluttered/short sentence triggers a repeat.
+    return best < 0.60 || veryWeak / probabilities.length >= 0.5;
+  }
+
+  Future<void> _askAgain() async {
+    _lowConfidenceReaskUsed = true;
+    _error = null;
+    _errorDetail = null;
+    _question = _language == ReporterLanguage.en
+        ? "I didn't catch that clearly. Please repeat once."
+        : 'Nu am înțeles bine. Poți repeta o dată?';
+    _phase = ReporterPhase.asking;
+    _notify();
+    try {
+      await _tts.speak(_question!, _language);
+    } on Object {
+      // TTS is optional; the on-screen prompt is enough.
+    }
+  }
+
+  Future<void> _openManualMenu() async {
+    _manualMenuRequested = true;
+    _question = null;
+    _pendingSlot = null;
+    _phase = ReporterPhase.idle;
+    _notify();
+    final callback = onLowConfidenceMenu;
+    if (callback != null) {
+      try {
+        await callback();
+      } on Object catch (error) {
+        debugPrint('[reporter] manual menu failed: $error');
+      }
+    }
   }
 
   /// Typed fallback ("Scrie în loc să vorbești"): same pipeline as voice.
@@ -676,6 +749,8 @@ class ReporterController extends ChangeNotifier {
 
   void _resetConversation() {
     _transcriptCorrected = false;
+    _lowConfidenceReaskUsed = false;
+    _manualMenuRequested = false;
     _turns.clear();
     _pendingSlot = null;
     _brain.reset();

@@ -67,6 +67,7 @@ class _ReporterScreenState extends State<ReporterScreen> {
       reporterId: session.userId,
       reporterName: session.displayName,
       location: GeolocatorLocationService(),
+      onLowConfidenceMenu: () => _menuAfterLowConfidence(_controller!),
     );
   }
 
@@ -102,6 +103,21 @@ class _ReporterScreenState extends State<ReporterScreen> {
   }
 
   /// Menu used to override the type while confirming (same 8×8×8 catalog).
+  /// Whisper failed twice on the initial report: make the deterministic menu
+  /// explicit instead of letting the reporter speak again forever.
+  Future<void> _menuAfterLowConfidence(ReporterController c) async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Whisper nu a înțeles a doua oară — alege tipul din meniu.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    await _menuReport(c);
+  }
+
   Future<void> _pickType(ReporterController c) async {
     final selection = await Navigator.of(context).push<MenuSelection>(
       MaterialPageRoute<MenuSelection>(

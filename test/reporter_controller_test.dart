@@ -120,6 +120,7 @@ class Harness {
       language: language,
       minHold: const Duration(milliseconds: 20),
       maxQuestions: maxQuestions,
+      onLowConfidenceMenu: () async => menuCalls++,
     );
   }
 
@@ -128,6 +129,7 @@ class Harness {
   final FakeTts tts = FakeTts();
   final List<AnalyzeRequest> analyzeRequests = <AnalyzeRequest>[];
   final List<ReportDraft> reports = <ReportDraft>[];
+  int menuCalls = 0;
   late final ReporterController controller;
 
   /// When set, `_analyze` waits for it (to test stale replies).
@@ -599,9 +601,9 @@ void main() {
       await h.speak(
         'fum langa poarta',
         words: const <TranscriptionWord>[
-          TranscriptionWord(text: 'fum', probability: 0.52),
-          TranscriptionWord(text: 'langa', probability: 0.48),
-          TranscriptionWord(text: 'poarta', probability: 0.50),
+          TranscriptionWord(text: 'fum', probability: 0.68),
+          TranscriptionWord(text: 'langa', probability: 0.65),
+          TranscriptionWord(text: 'poarta', probability: 0.67),
         ],
       );
       final c = h.controller;
@@ -611,6 +613,27 @@ void main() {
       expect(c.wordEditability, everyElement(isTrue),
           reason:
               'the whole sentence is uncertain, so every word can be fixed');
+    });
+
+    test('Whisper asks once when unusable, then falls back to the menu',
+        () async {
+      final h = Harness();
+      const hard = <TranscriptionWord>[
+        TranscriptionWord(text: 'nu', probability: 0.41),
+        TranscriptionWord(text: 'se', probability: 0.38),
+        TranscriptionWord(text: 'intelege', probability: 0.35),
+      ];
+      await h.speak('nu se intelege', words: hard);
+      expect(h.controller.phase, ReporterPhase.asking);
+      expect(h.question, contains('repeta'));
+      expect(h.controller.words, isEmpty,
+          reason: 'the unusable transcript must not be sent');
+      expect(h.analyzeRequests, isEmpty);
+
+      await h.speak('nu se intelege', words: hard);
+      expect(h.controller.manualMenuRequested, isTrue);
+      expect(h.menuCalls, 1);
+      expect(h.controller.phase, ReporterPhase.idle);
     });
 
     testWidgets('holding the mic records, releasing it ends the take',
