@@ -48,6 +48,7 @@ double airportLikelihoodOf({
     'MT-JBRIDGE' => 0.78,
     'OP-QUEUE' => 0.86,
     'OP-IT' => 0.72,
+    'OP-MED' => 0.92,
     'OP-OTHER' => 0.60,
     _ => score,
   };

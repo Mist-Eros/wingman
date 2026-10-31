@@ -137,7 +137,7 @@ def build_catalog(source: str) -> dict[str, Any]:
     schema_version_match = re.search(r"static const int schemaVersion = (\d+);", source)
     expected_count_match = re.search(r"static const int expectedCount = (\d+);", source)
     schema_version = int(schema_version_match.group(1)) if schema_version_match else 1
-    expected_count = int(expected_count_match.group(1)) if expected_count_match else 14
+    expected_count = int(expected_count_match.group(1)) if expected_count_match else 15
 
     problems: list[str] = []
     if len(types) != expected_count:

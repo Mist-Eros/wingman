@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 
 /// One dispatched / in-progress ticket with Preia + Rezolvat actions.
@@ -204,6 +205,8 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                             icon: Icons.place_outlined,
                             text: _ticket.location.display,
                           ),
+                          const SizedBox(height: 8),
+                          RequiredTeamsBar(ticket: _ticket),
                           const SizedBox(height: 6),
                           _MetaRow(
                             icon: Icons.groups_outlined,

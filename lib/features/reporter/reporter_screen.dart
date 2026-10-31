@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../core/core_scope.dart';
+import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 import '../../core/incidents/taxonomy.dart';
 import 'reporter_controller.dart';
@@ -484,6 +485,8 @@ class _ReporterScreenState extends State<ReporterScreen> {
                           '${tr('Stare', 'Status')}: ${ticket.status.labelRo}'),
                       Text(
                           '${tr('Locație', 'Location')}: ${ticket.location.display}'),
+                      RequiredTeamsBar(ticket: ticket, compact: true),
+                      const SizedBox(height: 4),
                       Text(
                           '${tr('Echipe', 'Teams')}: ${ticket.departmentsLabel}'),
                       if (ticket.isPendingOverride) ...<Widget>[

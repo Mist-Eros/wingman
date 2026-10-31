@@ -680,6 +680,29 @@ async def analyze_report(
 # deterministic while the prompt does the rest. Ordered: first match wins.
 _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
+        "OP-MED",
+        (
+            "leșin",
+            "lesin",
+            "inconștient",
+            "inconstient",
+            "nu respiră",
+            "nu respira",
+            "infarct",
+            "dureri în piept",
+            "dureri in piept",
+            "hemoragie",
+            "sânger",
+            "sanger",
+            "ambulanță",
+            "ambulanta",
+            "doctor",
+            "medical",
+            "comă",
+            "coma",
+        ),
+    ),
+    (
         "SF-FIRE",
         ("fum", "foc", "incendiu", "flacăr", "flacar", "scânte", "scante", "arde"),
     ),
@@ -896,8 +919,7 @@ _ADD_ONE_GROUPS: tuple[tuple[str, ...], ...] = (
 # Size words only escalate spill/FOD/fire reports (as in F1's severity.dart).
 _SIZE_CODES = {"SF-SPILL", "SF-FOD", "SF-FIRE"}
 _SIZE_WORDS = ("mare", "uriaș", "urias", "uriașă", "uriasa", "catastrofal", "dezastru")
-# Medical reports have no dedicated type yet: triage them to OP-OTHER (which
-# now lists Department.medical as standby) and make them critical.
+# Medical signals route to the dedicated OP-MED type and are escalated to critical.
 _MEDICAL_SIGNALS: tuple[str, ...] = (
     "leșin",
     "lesin",
@@ -943,7 +965,7 @@ def apply_transcript_urgency(
     if medical and classification.incident_code in _MEDICAL_OVERRIABLE:
         classification = replace(
             classification,
-            incident_code="OP-OTHER",
+            incident_code="OP-MED",
             confidence=max(min(classification.confidence, 0.95), 0.80),
             rationale=(classification.rationale + " [medical: triaj dispecer]").strip()[
                 :200

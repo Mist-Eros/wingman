@@ -11,7 +11,7 @@
    - AI: `ollama serve` + model `qwen2.5:1.5b` (health → `ollama.last_ok: true`).
    - STT: `STT available: true` (first transcription may load the model, ~1 s extra).
 3. Seed the stage data: `python backend\seed_demo.py --base https://<ip>:8443 --reset`
-   → 5 tickets: fire/smoke (critical), unattended bag, belt fault (menu), spill (janitor),
+   → 6 tickets: fire/smoke (critical), unattended bag, belt fault (menu), spill (janitor), medical emergency (Mandy),
    a low-confidence report.
 4. **Accounts** (hardcoded, hashed passwords): `admin/admin123` (Andy Admin — sees and
    decides everything), `engineer/engineer123` (Earl Engineer — maintenance/IT/baggage/airside),
@@ -49,7 +49,7 @@
 ## Fallbacks (say nothing, keep moving)
 
 - **Voice fails / noisy room** → „Scrie în loc să vorbești" typed path (same pipeline, verified).
-- **Network hiccup** → menu button on reporter (14 types, no AI), shows the taxonomy.
+- **Network hiccup** → menu button on reporter (15 types, no AI), shows the taxonomy.
 - **Dispatcher confusion** → toggle **Demo** mode (pre-built urgency-colored scene, keyboard 1/2/3).
 - **TLS issue on a phone** → install `wingman-insecure-release.apk`, start `backend\run_insecure.ps1`,
   20 s switch, no debugging on stage.

@@ -65,6 +65,29 @@ void main() {
     );
   });
 
+  test('medical ticket calls Mandy Medic, not fire/security/terminal', () {
+    final ticket = _ticket(id: 't-med', code: 'OP-MED');
+    final mandy = _crew(<Department>{Department.medical});
+    final fred = _crew(<Department>{Department.fireRescue});
+    final gina = _crew(<Department>{Department.security});
+    final john = _crew(<Department>{Department.terminal});
+
+    expect(
+      TicketAlertPolicy().alertsFor(tickets: <Ticket>[ticket], session: mandy),
+      hasLength(1),
+    );
+    for (final wrong in <Session>[fred, gina, john]) {
+      expect(
+        TicketAlertPolicy().alertsFor(
+          tickets: <Ticket>[ticket],
+          session: wrong,
+        ),
+        isEmpty,
+        reason: wrong.scopeLabel,
+      );
+    }
+  });
+
   test('only active tickets alert, and only once', () {
     final policy = TicketAlertPolicy();
     final resolved = _ticket(

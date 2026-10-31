@@ -11,7 +11,7 @@ Run this AFTER starting the backend (`backend\\run.ps1`), from the repo root:
 It verifies, in order:
   1. public /healthz
   2. auth: /api/health rejects a wrong token, accepts the right one
-  3. /api/taxonomy serves the same 14 codes as backend/taxonomy.json
+  3. /api/taxonomy serves the same 15 codes as backend/taxonomy.json
   4. WSS handshake + `hello`
   5. manual report (menu flow) -> dispatched, ai_source=manual, exact wire keys
   6. low-confidence/vague report -> dispatched immediately (no override window)
@@ -224,7 +224,7 @@ async def run(args: argparse.Namespace) -> int:
     status, taxonomy = http_call(base, token, "/api/taxonomy", insecure=insecure)
     actual_codes = [item.get("code") for item in taxonomy.get("types", [])]
     check("/api/taxonomy returns 200", status == 200, f"status={status}")
-    check("14 incident types", len(actual_codes) == 14, f"got {len(actual_codes)}")
+    check("15 incident types", len(actual_codes) == 15, f"got {len(actual_codes)}")
     check("served codes match taxonomy.json", actual_codes == expected_codes)
 
     # 3b ── source-backed occurrence catalog ─────────────────────────────────
@@ -283,8 +283,8 @@ async def run(args: argparse.Namespace) -> int:
         "WSS connected", hello is not None, (error or {}).get("error", "no hello event")
     )
     check(
-        "hello advertises 14 types",
-        (hello or {}).get("data", {}).get("incident_types") == 14,
+        "hello advertises 15 types",
+        (hello or {}).get("data", {}).get("incident_types") == 15,
     )
 
     try:

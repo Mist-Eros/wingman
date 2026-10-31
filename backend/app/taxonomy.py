@@ -24,7 +24,7 @@ from .config import settings
 
 logger = logging.getLogger("airport.taxonomy")
 
-EXPECTED_TYPE_COUNT = 14
+EXPECTED_TYPE_COUNT = 15
 EXPECTED_CATEGORY_COUNT = 4
 
 # Must match the `IncidentCategory` enum in taxonomy.dart.

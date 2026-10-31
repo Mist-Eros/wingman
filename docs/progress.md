@@ -213,3 +213,15 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Photo and GPS location are retained on the ticket and shown through a reusable **Foto/Hartă** toggle (photo tab + real OSM map with marker, accuracy/location text). | `lib/core/widgets/ticket_media_panel.dart` | dashboard screenshots: `21_ticket_media_photo.png`, `22_ticket_media_map.png` |
 | Toggle available in **dispatcher detail, mobile dispatcher cards, crew expanded card, sent confirmation, history card and dashboard detail**. | dispatcher/crew/reporter screens, dashboard JS | dashboard photo/map tabs verified; Flutter widget tests |
 | Location notification now advertises attached photo; report keeps photo/location through history/reset rules. | `core/notifications/ticket_notifier.dart`, ticket model | 174 Flutter tests; smoke 103/103 |
+
+---
+
+## 2026-10-31 — Mandy Medic + specific dispatch tags
+
+| Change | Where | Evidence |
+|---|---|---|
+| Added **Mandy Medic** (`medic` / `medic123`), crew scoped to **Medical**. | `lib/core/auth/demo_accounts.dart`, login | account test; README accounts table |
+| Added dedicated **`OP-MED`** medical emergency type, menu medical subcategory, AI/lexicon mapping and critical urgency. | `taxonomy.dart`, `incident_menu_data.dart`, `lexicon.dart`, `ai.py`, `backend/taxonomy.json` | 15-type taxonomy; smoke 103/103 |
+| Centralized **`TicketTargeting`**: only primary departments are called/alerted; standby departments are displayed but not woken. | `core/targeting/ticket_targeting.dart`, crew queue, notifier | Mandy gets OP-MED; fire/security/terminal do not |
+| Visible **required-team tags** ("Necesar: Medical / Pompieri / ...") on dispatcher cards/detail, crew cards, sent screen and dashboard. | `required_teams_bar.dart`, cards, dashboard JS | tags visible; dashboard detail "Echipe necesare" |
+| Seed now includes a medical scenario so Mandy has a live job in the demo. | `backend/seed_demo.py` | 6 seeded scenarios |

@@ -191,6 +191,20 @@
       ]
     },
     {
+      "code": "OP-MED",
+      "label_ro": "Urgență medicală / persoană inconștientă",
+      "category": "operations",
+      "urgency": "critical",
+      "primary_departments": [
+        "medical"
+      ],
+      "standby_departments": [
+        "operations",
+        "security",
+        "terminal"
+      ]
+    },
+    {
       "code": "OP-OTHER",
       "label_ro": "Alt incident nespecificat (triaj dispecer)",
       "category": "operations",

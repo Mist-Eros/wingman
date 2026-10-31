@@ -163,13 +163,13 @@ const List<Scenario> scenarios = <Scenario>[
   Scenario('Radio communication is down at the apron',
       code: 'OP-IT', urgency: C, place: 'Platformă'),
 
-  // ── life at risk: always critical, even without a dedicated type ───────────
+  // ── life at risk: dedicated medical type, always critical ───────────────────
   Scenario('Cineva a leșinat la poarta 6',
-      code: 'OP-OTHER', urgency: C, place: 'Poarta 6'),
+      code: 'OP-MED', urgency: C, place: 'Poarta 6'),
   Scenario('Someone is not breathing in the departure hall',
-      code: 'OP-OTHER', urgency: C),
+      code: 'OP-MED', urgency: C),
   Scenario('Un pasager a făcut infarct la terminalul 2',
-      code: 'OP-OTHER', urgency: C, place: 'Terminal 2'),
+      code: 'OP-MED', urgency: C, place: 'Terminal 2'),
 
   // ── only the category is known, or nothing ─────────────────────────────────
   Scenario('Este o problemă de securitate la poarta 3',

@@ -10,11 +10,11 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 //  HOW TO SWAP IN THE REAL TAXONOMY DOC (≈10 minutes)
-//  1. Replace ONLY the 14 entries inside `IncidentTaxonomy.all` below.
+//  1. Replace ONLY the 15 entries inside `IncidentTaxonomy.all` below.
 //  2. If your doc names departments we don't have, add them to the
 //     `Department` enum (wire = snake_case, labelRo = Romanian display text).
 //  3. Keep these argument names: code, labelRo, category, urgency,
-//     primaryDepartments, standbyDepartments. Keep 14 types / 4 categories.
+//     primaryDepartments, standbyDepartments. Keep 15 types / 4 categories.
 //  4. Re-emit the backend copy (do this every time `all` changes):
 //       dart run tool/emit_taxonomy.dart
 //     or, on the laptop, with Python installed:
@@ -245,11 +245,11 @@ class IncidentTaxonomy {
   /// Bump when the WIRE format changes (not when labels change).
   static const int schemaVersion = 1;
 
-  /// Hard requirement from the product spec: exactly 14 types, 4 categories.
-  static const int expectedCount = 14;
+  /// Product taxonomy: 15 types, 4 categories (medical emergency is dedicated).
+  static const int expectedCount = 15;
 
   // ───────────────────────────────────────────────────────────────────────────
-  // THE 14 TYPES — replace this block with the taxonomy doc, nothing else.
+  // THE 15 TYPES — replace this block with the taxonomy doc, nothing else.
   // NOTE: codes/codes below are the team's working set; `OP-OTHER` is the
   // mandatory catch-all so a garbage/unknown report can always be routed to
   // the dispatcher instead of crashing the flow.
@@ -409,6 +409,18 @@ class IncidentTaxonomy {
       standbyDepartments: <Department>[Department.maintenance],
     ),
     IncidentType(
+      code: 'OP-MED',
+      labelRo: 'Urgență medicală / persoană inconștientă',
+      category: IncidentCategory.operations,
+      urgency: Urgency.critical,
+      primaryDepartments: <Department>[Department.medical],
+      standbyDepartments: <Department>[
+        Department.operations,
+        Department.security,
+        Department.terminal,
+      ],
+    ),
+    IncidentType(
       code: 'OP-OTHER',
       labelRo: 'Alt incident nespecificat (triaj dispecer)',
       category: IncidentCategory.operations,
@@ -428,7 +440,7 @@ class IncidentTaxonomy {
     for (final type in all) type.code: type,
   };
 
-  /// All 14 codes, in taxonomy order.
+  /// All 15 codes, in taxonomy order.
   static List<String> get codes =>
       List<String>.unmodifiable(all.map((type) => type.code));
 

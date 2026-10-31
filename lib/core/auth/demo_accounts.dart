@@ -11,6 +11,7 @@
 //   • John Janitor      → crew, only terminal incidents (spills, queues, terminal).
 //   • Fred Firefighter  → crew, only fire/rescue incidents (fire brigade).
 //   • Gina Guard        → crew, only security incidents (guards).
+//   • Mandy Medic       → crew, only medical incidents (medical team).
 //
 // ANYONE can report (report buttons on the crew/dispatcher screens and the PC
 // dashboard); the role only controls which incidents alert the account.
@@ -142,6 +143,14 @@ final List<DemoAccount> demoAccounts = <DemoAccount>[
     role: UserRole.crew,
     departments: const <Department>{Department.security},
     tag: 'GUARD',
+  ),
+  _account(
+    username: 'medic',
+    displayName: 'Mandy Medic',
+    password: 'medic123',
+    role: UserRole.crew,
+    departments: const <Department>{Department.medical},
+    tag: 'MEDIC',
   ),
 ];
 

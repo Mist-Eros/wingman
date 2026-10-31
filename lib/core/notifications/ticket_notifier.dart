@@ -20,6 +20,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../models/session.dart';
 import '../models/ticket.dart';
+import '../targeting/ticket_targeting.dart';
 
 /// Configurable rules for who should receive alerts. The active DomainConfig
 /// maps its `notifications.roles` list into these rule flags.
@@ -62,7 +63,9 @@ class TicketAlertPolicy {
     for (final ticket in tickets) {
       if (!_seen.add(ticket.id)) continue; // already seen
       if (!_isActive(ticket.status)) continue;
-      if (!session.seesDepartments(ticket.primaryDepartments)) continue;
+      if (!TicketTargeting.isCalled(ticket: ticket, session: session)) {
+        continue;
+      }
       alerts.add(ticket);
     }
     return alerts;
@@ -137,12 +140,11 @@ class TicketNotifier {
     final where = ticket.location.display.isEmpty
         ? 'Locație nespecificată'
         : ticket.location.display;
-    final departments =
-        ticket.primaryDepartments.map((d) => d.labelRo).join(' · ');
+    final departments = TicketTargeting.requiredLabel(ticket);
     await _plugin.show(
       ticket.id.hashCode,
       '🚨 ${ticket.incidentCode} · ${ticket.labelRo}',
-      '$where · $departments',
+      '$where · Necesar: $departments',
       details,
     );
   }

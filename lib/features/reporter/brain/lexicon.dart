@@ -209,8 +209,8 @@ const Map<String, List<Stem>> kTypeStems = <String, List<Stem>>{
     Stem('fids=', 3), Stem('screen=', 1), Stem('boarding pass', 2),
     Stem('card reader', 2), Stem('communication', 2),
   ],
-  // ── Urgențe medicale (nu există tip dedicat → triaj la dispecer) ──────────
-  'OP-OTHER': <Stem>[
+  // ── Urgențe medicale ──────────
+  'OP-MED': <Stem>[
     Stem('lesin', 2), Stem('infarct', 2), Stem('nu respira', 2),
     Stem('convuls', 2), Stem('sufoc', 2), Stem('inec', 2), Stem('ambulanta', 2),
     Stem('medical', 2), Stem('doctor', 2), Stem('sange', 2), Stem('ranit', 2),

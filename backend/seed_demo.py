@@ -2,7 +2,7 @@
 
 Run AFTER the backend is up (from the repo root):
 
-    python backend/seed_demo.py                      # 3 reports
+    python backend/seed_demo.py                      # 6 reports
     python backend/seed_demo.py --reset              # clear store first
     python backend/seed_demo.py --base https://192.168.1.50:8443
 
@@ -78,6 +78,18 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
             "reporter_name": "Andrei P.",
             "location": {"terminal": "T1", "zone": "Poarta 3"},
             "use_ai": True,
+        },
+    },
+    {
+        "name": "menu · medical emergency (Mandy)",
+        "body": {
+            "source": "menu",
+            "transcript": "Urgență medicală — persoană inconștientă la poarta 6",
+            "reporter_id": "seed-reporter-6",
+            "reporter_name": "Furtuna-Cola Andrei-Alexandru",
+            "location": {"terminal": "T1", "zone": "Poarta 6"},
+            "hint_code": "OP-MED",
+            "use_ai": False,
         },
     },
     {

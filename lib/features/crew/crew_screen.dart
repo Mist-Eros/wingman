@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
+import '../../core/targeting/ticket_targeting.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
 import '../rewards/account_screen.dart';
@@ -44,7 +45,8 @@ class _CrewScreenState extends State<CrewScreen> {
       .where(
         // Primary departments = "this incident requires me now". Standby
         // departments are shown on the card but don't alert every crew.
-        (Ticket ticket) => session.seesDepartments(ticket.primaryDepartments),
+        (Ticket ticket) =>
+            TicketTargeting.isCalled(ticket: ticket, session: session),
       )
       .toList(growable: false);
 

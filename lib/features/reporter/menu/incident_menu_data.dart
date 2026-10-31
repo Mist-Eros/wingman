@@ -1100,21 +1100,21 @@ const List<MenuCategory> menuCategories = <MenuCategory>[
         'Urgență medicală',
         <MenuProblem>[
           MenuProblem(
-              'p-7-1-1', 'Urgență medicală — Terminal', 'Terminal', 'OP-OTHER'),
+              'p-7-1-1', 'Urgență medicală — Terminal', 'Terminal', 'OP-MED'),
           MenuProblem(
-              'p-7-1-2', 'Urgență medicală — Check-in', 'Check-in', 'OP-OTHER'),
+              'p-7-1-2', 'Urgență medicală — Check-in', 'Check-in', 'OP-MED'),
           MenuProblem('p-7-1-3', 'Urgență medicală — Control securitate',
-              'Control securitate', 'OP-OTHER'),
-          MenuProblem('p-7-1-4', 'Urgență medicală — Îmbarcare', 'Îmbarcare',
-              'OP-OTHER'),
+              'Control securitate', 'OP-MED'),
           MenuProblem(
-              'p-7-1-5', 'Urgență medicală — Poartă', 'Poartă', 'OP-OTHER'),
+              'p-7-1-4', 'Urgență medicală — Îmbarcare', 'Îmbarcare', 'OP-MED'),
           MenuProblem(
-              'p-7-1-6', 'Urgență medicală — Lounge', 'Lounge', 'OP-OTHER'),
+              'p-7-1-5', 'Urgență medicală — Poartă', 'Poartă', 'OP-MED'),
           MenuProblem(
-              'p-7-1-7', 'Urgență medicală — Parcare', 'Parcare', 'OP-OTHER'),
+              'p-7-1-6', 'Urgență medicală — Lounge', 'Lounge', 'OP-MED'),
+          MenuProblem(
+              'p-7-1-7', 'Urgență medicală — Parcare', 'Parcare', 'OP-MED'),
           MenuProblem('p-7-1-8', 'Urgență medicală — Zona bagaje',
-              'Zona bagaje', 'OP-OTHER'),
+              'Zona bagaje', 'OP-MED'),
         ],
       ),
       MenuSubcategory(

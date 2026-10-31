@@ -19,6 +19,17 @@ void main() {
       }
     });
 
+    test('Mandy Medic is scoped to the medical department', () {
+      final mandy = demoAccountByUsername('medic');
+      expect(mandy, isNotNull);
+      expect(mandy!.displayName, 'Mandy Medic');
+      expect(mandy.tag, 'MEDIC');
+      expect(mandy.checkPassword('medic123'), isTrue);
+      final session = mandy.toSession();
+      expect(session.departments, <Department>{Department.medical});
+      expect(session.isCrew, isTrue);
+    });
+
     test('validates the demo password and rejects a wrong one', () {
       final janitor = demoAccountByUsername('janitor')!;
       expect(janitor.checkPassword('janitor123'), isTrue);

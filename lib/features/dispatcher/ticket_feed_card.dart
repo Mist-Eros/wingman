@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/incidents/likelihood.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 import 'dispatcher_density.dart';
 import 'urgency_style.dart';
@@ -64,6 +65,8 @@ class TicketCardBody extends StatelessWidget {
             if (ticket.craiovaLikelihood < 0.70) const _WhyChip(),
           ],
         ),
+        const SizedBox(height: 8),
+        RequiredTeamsBar(ticket: ticket, compact: true),
         if (ticket.aiRationale != null &&
             ticket.aiRationale!.trim().isNotEmpty) ...[
           const SizedBox(height: 12),

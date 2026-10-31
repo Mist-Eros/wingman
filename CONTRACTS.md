@@ -331,7 +331,7 @@ already reflects them, use that for the "reconectare..." banner.
 
 ## 8. Taxonomy contract
 
-* The **closed list** is `IncidentTaxonomy.all` (14 types, 4 categories). `IncidentTaxonomy.codes`
+* The **closed list** is `IncidentTaxonomy.all` (15 types, 4 categories). `IncidentTaxonomy.codes`
   is the only legal set; `IncidentTaxonomy.byCode(code)` for lookups; `byCategory(...)` for menus.
 * `OP-OTHER` is the mandatory catch-all — never let a report fail because it doesn't match.
 * Urgency order: `Urgency.level` 1..4; the server may **raise** but never lower a type's default.

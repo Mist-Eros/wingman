@@ -318,6 +318,12 @@ const CFG = window.WINGMAN_CONFIG || { api: 'https://192.168.0.170:8443', token:
 const URGENCY_COLOR = { critical: '#D92D20', high: '#DC6803', medium: '#CA8A04', low: '#475467' };
 const URGENCY_FILL = { critical: '#FEE4E2', high: '#FFF1E3', medium: '#FEF9C3', low: '#FFFFFF' };
 const URGENCY_LABEL = { critical: 'Critică', high: 'Ridicată', medium: 'Medie', low: 'Scăzută' };
+const DEPT_LABEL = {
+  security: 'Securitate', fire_rescue: 'Pompieri / Salvare', medical: 'Medical',
+  maintenance: 'Mentenanță', operations: 'Operațiuni', terminal: 'Servicii Terminal',
+  baggage: 'Bagaje', it: 'IT / Comunicații', airside: 'Platformă / Airside'
+};
+const deptLabels = (t) => (t.primary_departments || []).map(d => DEPT_LABEL[d] || d).join(' · ');
 const STATUS_COLOR = {
   dispatched: '#0F4C81', in_progress: '#B45309',
   resolved: '#027A48', denied: '#64748B'
@@ -485,7 +491,7 @@ function render() {
         '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
         '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' +
-        esc(depts || '—') + '</div></div></div>';
+        'Necesar: ' + esc(deptLabels(t) || '—') + '</div></div></div>';
     }).join('');
   }
   renderDetail();
@@ -536,7 +542,7 @@ function renderDetail() {
     badge(STATUS_LABEL[t.status] || t.status, sc) +
     badge('Probabilitate Craiova ' + likelihoodPct(t), '#0F4C81') + '</div>' +
     mediaTabs +
-    kv('Locație', loc) + kv('Departamente', (t.primary_departments || []).join(' · ')) +
+    kv('Locație', loc) + kv('Echipe necesare', deptLabels(t)) +
     kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
     kv('Voturi', (t.resolve_votes || 0) + ' / ' + (t.quorum || 1)) +
     kv('Transcriere', t.transcript) +

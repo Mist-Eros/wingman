@@ -51,6 +51,7 @@ report** — there is no separate reporter account.
 | John Janitor | `janitor123` | terminal services |
 | Fred Firefighter | `firefighter123` | fire / rescue |
 | Gina Guard | `guard123` | security |
+| Mandy Medic | `medic123` | medical / urgențe medicale |
 
 ---
 
@@ -66,7 +67,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   │   ├── domain/              DomainConfig, quorum policy
 │   │   ├── rewards/             RewardPolicy, ledger, RewardService
 │   │   ├── demo/                demo reset service
-│   │   ├── incidents/           taxonomy — single source of truth (14 types)
+│   │   ├── incidents/           taxonomy — single source of truth (15 types)
 │   │   ├── models/              Ticket, Session, AnalyzeResult, Transcription
 │   │   ├── notifications/       department-scoped local notification policy
 │   │   ├── state/               TicketBoard (snapshot + WSS merge)
@@ -85,7 +86,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
 │   │   ├── domain.py            same domain profile + quorum/reward policies
 │   │   └── data/occurrences.json  source-backed incident database (59 entries)
-│   ├── seed_demo.py             seeds the 5 rehearsal tickets
+│   ├── seed_demo.py             seeds the 6 rehearsal tickets (incl. medical)
 │   └── run.ps1 / run_insecure.ps1
 ├── assets/certs/ca.crt          public CA bundle pinned by the app
 ├── config/domains/              application profiles (branding, features, rewards, quorum)

@@ -51,10 +51,10 @@ Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
 
 void main() {
   group('IncidentTaxonomy', () {
-    test('is valid: 14 types, 4 categories, unique uppercase codes', () {
+    test('is valid: 15 types, 4 categories, unique uppercase codes', () {
       IncidentTaxonomy.validate();
-      expect(IncidentTaxonomy.all, hasLength(14));
-      expect(IncidentTaxonomy.codes.toSet(), hasLength(14));
+      expect(IncidentTaxonomy.all, hasLength(15));
+      expect(IncidentTaxonomy.codes.toSet(), hasLength(15));
       expect(IncidentTaxonomy.codes.toSet(),
           hasLength(IncidentTaxonomy.all.length));
 
@@ -86,7 +86,7 @@ void main() {
     test('exports a backend catalog of the same shape', () {
       final catalog = IncidentTaxonomy.toJson();
       expect(catalog['version'], IncidentTaxonomy.schemaVersion);
-      expect(catalog['types'], hasLength(14));
+      expect(catalog['types'], hasLength(15));
       final first =
           (catalog['types'] as List<dynamic>).first as Map<String, dynamic>;
       expect(first.keys.toSet(), <String>{

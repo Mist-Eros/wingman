@@ -31,7 +31,7 @@ hold mic ─► record WAV (16 kHz mono) ─► POST /api/transcribe (Whisper, l
 | File | What it does |
 |---|---|
 | `text_utils.dart` | Normalizes text (no diacritics, same length) and number words ("doisprezece") |
-| `lexicon.dart` | ~580 RO + EN keyword stems for the 14 types, categories and danger signals |
+| `lexicon.dart` | ~580 RO + EN keyword stems for the 15 types, categories and danger signals |
 | `understanding.dart` | Type, place, size, people in danger, count — from what was said |
 | `severity.dart` | **Urgency** from the type's floor + danger signals; **confidence** formula; both with reasons |
 | `conversation_brain.dart` | What to ask next: only what is missing, **each thing once**, follow-ups per type (spill → size, fire → anyone in danger…), max 3 questions, answers kept verbatim |
