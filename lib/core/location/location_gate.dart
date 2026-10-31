@@ -80,6 +80,7 @@ class _LocationGateState extends State<LocationGate>
   _GateStatus _status = _GateStatus.checking;
   double? _distance;
   bool _inFlight = false;
+  bool _retryQueued = false;
   bool _askedPermission = false;
   Timer? _timer;
 
@@ -107,8 +108,13 @@ class _LocationGateState extends State<LocationGate>
     }
   }
 
-  Future<void> _check({bool silent = false}) async {
-    if (_inFlight) return;
+  Future<void> _check({bool silent = false, bool force = false}) async {
+    if (_inFlight) {
+      // A periodic check may be waiting on a 10 s GPS timeout. Never let a
+      // user tap on "Reîncearcă" be swallowed; queue one forced re-check.
+      if (force) _retryQueued = true;
+      return;
+    }
     _inFlight = true;
     if (!silent && mounted) {
       setState(() => _status = _GateStatus.checking);
@@ -172,7 +178,19 @@ class _LocationGateState extends State<LocationGate>
       _set(_GateStatus.unavailable);
     } finally {
       _inFlight = false;
+      if (_retryQueued && mounted) {
+        _retryQueued = false;
+        unawaited(_check(force: true));
+      }
     }
+  }
+
+  Future<void> _retry() async {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 20), (_) {
+      unawaited(_check(silent: true));
+    });
+    await _check(force: true);
   }
 
   void _set(_GateStatus status) {
@@ -263,7 +281,7 @@ class _LocationGateState extends State<LocationGate>
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: () => _check(),
+                        onPressed: _retry,
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('Reîncearcă'),
                         style: FilledButton.styleFrom(

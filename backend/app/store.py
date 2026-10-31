@@ -18,6 +18,7 @@ from fastapi import WebSocket
 
 from .ai import Classification
 from .config import Settings
+from .database import TicketDatabase
 from .domain import DomainConfig, load_domain_config
 from .taxonomy import URGENCY_LEVELS, Taxonomy
 
@@ -120,14 +121,26 @@ class TicketStore:
         self._hub = hub
         self._settings = settings
         self._domain = domain or load_domain_config()
+        self._db = TicketDatabase(settings.database_path)
         self._tickets: dict[str, dict[str, Any]] = {}
         self._order: list[str] = []  # creation order (oldest → newest)
         self._timers: dict[str, asyncio.Task[None]] = {}
         self._lock = asyncio.Lock()
+        for ticket in self._db.load_all():
+            self._tickets[ticket["id"]] = ticket
+            self._order.append(ticket["id"])
 
     @property
     def count(self) -> int:
         return len(self._tickets)
+
+    @property
+    def database_path(self) -> str:
+        return str(self._db.path)
+
+    @property
+    def database_rows(self) -> int:
+        return self._db.count()
 
     # ── create ────────────────────────────────────────────────────────────────
     async def create(
@@ -198,6 +211,7 @@ class TicketStore:
         async with self._lock:
             self._tickets[ticket["id"]] = ticket
             self._order.append(ticket["id"])
+            self._db.upsert(ticket)
             snapshot = copy.deepcopy(ticket)
 
         await self._hub.broadcast("ticket.created", {"ticket": snapshot})
@@ -543,6 +557,7 @@ class TicketStore:
             removed = len(self._tickets)
             self._tickets.clear()
             self._order.clear()
+            self._db.clear()
         await self._hub.broadcast("store.reset", {"removed": removed})
         return removed
 
@@ -561,6 +576,7 @@ class TicketStore:
                 self._order = [
                     ticket_id for ticket_id in self._order if ticket_id not in removed
                 ]
+                self._db.delete_many(removed_ids)
         if removed_ids:
             await self._hub.broadcast(
                 "history.cleared",
@@ -626,10 +642,10 @@ class TicketStore:
             raise NotFound(f"Ticket {ticket_id} not found")
         return ticket
 
-    @staticmethod
-    def _bump(ticket: dict[str, Any]) -> None:
+    def _bump(self, ticket: dict[str, Any]) -> None:
         ticket["version"] = int(ticket.get("version", 1)) + 1
         ticket["updated_at"] = utc_now()
+        self._db.upsert(ticket)
 
     @staticmethod
     def _dispatcher_label(

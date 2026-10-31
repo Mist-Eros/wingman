@@ -324,3 +324,12 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 |---|---|---|
 | Signed-in app locks when GPS is off, permission is denied, or the phone is **more than 2 km** from the airport (`DomainConfig.map` coordinates). Shows actionable settings buttons and live distance; rechecks every 20 s and on app resume. | `lib/core/location/location_gate.dart`, `main.dart` | pure 2 km tests; Android lock screen |
 | Removed visible “demo/example” copy from login, assistant questions, dispatcher local mode, account and both dashboards. | UI strings | analyze/tests |
+
+---
+
+## 2026-10-31 — SQLite persistence + location retry
+
+| Change | Where | Evidence |
+|---|---|---|
+| Tickets now persist in **SQLite** (`backend/data/wingman.db`). Every create/update/delete/reset writes through; startup reloads the database. `/healthz` exposes `database`, `database_rows`, `database_path`. | `backend/app/database.py`, `store.py`, `config.py` | seed 6 → backend restart → 6 tickets; `test_database.py` |
+| Location gate retry is forced/queued so a tap on **Reîncearcă** cannot be swallowed by an in-flight periodic GPS check. | `location_gate.dart` | Android: GPS off → on → retry unlocks |

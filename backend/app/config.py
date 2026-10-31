@@ -69,6 +69,7 @@ class Settings:
     # Dev conveniences
     allow_dev_reset: bool
     taxonomy_path: Path
+    database_path: Path
 
 
 def load_settings() -> Settings:
@@ -88,6 +89,9 @@ def load_settings() -> Settings:
         max_audio_bytes=max(1_000_000, _env_int("MAX_AUDIO_BYTES", 25 * 1024 * 1024)),
         allow_dev_reset=_env_bool("ENABLE_DEV_RESET", True),
         taxonomy_path=Path(_env_str("TAXONOMY_PATH", str(BASE_DIR / "taxonomy.json"))),
+        database_path=Path(
+            _env_str("DATABASE_PATH", str(BASE_DIR / "data" / "wingman.db"))
+        ),
     )
 
 

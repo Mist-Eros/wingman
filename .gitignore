@@ -47,3 +47,7 @@ desktop.ini
 # Local demo artifacts
 video-backup/
 *.mp4
+
+# SQLite runtime database
+backend/data/
+

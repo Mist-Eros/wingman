@@ -231,6 +231,9 @@ async def healthz() -> dict:
         "quorum_strategy": domain.quorum.strategy,
         "reward_strategy": domain.rewards.strategy,
         "tickets": store.count,
+        "database": "sqlite",
+        "database_rows": store.database_rows,
+        "database_path": store.database_path,
         "ws_clients": hub.count,
     }
 
