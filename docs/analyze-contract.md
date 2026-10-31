@@ -158,7 +158,7 @@ for (final category in IncidentCategory.values) {          // 4 categorii
 }
 ```
 
-Cele 15 tipuri (cod · etichetă · urgență): `SF-FIRE` Foc sau fum în terminal (critical) ·
+Cele 16 tipuri (cod · etichetă · urgență): `SF-FIRE` Foc sau fum în terminal (critical) ·
 `SF-FOD` Corp străin pe platformă/cale de rulare (critical) · `SF-SPILL` Scurgere de lichid (medium) ·
 `SF-EQUIP` Echipament de stingere defect (high) · `SC-BAG` Bagaj nesupravegheat (high) ·
 `SC-ACCESS` Acces neautorizat (critical) · `SC-ITEM` Obiect interzis (high) ·

@@ -136,21 +136,21 @@ const List<MenuCategory> menuCategories = <MenuCategory>[
         'Persoane în pericol',
         <MenuProblem>[
           MenuProblem('p-1-6-1', 'Persoane în pericol — Terminal', 'Terminal',
-              'OP-OTHER'),
+              'OP-RESCUE'),
           MenuProblem(
-              'p-1-6-2', 'Persoane în pericol — Pistă', 'Pistă', 'OP-OTHER'),
+              'p-1-6-2', 'Persoane în pericol — Pistă', 'Pistă', 'OP-RESCUE'),
           MenuProblem('p-1-6-3', 'Persoane în pericol — Platformă', 'Platformă',
-              'OP-OTHER'),
+              'OP-RESCUE'),
           MenuProblem(
-              'p-1-6-4', 'Persoane în pericol — Hangar', 'Hangar', 'OP-OTHER'),
+              'p-1-6-4', 'Persoane în pericol — Hangar', 'Hangar', 'OP-RESCUE'),
           MenuProblem('p-1-6-5', 'Persoane în pericol — Parcare', 'Parcare',
-              'OP-OTHER'),
+              'OP-RESCUE'),
           MenuProblem(
-              'p-1-6-6', 'Persoane în pericol — Cargo', 'Cargo', 'OP-OTHER'),
+              'p-1-6-6', 'Persoane în pericol — Cargo', 'Cargo', 'OP-RESCUE'),
           MenuProblem(
-              'p-1-6-7', 'Persoane în pericol — Turn', 'Turn', 'OP-OTHER'),
+              'p-1-6-7', 'Persoane în pericol — Turn', 'Turn', 'OP-RESCUE'),
           MenuProblem(
-              'p-1-6-8', 'Persoane în pericol — Poartă', 'Poartă', 'OP-OTHER'),
+              'p-1-6-8', 'Persoane în pericol — Poartă', 'Poartă', 'OP-RESCUE'),
         ],
       ),
       MenuSubcategory(

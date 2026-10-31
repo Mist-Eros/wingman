@@ -205,6 +205,20 @@
       ]
     },
     {
+      "code": "OP-RESCUE",
+      "label_ro": "Descarcerare / persoană blocată",
+      "category": "operations",
+      "urgency": "critical",
+      "primary_departments": [
+        "fire_rescue"
+      ],
+      "standby_departments": [
+        "medical",
+        "security",
+        "operations"
+      ]
+    },
+    {
       "code": "OP-OTHER",
       "label_ro": "Alt incident nespecificat (triaj dispecer)",
       "category": "operations",

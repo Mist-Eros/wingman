@@ -227,7 +227,7 @@ async def run(args: argparse.Namespace) -> int:
     status, taxonomy = http_call(base, token, "/api/taxonomy", insecure=insecure)
     actual_codes = [item.get("code") for item in taxonomy.get("types", [])]
     check("/api/taxonomy returns 200", status == 200, f"status={status}")
-    check("15 incident types", len(actual_codes) == 15, f"got {len(actual_codes)}")
+    check("16 incident types", len(actual_codes) == 16, f"got {len(actual_codes)}")
     check("served codes match taxonomy.json", actual_codes == expected_codes)
 
     # 3b ── source-backed occurrence catalog ─────────────────────────────────
@@ -286,8 +286,8 @@ async def run(args: argparse.Namespace) -> int:
         "WSS connected", hello is not None, (error or {}).get("error", "no hello event")
     )
     check(
-        "hello advertises 15 types",
-        (hello or {}).get("data", {}).get("incident_types") == 15,
+        "hello advertises 16 types",
+        (hello or {}).get("data", {}).get("incident_types") == 16,
     )
 
     try:

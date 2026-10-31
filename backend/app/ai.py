@@ -64,6 +64,8 @@ RULES_PROMPT = """REGULI OBLIGATORII
    • persoană suspectă/agresivă/agitată, comportament ciudat, panică → SC-BEHAV
    • bandă de bagaje, carusel, conveyor → MT-BELT
    • escalator, lift, scară rulantă → MT-ESC
+   • înjunghiat, înjunghiată, lovit cu cuțit, sângerare, rănit grav → OP-MED
+   • persoană blocată/prinsă, captiv, descarcerare → OP-RESCUE
    • pasarelă de îmbarcare, jet bridge, poartă blocată → MT-JBRIDGE
    • coadă foarte mare, aglomerare, flux de pasageri → OP-QUEUE
    • sistem căzut, aplicație, rețea, internet, check-in IT → OP-IT
@@ -81,6 +83,8 @@ FEW_SHOT_PROMPT = """EXEMPLE (intrare → ieșire)
 "Banda de bagaje din terminal 2 s-a oprit" → {"incident_code": "MT-BELT", "urgency": "high", "confidence": 0.95, "rationale": "bandă bagaje defectă"}
 "Cineva a intrat în zona restricționată de lângă poarta 5" → {"incident_code": "SC-ACCESS", "urgency": "critical", "confidence": 0.93, "rationale": "acces neautorizat în zonă restricționată"}
 "Un bagaj a fost lăsat nesupravegheat în terminal" → {"incident_code": "SC-BAG", "urgency": "high", "confidence": 0.92, "rationale": "bagaj nesupravegheat"}
+"Un pasager a fost înjunghiat lângă poarta 6" → {"incident_code": "OP-MED", "urgency": "critical", "confidence": 0.95, "rationale": "persoană înjunghiată, urgență medicală"}
+"O persoană este blocată în lift" → {"incident_code": "OP-RESCUE", "urgency": "critical", "confidence": 0.95, "rationale": "persoană blocată, descarcerare"}
 
 Top 3 demo includes a smoke/fire report — when the word fum/foc/incendiu appears, the answer is SF-FIRE."""
 
@@ -117,6 +121,61 @@ def build_user_prompt(transcript: str, location_label: str) -> str:
 # taxonomy (checked once at startup in main.py).
 # ─────────────────────────────────────────────────────────────────────────────
 KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "OP-MED",
+        (
+            "înjunghiat",
+            "injunghiat",
+            "lovit cu cuțit",
+            "lovit cu cutit",
+            "sângerare",
+            "sangerare",
+            "rănit grav",
+            "ranit grav",
+            "înjunghiat",
+            "injunghiat",
+            "lovit cu cuțit",
+            "lovit cu cutit",
+            "sângerare",
+            "sangerare",
+            "atacat",
+            "atacată",
+            "atacata",
+            "hemoragie",
+            "inconștient",
+            "inconstient",
+            "nu respiră",
+            "nu respira",
+            "leșin",
+            "lesin",
+        ),
+    ),
+    (
+        "OP-RESCUE",
+        (
+            "descarcerare",
+            "persoană blocată",
+            "persoana blocata",
+            "persoană prinsă",
+            "persoana prinsa",
+            "persoană este blocată",
+            "persoana este blocata",
+            "persoană este prinsă",
+            "persoana este prinsa",
+            "este prinsă",
+            "este prinsa",
+            "prinsă în",
+            "prinsa in",
+            "blocat în lift",
+            "blocat in lift",
+            "prins sub",
+            "prinsă sub",
+            "prinsa sub",
+            "captiv",
+            "nu poate ieși",
+            "nu poate iesi",
+        ),
+    ),
     (
         "SF-FIRE",
         (
@@ -765,6 +824,54 @@ _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
             "medical",
             "comă",
             "coma",
+            "înjunghiat",
+            "injunghiat",
+            "junghiat",
+            "lovit cu cuțit",
+            "lovit cu cutit",
+            "sângerare",
+            "sangerare",
+            "rănit grav",
+            "ranit grav",
+            "victimă",
+            "victima",
+            "atacat",
+            "atacată",
+            "atacata",
+        ),
+    ),
+    (
+        "OP-RESCUE",
+        (
+            "descarcerare",
+            "persoană blocată",
+            "persoana blocata",
+            "persoană prinsă",
+            "persoana prinsa",
+            "persoană este prinsă",
+            "persoana este prinsa",
+            "este prinsă",
+            "este prinsa",
+            "prinsă în",
+            "prinsa in",
+            "om blocat",
+            "blocat în lift",
+            "blocat in lift",
+            "blocată în lift",
+            "blocata in lift",
+            "blocat între",
+            "blocat intre",
+            "prins sub",
+            "prinsă sub",
+            "prinsa sub",
+            "captiv",
+            "nu poate ieși",
+            "nu poate iesi",
+            "este blocat",
+            "este blocată",
+            "este blocata",
+            "închis în",
+            "inchis in",
         ),
     ),
     (
@@ -814,7 +921,18 @@ _KEYWORD_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
     (
         "SC-BEHAV",
-        ("suspect", "agresiv", "agitat", "ameninț", "amenint", "comportament"),
+        (
+            "suspect",
+            "agresiv",
+            "agitat",
+            "ameninț",
+            "amenint",
+            "comportament",
+            "în pericol",
+            "in pericol",
+            "persoană în pericol",
+            "persoana in pericol",
+        ),
     ),
     (
         "OP-QUEUE",

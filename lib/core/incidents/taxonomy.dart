@@ -246,7 +246,7 @@ class IncidentTaxonomy {
   static const int schemaVersion = 1;
 
   /// Product taxonomy: 15 types, 4 categories (medical emergency is dedicated).
-  static const int expectedCount = 15;
+  static const int expectedCount = 16;
 
   // ───────────────────────────────────────────────────────────────────────────
   // THE 15 TYPES — replace this block with the taxonomy doc, nothing else.
@@ -418,6 +418,18 @@ class IncidentTaxonomy {
         Department.operations,
         Department.security,
         Department.terminal,
+      ],
+    ),
+    IncidentType(
+      code: 'OP-RESCUE',
+      labelRo: 'Descarcerare / persoană blocată',
+      category: IncidentCategory.operations,
+      urgency: Urgency.critical,
+      primaryDepartments: <Department>[Department.fireRescue],
+      standbyDepartments: <Department>[
+        Department.medical,
+        Department.security,
+        Department.operations,
       ],
     ),
     IncidentType(

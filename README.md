@@ -67,7 +67,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   │   ├── domain/              DomainConfig, quorum policy
 │   │   ├── rewards/             RewardPolicy, ledger, RewardService
 │   │   ├── demo/                demo reset service
-│   │   ├── incidents/           taxonomy — single source of truth (15 types)
+│   │   ├── incidents/           taxonomy — single source of truth (16 types)
 │   │   ├── models/              Ticket, Session, AnalyzeResult, Transcription
 │   │   ├── notifications/       department-scoped local notification policy
 │   │   ├── state/               TicketBoard (snapshot + WSS merge)
@@ -140,7 +140,7 @@ catalog, demo accounts, localisation).
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
-* **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 4 rows × 2 columns grid per level.
+* **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the closed operational codes, in a full-screen 4 rows × 2 columns grid per level.
 * **Accessibility**: profiles for blind, mute, deaf, colorblind, motor and cognitive staff (text size, contrast, visual alerts, spoken guidance, typed-first, large targets). See `docs/accessibility.md`.
 * **Live GPS map on real OpenStreetMap tiles** (configurable tile server) with coordinates/accuracy, and an **optional 5-second photo** prompt (never blocks a report); photo + GPS stay on the ticket and are shown with a **Foto/Hartă toggle**.
 * **Account tab** with points and attended incidents; **Reset demo complet** clears tickets/history/points.

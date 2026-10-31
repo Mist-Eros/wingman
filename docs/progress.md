@@ -279,3 +279,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Rewards now cover **reporting + attending + resolving** (`reportPoints=3`, attended 2, resolved 10), config-driven. | `reward_policy.dart`, `domain.py`, domain JSON | reward tests |
 | Anti-farming: self-report + self-resolve **alone** on a low/medium incident gives 0 points; high/critical incidents still count. UI reports blocked self-resolutions. | reward policy + account UI | Dart/backend tests |
 | **Samsung A52s** (`R5CT22RJNZF`) set up as second crew phone: final APK, USB reverse, location/audio/notifications permissions, Mandy Medic logged in, WSS connected. | device setup | A52s screenshot + logcat |
+
+---
+
+## 2026-10-31 — classification gaps: stabbing and trapped people
+
+| Change | Where | Evidence |
+|---|---|---|
+| Added `OP-RESCUE` (Descarcerare / persoană blocată) to the closed taxonomy and backend copy; primary **Pompieri / Salvare**, standby Medical/Security. | `taxonomy.dart`, `backend/taxonomy.json`, sync script | 16 types; API report primary `fire_rescue` |
+| Deterministic guards: knife/stab/bleeding words → `OP-MED`; blocked/trapped/captive person → `OP-RESCUE`; generic "în pericol" stays `SC-BEHAV` (Security). | `backend/app/ai.py` | `test_classification.py` + live `/api/reports` checks |
+| Menu subcategory "Persoane în pericol" now maps to `OP-RESCUE`. | `incident_menu_data.dart` | Flutter tests |
