@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // lib/main.dart
 //
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
@@ -154,6 +154,11 @@ Future<String?> _loadCaPem() async {
     return null;
   }
 }
+
+/// Temporary demo-only location bypass, set at build time with:
+/// --dart-define=LOCATION_BYPASS_UNTIL=<unix-millis>
+const int kLocationBypassUntil =
+    int.fromEnvironment('LOCATION_BYPASS_UNTIL', defaultValue: 0);
 
 class AirportApp extends StatefulWidget {
   const AirportApp({
@@ -315,6 +320,7 @@ class _AirportAppState extends State<AirportApp> {
                 airportLat: widget.domain.map.initialLat,
                 airportLng: widget.domain.map.initialLng,
                 onSignOut: _session == null ? null : _signOut,
+                bypassUntilMillis: kLocationBypassUntil,
                 child: themed,
               );
             },

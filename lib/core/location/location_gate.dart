@@ -55,12 +55,17 @@ class LocationGate extends StatefulWidget {
     required this.airportLng,
     required this.child,
     this.onSignOut,
+    this.bypassUntilMillis = 0,
   });
 
   final double airportLat;
   final double airportLng;
   final Widget child;
   final VoidCallback? onSignOut;
+
+  /// Temporary demo escape hatch. A build with a future epoch here bypasses the
+  /// gate until that instant, then automatically re-locks.
+  final int bypassUntilMillis;
 
   @override
   State<LocationGate> createState() => _LocationGateState();
@@ -86,11 +91,25 @@ class _LocationGateState extends State<LocationGate>
   bool _askedPermission = false;
   bool _allowWithoutLocation = false;
   Timer? _timer;
+  Timer? _bypassTimer;
+
+  bool get _bypassed =>
+      widget.bypassUntilMillis > DateTime.now().millisecondsSinceEpoch;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (_bypassed) {
+      final remaining =
+          widget.bypassUntilMillis - DateTime.now().millisecondsSinceEpoch;
+      _bypassTimer = Timer(Duration(milliseconds: remaining), () {
+        if (!mounted) return;
+        setState(() {});
+        unawaited(_check());
+      });
+      return;
+    }
     unawaited(_check());
     _timer = Timer.periodic(const Duration(seconds: 20), (_) {
       unawaited(_check(silent: true));
@@ -100,6 +119,7 @@ class _LocationGateState extends State<LocationGate>
   @override
   void dispose() {
     _timer?.cancel();
+    _bypassTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -252,6 +272,7 @@ class _LocationGateState extends State<LocationGate>
 
   @override
   Widget build(BuildContext context) {
+    if (_bypassed) return widget.child;
     if (_status == _GateStatus.ok) return widget.child;
     if (_status == _GateStatus.unavailable && _allowWithoutLocation) {
       return widget.child;
