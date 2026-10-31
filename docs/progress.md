@@ -258,3 +258,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | All words were yellow because a fixed 0.70 threshold was applied to every word. Replaced with a relative rule: only clear outliers get underlined; uniformly low sentences show a warning and allow editing all words without yellow. | `reporter_controller.dart`, `reporter_widgets.dart` | widget/controller tests, including all-low case |
 | Added Ollama ASR correction before display/classification. Safe merge: only low-confidence words/diacritics may change; high-confidence words, numbers and inserted facts are preserved. Falls back to raw on timeout/error. | `backend/app/ai.py`, `stt.py`, `main.py`, config/env | direct correction + merge tests; API returns `corrected`/`raw_text` |
 | App shows a small "Text corectat automat de AI" indicator when the LLM changed the transcript. | reporter confirmation | Flutter tests |
+
+---
+
+## 2026-10-31 — duplicate reports become a people counter
+
+| Change | Where | Evidence |
+|---|---|---|
+| Duplicate reports still resolve to one ticket, but now increment `report_count`, keep distinct `reporter_ids`/`reporter_names`, and broadcast `ticket.updated`; photos/GPS from the duplicate are still merged. | `backend/app/store.py` (`attach_media`), `main.py` | smoke check: second report same id, `report_count=2`, two distinct reporters |
+| Ticket header now shows a **👥 N** chip (N = distinct people); tooltip also shows total reports ("2 raportări · 2 persoane"). | `reporter_count_chip.dart`, dispatcher/crew/history cards, dashboard JS | widget test; dashboard card/detail |
+| Wire/model fields added: `report_count`, `reporter_ids`, `reporter_names`. | `ticket.dart`, smoke `TICKET_KEYS`, sample contract | Flutter contract tests |

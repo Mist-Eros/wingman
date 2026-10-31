@@ -162,6 +162,9 @@ class TicketStore:
             "source": source,
             "reporter_id": reporter_id,
             "reporter_name": reporter_name,
+            "report_count": 1,
+            "reporter_ids": [reporter_id],
+            "reporter_names": [reporter_name],
             "transcript": transcript,
             "photo_base64": photo_base64,
             "location": {
@@ -273,11 +276,31 @@ class TicketStore:
         *,
         photo_base64: str | None = None,
         location: dict[str, Any] | None = None,
+        reporter_id: str | None = None,
+        reporter_name: str | None = None,
     ) -> dict[str, Any]:
-        """Attach photo/GPS from a duplicate report to the existing ticket."""
+        """Merge a duplicate report into the existing ticket.
+
+        Keeping one ticket is intentional, but the UI must show how many people
+        reported it: `report_count` counts every submission and `reporter_ids`
+        keeps the distinct reporters.
+        """
         changed = False
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
+            ticket["report_count"] = int(ticket.get("report_count") or 0) + 1
+            reporter_ids = list(
+                ticket.get("reporter_ids")
+                or ([ticket["reporter_id"]] if ticket.get("reporter_id") else [])
+            )
+            reporter_names = list(ticket.get("reporter_names") or [])
+            if reporter_id and reporter_id not in reporter_ids:
+                reporter_ids.append(reporter_id)
+            if reporter_name and reporter_name not in reporter_names:
+                reporter_names.append(reporter_name)
+            ticket["reporter_ids"] = reporter_ids
+            ticket["reporter_names"] = reporter_names
+            changed = True
             if photo_base64 and not ticket.get("photo_base64"):
                 ticket["photo_base64"] = photo_base64
                 changed = True

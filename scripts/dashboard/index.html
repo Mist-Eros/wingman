@@ -178,6 +178,9 @@
   .ticket .meta { color:#64748B; }
   .ticket.sel { border-color:#0F4C81; box-shadow:0 0 0 1px #0F4C81 inset; }
   .when { color:#94A3B8; }
+  .reporters { display:inline-flex; align-items:center; gap:3px; padding:2px 7px;
+                border:1px solid #E2E8F0; border-radius:7px; background:#F8FAFC;
+                color:#0F4C81; font-size:11px; font-weight:800; }
   .detail { background:#fff; }
   .toast { background:#0F172A; color:#fff; border-color:#0F172A; }
   .modal { background:#fff; border-color:#E2E8F0; color:#0F172A; }
@@ -324,6 +327,7 @@ const DEPT_LABEL = {
   baggage: 'Bagaje', it: 'IT / Comunicații', airside: 'Platformă / Airside'
 };
 const deptLabels = (t) => (t.primary_departments || []).map(d => DEPT_LABEL[d] || d).join(' · ');
+const peopleCount = (t) => (t.reporter_ids || []).length || 1;
 const STATUS_COLOR = {
   dispatched: '#0F4C81', in_progress: '#B45309',
   resolved: '#027A48', denied: '#64748B'
@@ -488,6 +492,7 @@ function render() {
         '<div class="main"><div class="top">' +
         badge(t.incident_code, uc) + badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
         badge(STATUS_LABEL[t.status] || t.status, sc) +
+        '<span class="reporters">👥 ' + peopleCount(t) + '</span>' +
         '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
         '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' +
@@ -543,7 +548,7 @@ function renderDetail() {
     badge('Probabilitate Craiova ' + likelihoodPct(t), '#0F4C81') + '</div>' +
     mediaTabs +
     kv('Locație', loc) + kv('Echipe necesare', deptLabels(t)) +
-    kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
+    kv('Raportat de', (t.reporter_name || '—') + ' · 👥 ' + peopleCount(t)) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
     kv('Voturi', (t.resolve_votes || 0) + ' / ' + (t.quorum || 1)) +
     kv('Transcriere', t.transcript) +
     (t.decided_by ? kv('Decis de', t.decided_by) : '') +

@@ -58,6 +58,9 @@ TICKET_KEYS = {
     "source",
     "reporter_id",
     "reporter_name",
+    "report_count",
+    "reporter_ids",
+    "reporter_names",
     "transcript",
     "photo_base64",
     "location",
@@ -296,8 +299,8 @@ async def run(args: argparse.Namespace) -> int:
             {
                 "source": "menu",
                 "transcript": "Foc sau fum în terminal",
-                "reporter_id": "smoke-reporter",
-                "reporter_name": "Smoke Test",
+                "reporter_id": "smoke-reporter-2",
+                "reporter_name": "Smoke Reporter 2",
                 "location": {"terminal": "T2", "zone": "Banda 3"},
                 "hint_code": "SF-FIRE",
                 "use_ai": False,
@@ -356,6 +359,16 @@ async def run(args: argparse.Namespace) -> int:
             for t in all_tickets.get("tickets", [])
             if t.get("incident_code") == "SF-FIRE" and t.get("status") == "dispatched"
         ]
+        check(
+            "duplicate increments report_count",
+            duplicate_ticket.get("report_count") == 2,
+            str(duplicate_ticket.get("report_count")),
+        )
+        check(
+            "duplicate keeps two distinct reporters",
+            len(duplicate_ticket.get("reporter_ids") or []) == 2,
+            str(duplicate_ticket.get("reporter_ids")),
+        )
         check(
             "only one open SF-FIRE ticket exists",
             status == 200 and len(same) == 1,

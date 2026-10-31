@@ -207,6 +207,9 @@ class Ticket {
     required this.source,
     required this.reporterId,
     required this.reporterName,
+    this.reportCount = 1,
+    this.reporterIds = const <String>[],
+    this.reporterNames = const <String>[],
     required this.transcript,
     this.photoBase64,
     required this.location,
@@ -246,6 +249,17 @@ class Ticket {
 
   final String reporterId;
   final String reporterName;
+
+  /// Number of submissions merged into this ticket (initial report = 1).
+  final int reportCount;
+
+  /// Distinct reporter ids; a duplicate report increments [reportCount] and adds
+  /// its reporter here instead of creating a second ticket.
+  final List<String> reporterIds;
+  final List<String> reporterNames;
+
+  /// People who reported this incident (at least one, including legacy tickets).
+  int get reporterPeopleCount => reporterIds.isEmpty ? 1 : reporterIds.length;
 
   /// Verbatim STT transcript for voice reports, or the menu label text.
   final String transcript;
@@ -351,6 +365,9 @@ class Ticket {
         'source': source.wire,
         'reporter_id': reporterId,
         'reporter_name': reporterName,
+        'report_count': reportCount,
+        'reporter_ids': List<String>.of(reporterIds),
+        'reporter_names': List<String>.of(reporterNames),
         'transcript': transcript,
         'photo_base64': photoBase64,
         'location': location.toJson(),
@@ -388,6 +405,9 @@ class Ticket {
       source: ReportSource.fromWire(_asString(json['source'], 'source')),
       reporterId: _asString(json['reporter_id'], 'reporter_id'),
       reporterName: _asString(json['reporter_name'], 'reporter_name'),
+      reportCount: _asInt(json['report_count'] ?? 1, 'report_count'),
+      reporterIds: _strings(json['reporter_ids']),
+      reporterNames: _strings(json['reporter_names']),
       transcript: _asString(json['transcript'], 'transcript'),
       photoBase64: _asStringOrNull(json['photo_base64']),
       location: IncidentLocation.fromJson(json['location']),
@@ -419,6 +439,9 @@ class Ticket {
     String? incidentCode,
     String? labelRo,
     IncidentCategory? category,
+    int? reportCount,
+    List<String>? reporterIds,
+    List<String>? reporterNames,
     List<Department>? primaryDepartments,
     List<Department>? standbyDepartments,
     List<String>? joinedCrewIds,
@@ -443,6 +466,9 @@ class Ticket {
         source: source,
         reporterId: reporterId,
         reporterName: reporterName,
+        reportCount: reportCount ?? this.reportCount,
+        reporterIds: reporterIds ?? this.reporterIds,
+        reporterNames: reporterNames ?? this.reporterNames,
         transcript: transcript,
         location: location,
         confidence: confidence,

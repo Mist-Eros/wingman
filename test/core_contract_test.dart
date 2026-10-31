@@ -21,6 +21,9 @@ Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
       'source': 'voice',
       'reporter_id': 'reporter-1',
       'reporter_name': 'Andrei P.',
+      'report_count': 2,
+      'reporter_ids': <String>['reporter-1', 'reporter-2'],
+      'reporter_names': <String>['Andrei P.', 'Ioana M.'],
       'transcript': 'Este fum lângă poarta 12.',
       'photo_base64': null,
       'location': <String, dynamic>{
@@ -141,6 +144,9 @@ void main() {
       expect(ticket.confidenceLabel, '93%');
       expect(ticket.createdAt.isUtc, isTrue);
       expect(ticket.hasOverrideDeadline, isFalse);
+      expect(ticket.reportCount, 2);
+      expect(ticket.reporterIds, <String>['reporter-1', 'reporter-2']);
+      expect(ticket.reporterPeopleCount, 2);
     });
 
     test('round-trips every wire key', () {

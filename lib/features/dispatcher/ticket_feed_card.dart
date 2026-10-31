@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/incidents/likelihood.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import '../../core/widgets/reporter_count_chip.dart';
 import '../../core/widgets/required_teams_bar.dart';
 import '../../core/widgets/ticket_media_panel.dart';
 import 'dispatcher_density.dart';
@@ -224,6 +225,7 @@ class TicketFeedCard extends StatelessWidget {
                                   _ConfidenceChip(
                                       likelihood: ticket.craiovaLikelihood),
                                   _StatusChip(status: ticket.status),
+                                  ReporterCountChip(ticket: ticket),
                                   Text(
                                     _ageLabel(ticket.ageSeconds()),
                                     style:

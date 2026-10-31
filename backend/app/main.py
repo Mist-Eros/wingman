@@ -478,6 +478,8 @@ async def create_report(report: schemas.ReportIn) -> dict:
                 existing["id"],
                 photo_base64=report.photo_base64,
                 location=location,
+                reporter_id=report.reporter_id or "anon",
+                reporter_name=report.reporter_name or "Anonim",
             )
             return {
                 "ticket": existing,
