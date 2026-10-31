@@ -45,7 +45,12 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       standbyDepartments: type.standbyDepartments,
       joinedCrewIds: joined,
       resolveVotes: resolveVotes,
-      quorum: 2,
+      quorum: switch (urgency) {
+        Urgency.low => 1,
+        Urgency.medium => 1,
+        Urgency.high => 2,
+        Urgency.critical => 2,
+      },
       overrideDeadline: overrideDeadline,
       decidedBy: decidedBy,
       createdAt: created,

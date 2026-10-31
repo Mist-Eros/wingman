@@ -263,7 +263,12 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                       : '${_health!['stt']?['available'] == true ? 'disponibil' : 'indisponibil'} '
                           '(${_health!['stt']?['model'] ?? '?'})',
                 ),
-                _kv('Quorum echipaj', '${_health?['resolve_quorum'] ?? 2}'),
+                _kv(
+                  'Quorum echipaj',
+                  _health?['resolve_quorum_by_urgency'] is Map
+                      ? '1 (minor) · 2 (periculos)'
+                      : '${_health?['resolve_quorum'] ?? 2}',
+                ),
               ],
             ),
           ),

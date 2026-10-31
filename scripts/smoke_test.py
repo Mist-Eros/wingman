@@ -294,11 +294,11 @@ async def run(args: argparse.Namespace) -> int:
             token,
             {
                 "source": "menu",
-                "transcript": "Defecțiune bandă transportoare bagaje",
+                "transcript": "Foc sau fum în terminal",
                 "reporter_id": "smoke-reporter",
                 "reporter_name": "Smoke Test",
                 "location": {"terminal": "T2", "zone": "Banda 3"},
-                "hint_code": "MT-BELT",
+                "hint_code": "SF-FIRE",
                 "use_ai": False,
             },
             insecure,
@@ -332,11 +332,11 @@ async def run(args: argparse.Namespace) -> int:
             token,
             {
                 "source": "menu",
-                "transcript": "Defecțiune bandă transportoare bagaje",
+                "transcript": "Foc sau fum în terminal",
                 "reporter_id": "smoke-reporter",
                 "reporter_name": "Smoke Test",
                 "location": {"terminal": "T2", "zone": "Banda 3"},
-                "hint_code": "MT-BELT",
+                "hint_code": "SF-FIRE",
                 "use_ai": False,
             },
             insecure,
@@ -353,10 +353,10 @@ async def run(args: argparse.Namespace) -> int:
         same = [
             t
             for t in all_tickets.get("tickets", [])
-            if t.get("incident_code") == "MT-BELT" and t.get("status") == "dispatched"
+            if t.get("incident_code") == "SF-FIRE" and t.get("status") == "dispatched"
         ]
         check(
-            "only one open MT-BELT ticket exists",
+            "only one open SF-FIRE ticket exists",
             status == 200 and len(same) == 1,
             f"found {len(same)}",
         )
@@ -453,6 +453,51 @@ async def run(args: argparse.Namespace) -> int:
         check("summary note present", bool(ticket.get("resolution_note")))
         resolved_event = await wait_for_type(events, "ticket.resolved", timeout=5)
         check("ticket.resolved broadcast on WSS", resolved_event is not None)
+
+        print("[7b] urgency-based quorum")
+        status, low_payload = report(
+            base,
+            token,
+            {
+                "source": "menu",
+                "transcript": "Coada de la poarta 5 este neobișnuit de lungă.",
+                "reporter_id": "smoke-low",
+                "reporter_name": "Smoke Low",
+                "location": {"terminal": "T1", "zone": "Zona de îmbarcare"},
+                "hint_code": "OP-OTHER",
+                "use_ai": False,
+            },
+            insecure,
+        )
+        low_ticket = low_payload.get("ticket", {})
+        check(
+            "low ticket quorum is 1",
+            low_ticket.get("quorum") == 1,
+            str(low_ticket.get("quorum")),
+        )
+        low_id = low_ticket.get("id", "")
+        http_call(
+            base,
+            token,
+            f"/api/tickets/{low_id}/join",
+            method="POST",
+            payload={"crew_id": "smoke-low-crew", "crew_name": "Low Crew"},
+            insecure=insecure,
+        )
+        status, resolved_payload = http_call(
+            base,
+            token,
+            f"/api/tickets/{low_id}/vote",
+            method="POST",
+            payload={"crew_id": "smoke-low-crew", "approve": True},
+            insecure=insecure,
+        )
+        check(
+            "one vote resolves a low ticket",
+            status == 200
+            and resolved_payload.get("ticket", {}).get("status") == "resolved",
+            str(resolved_payload.get("ticket", {}).get("status")),
+        )
 
         # 8 ── deny ──────────────────────────────────────────────────────────
         print("[8] dispatcher deny")

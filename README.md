@@ -7,7 +7,7 @@ the departments the incident needs**. Tickets go straight to the dispatcher, who
 reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
 no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **101/101** ·
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **103/103** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -20,7 +20,7 @@ cd backend; .\run.ps1
 
 # 2) seed the stage data + prove the API
 cd ..; python backend\seed_demo.py
-python scripts\smoke_test.py --ca backend\certs\ca.crt     # 101/101
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 103/103
 
 # 3) phone (Android; APK is built by the script)
 .\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
@@ -133,7 +133,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/transcribe` | Audio → text (local faster-whisper) |
 | GET | `/api/tickets[?status=]`, `/api/tickets/{id}` | List / read |
 | POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
-| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 2) |
+| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 1–2 by urgency) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
 | POST | `/api/tickets/clear-history` | Admin: permanently clears resolved/denied tickets |
 | GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |

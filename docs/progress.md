@@ -139,3 +139,12 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Logo removed from app UI; it lives **only as the launcher/app icon**. Login restored to the previous Wingman header; branding assets no longer bundled. | `lib/features/auth/login_screen.dart`, `pubspec.yaml`, `android/.../mipmap-*` | S24 login no longer shows the logo; launcher icon unchanged |
 | **Duplicate tickets blocked server-side**: same open incident type + same location within 15 min, or identical normalized transcript within 30 min, returns the existing ticket with `duplicate: true` — no new ticket, no duplicate WSS event. | `backend/app/store.py` (`find_duplicate`), `backend/app/main.py` | smoke 101/101: second MT-BELT report keeps the same id and only one open MT-BELT |
 | Screenshots/cards refreshed after logo removal; history screenshots included. | `D:\Hackathon\Screenshots\` | new login capture, updated `team-grid.png` |
+
+---
+
+## 2026-10-31 — urgency-based crew quorum
+
+| Change | Where | Evidence |
+|---|---|---|
+| Crew resolution quorum now depends on danger: **low/medium = 1 vote**, **high/critical = 2 votes** (was always 2). | `backend/app/store.py` (`QUORUM_BY_URGENCY`), `lib/features/dispatcher/demo_tickets.dart` | smoke: low OP-OTHER resolves with 1 vote; critical SF-FIRE still needs 2; 103/103 |
+| DevTools shows the mapping; docs updated. | `lib/features/dev/dev_tools_screen.dart`, README/CONTRACTS | health exposes `resolve_quorum_by_urgency` |

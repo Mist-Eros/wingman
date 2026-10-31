@@ -251,6 +251,12 @@ async def health() -> dict:
         "ws_clients": hub.count,
         "confidence_threshold": settings.confidence_threshold,
         "resolve_quorum": settings.resolve_quorum,
+        "resolve_quorum_by_urgency": {
+            "low": 1,
+            "medium": 1,
+            "high": 2,
+            "critical": 2,
+        },
         "ollama": {
             "url": settings.ollama_url,
             "model": settings.ollama_model,

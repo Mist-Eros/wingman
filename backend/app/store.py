@@ -22,6 +22,14 @@ from .taxonomy import URGENCY_LEVELS, Taxonomy
 
 logger = logging.getLogger("airport.store")
 
+QUORUM_BY_URGENCY: dict[str, int] = {
+    "low": 1,
+    "medium": 1,
+    "high": 2,
+    "critical": 2,
+}
+
+
 ALLOWED_STATUSES: tuple[str, ...] = (
     "pending_override",
     "dispatched",
@@ -161,7 +169,7 @@ class TicketStore:
             "joined_crew_ids": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
-            "quorum": self._settings.resolve_quorum,
+            "quorum": QUORUM_BY_URGENCY.get(urgency, self._settings.resolve_quorum),
             "override_deadline": None,
             "dispatched_at": now,
             "resolved_at": None,
