@@ -366,3 +366,14 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 - Split the former multi-department `engineer` account: **Earl Engineer** is maintenance only.
 - Added dedicated crew accounts for **operations, IT, baggage and airside**, joining security, fire/rescue, medical, maintenance and terminal.
 - The demo account list now has **one admin + nine department accounts**; each department has exactly one scoped account so alerts/quorum testing maps 1:1.
+
+---
+
+## 2026-10-31 — exactly one responder per department
+
+- A crew join now carries the responder's `department`; the backend rejects:
+  - a department that is not primary for the ticket (standby never responds);
+  - a second crew member from a department that already has a responder (409).
+- Leaving removes both the crew id and its department, so another member from that team can take over.
+- The Flutter crew screen sends the account's matching primary department; `joined_departments` is persisted and exposed on the wire.
+- With one demo account per department, notifications and response are now 1:1 per team.

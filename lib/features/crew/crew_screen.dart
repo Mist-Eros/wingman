@@ -256,11 +256,21 @@ class _CrewScreenState extends State<CrewScreen> {
                                   key: ValueKey<String>(ticket.id),
                                   ticket: ticket,
                                   crewId: session.userId,
-                                  onJoin: () => board.join(
-                                    ticket.id,
-                                    crewId: session.userId,
-                                    crewName: session.displayName,
-                                  ),
+                                  onJoin: () {
+                                    final department =
+                                        session.primaryDepartmentFor(
+                                      ticket.primaryDepartments,
+                                    );
+                                    if (department == null) {
+                                      return Future<bool>.value(false);
+                                    }
+                                    return board.join(
+                                      ticket.id,
+                                      crewId: session.userId,
+                                      department: department.wire,
+                                      crewName: session.displayName,
+                                    );
+                                  },
                                   onVote: () => board.vote(
                                     ticket.id,
                                     crewId: session.userId,

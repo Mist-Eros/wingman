@@ -178,9 +178,15 @@ class TicketBoard extends ChangeNotifier {
   Future<bool> join(
     String ticketId, {
     required String crewId,
+    required String department,
     String? crewName,
   }) =>
-      _run(() => _api.join(ticketId, crewId: crewId, crewName: crewName));
+      _run(() => _api.join(
+            ticketId,
+            crewId: crewId,
+            department: department,
+            crewName: crewName,
+          ));
 
   Future<bool> leave(String ticketId, {required String crewId}) =>
       _run(() => _api.leave(ticketId, crewId: crewId));

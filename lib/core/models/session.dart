@@ -75,6 +75,18 @@ class Session {
   bool get isDispatcher => role == UserRole.dispatcher || isAdmin;
   bool get isCrew => role == UserRole.crew;
 
+  /// The primary department this session responds as on [ticket], if any.
+  Department? primaryDepartmentFor(Iterable<Department> primary) {
+    if (departments.isEmpty) {
+      // Legacy/global crew account: respond as the first required department.
+      return primary.isEmpty ? null : primary.first;
+    }
+    for (final department in primary) {
+      if (departments.contains(department)) return department;
+    }
+    return null;
+  }
+
   /// The single rule for "do I get alerted about this ticket?".
   bool seesDepartments(Iterable<Department> ticketDepartments) {
     if (isAdmin) return true;

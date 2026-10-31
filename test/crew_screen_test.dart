@@ -74,6 +74,7 @@ class _FakeApi extends ApiClient {
   Future<Ticket> join(
     String ticketId, {
     required String crewId,
+    required String department,
     String? crewName,
   }) async {
     final current = store[ticketId];
@@ -83,6 +84,7 @@ class _FakeApi extends ApiClient {
     if (current.isJoinedBy(crewId)) return current;
     final updated = current.copyWith(
       joinedCrewIds: <String>[...current.joinedCrewIds, crewId],
+      joinedDepartments: <String>[...current.joinedDepartments, department],
       status: TicketStatus.inProgress,
       version: current.version + 1,
       updatedAt: DateTime.now().toUtc(),

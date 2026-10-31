@@ -104,7 +104,8 @@ void main() {
     final listed = await api.listTickets();
     expect(listed.map((item) => item.id), contains(ticket.id));
 
-    var updated = await api.join(ticket.id, crewId: 'dart-crew-1');
+    var updated =
+        await api.join(ticket.id, crewId: 'dart-crew-1', department: 'baggage');
     expect(updated.status, TicketStatus.inProgress);
     expect(updated.isJoinedBy('dart-crew-1'), isTrue);
 
@@ -112,7 +113,7 @@ void main() {
     expect(updated.resolveVotes, 1);
     expect(updated.status, TicketStatus.inProgress);
 
-    await api.join(ticket.id, crewId: 'dart-crew-2');
+    await api.join(ticket.id, crewId: 'dart-crew-2', department: 'maintenance');
     updated = await api.vote(ticket.id, crewId: 'dart-crew-2');
     expect(updated.status, TicketStatus.resolved);
     expect(updated.resolvedAt, isNotNull);

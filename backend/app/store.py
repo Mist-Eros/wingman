@@ -193,6 +193,7 @@ class TicketStore:
             "primary_departments": list(incident_type.primary_departments),
             "standby_departments": list(incident_type.standby_departments),
             "joined_crew_ids": [],
+            "joined_departments": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
             "quorum": self._domain.quorum.required_for(
@@ -431,15 +432,33 @@ class TicketStore:
         self,
         ticket_id: str,
         crew_id: str,
+        department: str,
         crew_name: str | None = None,
     ) -> dict[str, Any]:
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
             if ticket["status"] in ("pending_override", "resolved", "denied"):
                 raise Conflict("Only dispatched or in-progress tickets can be joined")
+            primary = [str(value) for value in ticket.get("primary_departments") or []]
+            if str(department) not in primary:
+                raise Conflict(
+                    "Only primary department responders can join this ticket"
+                )
+            joined = ticket.setdefault("joined_crew_ids", [])
+            joined_departments = ticket.setdefault("joined_departments", [])
+            # Older persisted tickets may have ids without departments.
+            while len(joined_departments) < len(joined):
+                joined_departments.append("")
             changed = False
-            if crew_id not in ticket["joined_crew_ids"]:
-                ticket["joined_crew_ids"].append(crew_id)
+            if crew_id in joined:
+                index = joined.index(crew_id)
+                if joined_departments[index] != department:
+                    raise Conflict("This crew member is already responding")
+            else:
+                if department in joined_departments:
+                    raise Conflict("A responder from this department already joined")
+                joined.append(crew_id)
+                joined_departments.append(str(department))
                 changed = True
             if ticket["status"] == "dispatched":
                 ticket["status"] = "in_progress"
@@ -456,6 +475,7 @@ class TicketStore:
                     "action": "joined",
                     "crew_id": crew_id,
                     "crew_name": crew_name,
+                    "department": department,
                 },
             )
         return snapshot
@@ -472,7 +492,13 @@ class TicketStore:
                 raise Conflict("Cannot leave a closed ticket")
             if crew_id not in ticket["joined_crew_ids"]:
                 return copy.deepcopy(ticket)
-            ticket["joined_crew_ids"].remove(crew_id)
+            joined = ticket["joined_crew_ids"]
+            departments = ticket.setdefault("joined_departments", [])
+            while len(departments) < len(joined):
+                departments.append("")
+            index = joined.index(crew_id)
+            joined.pop(index)
+            departments.pop(index)
             if crew_id in ticket["resolve_voter_ids"]:
                 ticket["resolve_voter_ids"].remove(crew_id)
                 ticket["resolve_votes"] = len(ticket["resolve_voter_ids"])

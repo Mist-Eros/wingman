@@ -608,7 +608,9 @@ async def override_ticket(
 @api.post("/tickets/{ticket_id}/join")
 async def join_ticket(ticket_id: str, body: schemas.JoinIn) -> dict:
     try:
-        ticket = await store.join(ticket_id, body.crew_id, body.crew_name)
+        ticket = await store.join(
+            ticket_id, body.crew_id, body.department, body.crew_name
+        )
     except (NotFound, Conflict) as exc:
         raise _to_http(exc) from exc
     return {"ticket": ticket}

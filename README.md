@@ -33,7 +33,7 @@ An airport employee reports an incident by **voice** or through a deterministic 
 | **Local-first AI** | Whisper and Ollama run on the laptop. Reports stay on the local network. |
 | **Human-safe classification** | Closed taxonomy, schema validation, deterministic keyword guards and a fallback classifier. The AI cannot invent an incident code. |
 | **Honest Whisper** | Low-confidence speech gets **one** repeat, never a loop. Still unclear? The app switches to the deterministic 8×8×8 menu. |
-| **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. Standby teams are not woken for nothing. |
+| **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. **One responder per primary department** is enforced server-side; standby teams are never woken. |
 | **One ticket, many reporters** | Duplicate reports merge into one ticket, increment the report count and keep the distinct reporters visible with a 👥 counter. |
 | **Real persistence** | Tickets, photos, votes and history live in SQLite and survive backend restarts. |
 | **Live everywhere** | One WSS connection keeps phones and the control room in sync, with a versioned `TicketBoard` cache. Every ticket carries a live **since-posted timer**. |
@@ -158,7 +158,7 @@ Wingman/
 
 - **193 Flutter tests**
 - **23 backend tests**
-- **108/108** live smoke checks (TLS + WSS)
+- **109/109** live smoke checks (TLS + WSS)
 - `flutter analyze` clean
 - `.\scripts\verify_all.ps1 -Live` → all gates
 

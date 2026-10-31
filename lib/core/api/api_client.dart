@@ -253,11 +253,13 @@ class ApiClient {
   Future<Ticket> join(
     String ticketId, {
     required String crewId,
+    required String department,
     String? crewName,
   }) =>
       _mutate('POST', '/api/tickets/$ticketId/join', <String, dynamic>{
         'crew_id': crewId,
         'crew_name': crewName,
+        'department': department,
       });
 
   Future<Ticket> leave(

@@ -70,6 +70,7 @@ TICKET_KEYS = {
     "primary_departments",
     "standby_departments",
     "joined_crew_ids",
+    "joined_departments",
     "resolve_votes",
     "resolve_voter_ids",
     "quorum",
@@ -404,7 +405,11 @@ async def run(args: argparse.Namespace) -> int:
 
         # 7 ── join + vote quorum ────────────────────────────────────────────
         print("[7] crew join + vote")
-        join_body = {"crew_id": "smoke-crew-a", "crew_name": "Crew A"}
+        join_body = {
+            "crew_id": "smoke-crew-a",
+            "crew_name": "Crew A",
+            "department": "fire_rescue",
+        }
         status, payload = http_call(
             base,
             token,
@@ -417,6 +422,25 @@ async def run(args: argparse.Namespace) -> int:
         check(
             "join moves ticket to in_progress",
             payload.get("ticket", {}).get("status") == "in_progress",
+        )
+
+        # Same department cannot send a second responder.
+        status, duplicate_join = http_call(
+            base,
+            token,
+            f"/api/tickets/{manual_id}/join",
+            method="POST",
+            payload={
+                "crew_id": "smoke-crew-a2",
+                "crew_name": "Crew A2",
+                "department": "fire_rescue",
+            },
+            insecure=insecure,
+        )
+        check(
+            "second responder from same department rejected",
+            status == 409,
+            f"status={status}",
         )
 
         vote_body = {"crew_id": "smoke-crew-a", "approve": True}
@@ -446,7 +470,11 @@ async def run(args: argparse.Namespace) -> int:
             token,
             f"/api/tickets/{manual_id}/join",
             method="POST",
-            payload={"crew_id": "smoke-crew-b", "crew_name": "Crew B"},
+            payload={
+                "crew_id": "smoke-crew-b",
+                "crew_name": "Crew B",
+                "department": "security",
+            },
             insecure=insecure,
         )
         status, payload = http_call(
@@ -495,7 +523,11 @@ async def run(args: argparse.Namespace) -> int:
             token,
             f"/api/tickets/{low_id}/join",
             method="POST",
-            payload={"crew_id": "smoke-low-crew", "crew_name": "Low Crew"},
+            payload={
+                "crew_id": "smoke-low-crew",
+                "crew_name": "Low Crew",
+                "department": "operations",
+            },
             insecure=insecure,
         )
         status, resolved_payload = http_call(

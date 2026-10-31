@@ -39,6 +39,7 @@ Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
       'primary_departments': <String>['fire_rescue', 'security'],
       'standby_departments': <String>['operations', 'maintenance'],
       'joined_crew_ids': <String>[],
+      'joined_departments': <String>[],
       'resolve_votes': 0,
       'resolve_voter_ids': <String>[],
       'quorum': 2,

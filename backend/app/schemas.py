@@ -106,6 +106,8 @@ class JoinIn(BaseModel):
 
     crew_id: str = Field(min_length=1, max_length=120)
     crew_name: str | None = Field(default=None, max_length=120)
+    # Responder's department; exactly one responder per primary department.
+    department: str = Field(min_length=1, max_length=40)
 
 
 class VoteIn(BaseModel):

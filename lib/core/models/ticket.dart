@@ -221,6 +221,7 @@ class Ticket {
     required this.updatedAt,
     this.aiRationale,
     this.joinedCrewIds = const <String>[],
+    this.joinedDepartments = const <String>[],
     this.resolveVotes = 0,
     this.resolveVoterIds = const <String>[],
     this.quorum = 2,
@@ -282,6 +283,9 @@ class Ticket {
 
   /// Crew members who joined. The crew screen disables "Join" if `contains(me)`.
   final List<String> joinedCrewIds;
+
+  /// Parallel to [joinedCrewIds]; one responder per primary department.
+  final List<String> joinedDepartments;
 
   /// Number of approving resolve votes.
   final int resolveVotes;
@@ -379,6 +383,7 @@ class Ticket {
         'standby_departments':
             standbyDepartments.map((d) => d.wire).toList(growable: false),
         'joined_crew_ids': List<String>.of(joinedCrewIds),
+        'joined_departments': List<String>.of(joinedDepartments),
         'resolve_votes': resolveVotes,
         'resolve_voter_ids': List<String>.of(resolveVoterIds),
         'quorum': quorum,
@@ -445,6 +450,7 @@ class Ticket {
     List<Department>? primaryDepartments,
     List<Department>? standbyDepartments,
     List<String>? joinedCrewIds,
+    List<String>? joinedDepartments,
     int? resolveVotes,
     List<String>? resolveVoterIds,
     int? quorum,
@@ -477,6 +483,7 @@ class Ticket {
         primaryDepartments: primaryDepartments ?? this.primaryDepartments,
         standbyDepartments: standbyDepartments ?? this.standbyDepartments,
         joinedCrewIds: joinedCrewIds ?? this.joinedCrewIds,
+        joinedDepartments: joinedDepartments ?? this.joinedDepartments,
         resolveVotes: resolveVotes ?? this.resolveVotes,
         resolveVoterIds: resolveVoterIds ?? this.resolveVoterIds,
         quorum: quorum ?? this.quorum,
