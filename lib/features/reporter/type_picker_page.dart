@@ -1,118 +1,213 @@
-// Waze-style button menu: pick a category, then the incident type. Works with
-// no voice and no AI wait (the type is sent as `hint_code`).
+// 8×8×8 incident menu: 8 categories → 8 subcategories → 8 problems.
+//
+// The grid is always 2 rows × 4 buttons and fills the whole screen. Selecting
+// a problem is the third tap; the caller can then submit the report with the
+// problem's operational code and its exact label/location.
 
 import 'package:flutter/material.dart';
 
-import '../../core/incidents/taxonomy.dart';
+import 'menu/incident_menu_data.dart';
 import 'reporter_language.dart';
 
-class TypePickerPage extends StatefulWidget {
-  const TypePickerPage({super.key, required this.language});
+class IncidentMenuPage extends StatefulWidget {
+  const IncidentMenuPage({super.key, required this.language});
 
   final ReporterLanguage language;
 
   @override
-  State<TypePickerPage> createState() => _TypePickerPageState();
+  State<IncidentMenuPage> createState() => _IncidentMenuPageState();
 }
 
-class _TypePickerPageState extends State<TypePickerPage> {
-  IncidentCategory? _category;
+class _IncidentMenuPageState extends State<IncidentMenuPage> {
+  MenuCategory? _category;
+  MenuSubcategory? _subcategory;
 
   Tr get _tr => Tr(widget.language);
 
-  static const Map<IncidentCategory, IconData> _icons =
-      <IncidentCategory, IconData>{
-    IncidentCategory.safetyFire: Icons.local_fire_department,
-    IncidentCategory.security: Icons.shield_outlined,
-    IncidentCategory.maintenance: Icons.build_outlined,
-    IncidentCategory.operations: Icons.flight_takeoff,
-  };
+  int get _level => _subcategory != null ? 2 : (_category != null ? 1 : 0);
 
-  String _categoryLabel(IncidentCategory category) {
-    if (widget.language == ReporterLanguage.ro) return category.labelRo;
-    switch (category) {
-      case IncidentCategory.safetyFire:
-        return 'Safety & fire';
-      case IncidentCategory.security:
-        return 'Security';
-      case IncidentCategory.maintenance:
-        return 'Maintenance';
-      case IncidentCategory.operations:
-        return 'Operations';
+  String get _title {
+    if (_subcategory != null) return _subcategory!.label;
+    if (_category != null) return _category!.label;
+    return _tr('Ce s-a întâmplat?', 'What happened?');
+  }
+
+  String? get _path {
+    if (_subcategory != null) {
+      return '${_category!.label} · ${_subcategory!.label}';
     }
+    return null;
+  }
+
+  void _back() {
+    setState(() {
+      if (_subcategory != null) {
+        _subcategory = null;
+      } else if (_category != null) {
+        _category = null;
+      }
+    });
+  }
+
+  void _selectProblem(MenuProblem problem) {
+    Navigator.of(context).pop(
+      MenuSelection(_category!, _subcategory!, problem),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final category = _category;
+    final scheme = Theme.of(context).colorScheme;
+    final onLevelZero = _level == 0;
+
     return PopScope(
-      canPop: category == null,
+      canPop: onLevelZero,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(() => _category = null);
+        if (!didPop) _back();
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            category == null
-                ? _tr('Ce s-a întâmplat?', 'What happened?')
-                : _categoryLabel(category),
+          leading: onLevelZero
+              ? null
+              : IconButton(
+                  tooltip: _tr('Înapoi', 'Back'),
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: _back,
+                ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              if (_path != null)
+                Text(
+                  _path!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
           ),
         ),
         body: SafeArea(
-          child: category == null ? _categories() : _types(category),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tiles = _level == 0
+                  ? <Widget>[
+                      for (final category in menuCategories)
+                        _MenuTile(
+                          icon: category.icon,
+                          label: category.label,
+                          onTap: () => setState(() => _category = category),
+                        ),
+                    ]
+                  : _level == 1
+                      ? <Widget>[
+                          for (final subcategory in _category!.subcategories)
+                            _MenuTile(
+                              icon: _category!.icon,
+                              label: subcategory.label,
+                              onTap: () => setState(
+                                () => _subcategory = subcategory,
+                              ),
+                            ),
+                        ]
+                      : <Widget>[
+                          for (final problem in _subcategory!.problems)
+                            _MenuTile(
+                              icon: _category!.icon,
+                              label: problem.label,
+                              footer: problem.typeCode,
+                              dense: true,
+                              onTap: () => _selectProblem(problem),
+                            ),
+                        ];
+
+              // Two rows of four fill the available height exactly.
+              final height =
+                  ((constraints.maxHeight - 34) / 2).clamp(90.0, 460.0);
+
+              return GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: 8,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  mainAxisExtent: height,
+                ),
+                itemBuilder: (context, index) => tiles[index],
+              );
+            },
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _categories() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: <Widget>[
-        for (final category in IncidentCategory.values)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: FilledButton.tonalIcon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(76),
-                alignment: Alignment.centerLeft,
-                textStyle: Theme.of(context).textTheme.titleMedium,
-              ),
-              icon: Icon(_icons[category], size: 32),
-              label: Text(_categoryLabel(category)),
-              onPressed: () => setState(() => _category = category),
-            ),
-          ),
-      ],
-    );
-  }
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.footer,
+    this.dense = false,
+  });
 
-  Widget _types(IncidentCategory category) {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final String? footer;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: <Widget>[
-        for (final type in IncidentTaxonomy.byCategory(category))
-          Card(
-            child: ListTile(
-              minVerticalPadding: 14,
-              title: Text(
-                type.labelRo,
-                style: Theme.of(context).textTheme.titleMedium,
+    return Material(
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(icon, size: dense ? 26 : 34, color: scheme.primary),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: dense ? 5 : 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: dense ? 10.5 : 12,
+                  height: 1.2,
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
               ),
-              subtitle: Text(
-                '${type.code} · ${type.primaryDepartments.map((d) => d.labelRo).join(", ")}',
-              ),
-              trailing: Chip(
-                label: Text(type.urgency.labelRo),
-                backgroundColor: type.urgency.level >= Urgency.high.level
-                    ? scheme.errorContainer
-                    : scheme.surfaceContainerHighest,
-              ),
-              onTap: () => Navigator.of(context).pop(type),
-            ),
+              if (footer != null) ...<Widget>[
+                const SizedBox(height: 6),
+                Text(
+                  footer!,
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }

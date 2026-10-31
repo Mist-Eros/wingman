@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import '../../core/core_scope.dart';
 import '../../core/incidents/taxonomy.dart';
 import 'reporter_controller.dart';
+import 'menu/incident_menu_data.dart';
 import 'reporter_dialogs.dart';
 import 'reporter_language.dart';
 import 'reporter_widgets.dart';
@@ -71,31 +72,33 @@ class _ReporterScreenState extends State<ReporterScreen> {
 
   // ── actions ───────────────────────────────────────────────────────────────
 
-  /// Full menu report (idle / asking): pick a type, optional place, send.
+  /// Three taps: category → subcategory → problem. The problem already
+  /// carries its location, so the report can be submitted immediately.
   Future<void> _menuReport(ReporterController c) async {
-    final tr = Tr(c.language);
     await c.cancelCapture();
     if (!mounted) return;
-    final type = await Navigator.of(context).push<IncidentType>(
-      MaterialPageRoute<IncidentType>(
-        builder: (_) => TypePickerPage(language: c.language),
+    final selection = await Navigator.of(context).push<MenuSelection>(
+      MaterialPageRoute<MenuSelection>(
+        builder: (_) => IncidentMenuPage(language: c.language),
       ),
     );
-    if (type == null || !mounted) return;
-    final place = await showLocationSheet(context, tr, type.labelRo);
-    if (place == null || !mounted) return;
-    await c.submitMenu(type, locationText: place);
+    if (selection == null || !mounted) return;
+    await c.submitMenu(
+      selection.type,
+      transcript: selection.problem.label,
+      locationText: selection.problem.location,
+    );
   }
 
-  /// Menu used to override the type while confirming.
+  /// Menu used to override the type while confirming (same 8×8×8 catalog).
   Future<void> _pickType(ReporterController c) async {
-    final type = await Navigator.of(context).push<IncidentType>(
-      MaterialPageRoute<IncidentType>(
-        builder: (_) => TypePickerPage(language: c.language),
+    final selection = await Navigator.of(context).push<MenuSelection>(
+      MaterialPageRoute<MenuSelection>(
+        builder: (_) => IncidentMenuPage(language: c.language),
       ),
     );
-    if (type == null || !mounted) return;
-    c.pickType(type);
+    if (selection == null || !mounted) return;
+    c.pickType(selection.type);
   }
 
   Future<void> _typeInstead(ReporterController c) async {
