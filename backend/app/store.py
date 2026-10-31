@@ -180,6 +180,72 @@ class TicketStore:
         await self._hub.broadcast("ticket.created", {"ticket": snapshot})
         return snapshot
 
+    async def find_duplicate(
+        self,
+        *,
+        incident_code: str,
+        transcript: str,
+        location: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """An open ticket with the same incident/location (or exact words).
+
+        The same incident is often reported by several people. We keep ONE
+        ticket instead of creating duplicates: same type + same location within
+        15 minutes, or the same normalized transcript within 30 minutes.
+        """
+
+        def normalize(value: str) -> str:
+            cleaned = "".join(
+                ch.lower() if (ch.isalnum() or ch.isspace()) else " " for ch in value
+            )
+            return " ".join(cleaned.split())
+
+        text_key = normalize(transcript)
+        location_key = normalize(
+            " ".join(
+                str(location.get(key) or "") for key in ("terminal", "zone", "note")
+            )
+        )
+        now = datetime.now(timezone.utc)
+
+        async with self._lock:
+            for ticket_id in reversed(self._order):
+                ticket = self._tickets[ticket_id]
+                if ticket["status"] not in (
+                    "dispatched",
+                    "in_progress",
+                    "pending_override",
+                ):
+                    continue
+                try:
+                    created = datetime.fromisoformat(
+                        str(ticket["created_at"]).replace("Z", "+00:00")
+                    )
+                except ValueError:
+                    continue
+                age = (now - created).total_seconds()
+
+                same_text = (
+                    len(text_key) >= 12
+                    and age <= 30 * 60
+                    and text_key == normalize(str(ticket["transcript"]))
+                )
+                same_incident = (
+                    ticket["incident_code"] == incident_code
+                    and bool(location_key)
+                    and age <= 15 * 60
+                    and location_key
+                    == normalize(
+                        " ".join(
+                            str(ticket["location"].get(key) or "")
+                            for key in ("terminal", "zone", "note")
+                        )
+                    )
+                )
+                if same_text or same_incident:
+                    return copy.deepcopy(ticket)
+        return None
+
     # ── dispatcher actions ────────────────────────────────────────────────────
     async def confirm(
         self,

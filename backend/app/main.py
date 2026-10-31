@@ -405,6 +405,23 @@ async def create_report(report: schemas.ReportIn) -> dict:
             report.hint_code,
             report.use_ai,
         )
+        existing = await store.find_duplicate(
+            incident_code=classification.incident_code,
+            transcript=report.transcript,
+            location=location,
+        )
+        if existing is not None:
+            logger.info(
+                "Duplicate report ignored → existing ticket %s (%s)",
+                existing["id"],
+                existing["incident_code"],
+            )
+            return {
+                "ticket": existing,
+                "duplicate": True,
+                "taxonomy_version": taxonomy.version,
+            }
+
         ticket = await store.create(
             source=report.source,
             transcript=report.transcript.strip(),

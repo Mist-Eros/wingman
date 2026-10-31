@@ -129,3 +129,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Real app logo** used once (login header) and as Android launcher icon; transparent banner, no duplicated wordmark; single branding asset. | `assets/branding/`, `pubspec.yaml`, `lib/features/auth/login_screen.dart`, `android/.../mipmap-*/ic_launcher.png` | S24 login + launcher; APK rebuilt |
 | **Admin Istoric tab** with every resolved/denied ticket and **Golește istoricul** (confirm dialog, backend endpoint, board refresh). | `lib/features/dispatcher/dispatcher_screen.dart`, `lib/core/api/api_client.dart`, `lib/core/state/ticket_board.dart`, `backend/app/main.py`, `backend/app/store.py` | 2 history tickets shown, cleared → 0; smoke 99/99 |
 | Screenshots updated with logo, tabs, history and cleared state; equal cards regenerated. | `D:\Hackathon\Screenshots\` | `Wingman/03_Dispatcher/04_history.png`, `05_history_cleared.png`, new `team-grid.png` |
+
+---
+
+## 2026-10-31 — logo cleanup + duplicate-ticket guard
+
+| Change | Where | Evidence |
+|---|---|---|
+| Logo removed from app UI; it lives **only as the launcher/app icon**. Login restored to the previous Wingman header; branding assets no longer bundled. | `lib/features/auth/login_screen.dart`, `pubspec.yaml`, `android/.../mipmap-*` | S24 login no longer shows the logo; launcher icon unchanged |
+| **Duplicate tickets blocked server-side**: same open incident type + same location within 15 min, or identical normalized transcript within 30 min, returns the existing ticket with `duplicate: true` — no new ticket, no duplicate WSS event. | `backend/app/store.py` (`find_duplicate`), `backend/app/main.py` | smoke 101/101: second MT-BELT report keeps the same id and only one open MT-BELT |
+| Screenshots/cards refreshed after logo removal; history screenshots included. | `D:\Hackathon\Screenshots\` | new login capture, updated `team-grid.png` |

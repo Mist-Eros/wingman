@@ -326,6 +326,41 @@ async def run(args: argparse.Namespace) -> int:
         check("ticket.created broadcast on WSS", created_event is not None)
         manual_id = manual.get("id", "")
 
+        print("[5b] duplicate report dedupe")
+        status, duplicate_payload = report(
+            base,
+            token,
+            {
+                "source": "menu",
+                "transcript": "Defecțiune bandă transportoare bagaje",
+                "reporter_id": "smoke-reporter",
+                "reporter_name": "Smoke Test",
+                "location": {"terminal": "T2", "zone": "Banda 3"},
+                "hint_code": "MT-BELT",
+                "use_ai": False,
+            },
+            insecure,
+        )
+        duplicate_ticket = duplicate_payload.get("ticket", {})
+        check(
+            "duplicate report is accepted but not recreated",
+            status in (200, 201)
+            and duplicate_payload.get("duplicate") is True
+            and duplicate_ticket.get("id") == manual_id,
+            f"status={status} id={duplicate_ticket.get('id')}",
+        )
+        status, all_tickets = http_call(base, token, "/api/tickets", insecure=insecure)
+        same = [
+            t
+            for t in all_tickets.get("tickets", [])
+            if t.get("incident_code") == "MT-BELT" and t.get("status") == "dispatched"
+        ]
+        check(
+            "only one open MT-BELT ticket exists",
+            status == 200 and len(same) == 1,
+            f"found {len(same)}",
+        )
+
         # 6 ── override window ───────────────────────────────────────────────
         print("[6] low-confidence report dispatches immediately")
         status, payload = report(

@@ -7,7 +7,7 @@ the departments the incident needs**. Tickets go straight to the dispatcher, who
 reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
 no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **99/99** ·
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **101/101** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -20,7 +20,7 @@ cd backend; .\run.ps1
 
 # 2) seed the stage data + prove the API
 cd ..; python backend\seed_demo.py
-python scripts\smoke_test.py --ca backend\certs\ca.crt     # 99/99
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 101/101
 
 # 3) phone (Android; APK is built by the script)
 .\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
@@ -115,6 +115,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
+* **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
   local (no cloud push): keep the phone connected and awake during the demo.

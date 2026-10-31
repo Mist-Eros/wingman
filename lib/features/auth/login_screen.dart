@@ -117,16 +117,53 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Image.asset(
-              'assets/branding/wingman_logo_banner.png',
-              height: 74,
-              width: 300,
-              fit: BoxFit.contain,
-              alignment: Alignment.centerLeft,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(WingmanRadius.lg),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: const Icon(
+                Icons.flight_takeoff_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: WingmanSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Wingman',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      shadows: <Shadow>[
+                        Shadow(color: Colors.black38, blurRadius: 12),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Airport incident response · demo · '
+                    '${SkyPeriod.current().labelRo}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      shadows: <Shadow>[
+                        Shadow(color: Colors.black38, blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             IconButton(
               tooltip: 'DevTools · aspect, server, acțiuni demo',
               onPressed: () => Navigator.of(context).push(
@@ -140,17 +177,6 @@ class _Header extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Airport incident response · demo · ${SkyPeriod.current().labelRo}',
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-            shadows: <Shadow>[
-              Shadow(color: Colors.black38, blurRadius: 8),
-            ],
-          ),
         ),
         const SizedBox(height: WingmanSpacing.lg),
         Container(
