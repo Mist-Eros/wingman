@@ -148,3 +148,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 |---|---|---|
 | Crew resolution quorum now depends on danger: **low/medium = 1 vote**, **high/critical = 2 votes** (was always 2). | `backend/app/store.py` (`QUORUM_BY_URGENCY`), `lib/features/dispatcher/demo_tickets.dart` | smoke: low OP-OTHER resolves with 1 vote; critical SF-FIRE still needs 2; 103/103 |
 | DevTools shows the mapping; docs updated. | `lib/features/dev/dev_tools_screen.dart`, README/CONTRACTS | health exposes `resolve_quorum_by_urgency` |
+
+---
+
+## 2026-10-31 — 8×8×8 full-screen incident menu
+
+| Change | Where | Evidence |
+|---|---|---|
+| **8 categories × 8 subcategories × 8 problems = 512** catalog, each mapped to one of the 14 operational codes and carrying exact label + location. | `lib/features/reporter/menu/incident_menu_data.dart`, generator | data test: 8/8/8, 512 unique IDs, valid codes |
+| Menu redesigned as a **full-screen 2×4 grid** at all 3 levels; **3 taps** (category → subcategory → problem) submit the report with the exact problem label/location. | `lib/features/reporter/type_picker_page.dart`, `reporter_screen.dart`, `reporter_controller.dart` | verified on S24; ticket transcript “Bagaj suspect — Terminal”, SC-BAG |
+| New menu screenshots and equal cards. | `D:\Hackathon\Screenshots\Wingman\02_Reporter\06–09_*`, `Team/team-grid.png` | 4 captures |
