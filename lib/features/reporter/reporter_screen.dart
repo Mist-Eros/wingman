@@ -10,12 +10,16 @@
 // confirmation screen: tap a word to correct it, or "Reia de la capăt" to
 // record everything again. The 14-button menu is always available.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../core/core_scope.dart';
 import '../../core/incidents/taxonomy.dart';
 import 'reporter_controller.dart';
 import 'menu/incident_menu_data.dart';
+import 'live_gps_map_screen.dart';
+import 'photo_prompt.dart';
 import 'reporter_dialogs.dart';
 import 'reporter_language.dart';
 import 'reporter_widgets.dart';
@@ -83,10 +87,13 @@ class _ReporterScreenState extends State<ReporterScreen> {
       ),
     );
     if (selection == null || !mounted) return;
+    final photo = await showIncidentPhotoPrompt(context);
+    if (!mounted) return;
     await c.submitMenu(
       selection.type,
       transcript: selection.problem.label,
       locationText: selection.problem.location,
+      photoBase64: photo == null ? null : base64Encode(photo),
     );
   }
 
@@ -279,6 +286,18 @@ class _ReporterScreenState extends State<ReporterScreen> {
             ],
           ),
         ] else ...<Widget>[
+          TextButton.icon(
+            icon: const Icon(Icons.map_outlined),
+            label: Text(tr('Hartă live GPS', 'Live GPS map')),
+            onPressed: listening
+                ? null
+                : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const LiveGpsMapScreen(),
+                      ),
+                    ),
+          ),
+          const SizedBox(height: 2),
           FilledButton.tonalIcon(
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(56),
@@ -295,6 +314,14 @@ class _ReporterScreenState extends State<ReporterScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Future<void> _submitWithPhoto(ReporterController c) async {
+    final bytes = await showIncidentPhotoPrompt(context);
+    if (!mounted) return;
+    await c.submit(
+      photoBase64: bytes == null ? null : base64Encode(bytes),
     );
   }
 
@@ -400,7 +427,7 @@ class _ReporterScreenState extends State<ReporterScreen> {
                 ),
                 icon: const Icon(Icons.send),
                 label: Text(tr('Trimite', 'Send')),
-                onPressed: c.submit,
+                onPressed: () => _submitWithPhoto(c),
               ),
             ),
           ],

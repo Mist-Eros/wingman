@@ -116,6 +116,9 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
 * **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 4 rows × 2 columns grid per level.
+* **Accessibility**: profiles for blind, mute, deaf, colorblind, motor and cognitive staff (text size, contrast, visual alerts, spoken guidance, typed-first, large targets). See `docs/accessibility.md`.
+* **Live GPS map** with real coordinates/accuracy, and an **optional 5-second photo** prompt (never blocks a report).
+* **Account tab** with points and attended incidents; **Reset demo complet** clears tickets/history/points.
 * **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
@@ -134,7 +137,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/transcribe` | Audio → text (local faster-whisper) |
 | GET | `/api/tickets[?status=]`, `/api/tickets/{id}` | List / read |
 | POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
-| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 1–2 by urgency) |
+| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (one per primary department) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
 | POST | `/api/tickets/clear-history` | Admin: permanently clears resolved/denied tickets |
 | GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |

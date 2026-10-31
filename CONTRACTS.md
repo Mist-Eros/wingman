@@ -110,7 +110,7 @@ Always render inside `ListenableBuilder(listenable: board, builder: ...)`.
 | `joined_crew_ids` | string[] | crew ids |
 | `resolve_votes` | int | approving votes |
 | `resolve_voter_ids` | string[] | who approved (prevents double counting) |
-| `quorum` | int | approvals needed: 1 for low/medium, 2 for high/critical |
+| `quorum` | int | approvals needed: one per primary department involved |
 | `override_deadline` | ISO date \| null | always null (legacy field) |
 | `dispatched_at`, `resolved_at` | ISO date \| null | |
 | `resolution_note` | string \| null | dispatcher denial reason / vote summary |

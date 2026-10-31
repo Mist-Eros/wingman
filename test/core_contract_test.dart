@@ -1,4 +1,4 @@
-// Contract tests: the frozen core API everything else depends on.
+﻿// Contract tests: the frozen core API everything else depends on.
 // Run with:  flutter test
 //
 // These are deliberately about CONTRACTS, not UI: taxonomy integrity, enum
@@ -22,6 +22,7 @@ Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
       'reporter_id': 'reporter-1',
       'reporter_name': 'Andrei P.',
       'transcript': 'Este fum lângă poarta 12.',
+      'photo_base64': null,
       'location': <String, dynamic>{
         'terminal': 'T1',
         'zone': 'Poarta 12',
@@ -328,3 +329,4 @@ void main() {
     });
   });
 }
+

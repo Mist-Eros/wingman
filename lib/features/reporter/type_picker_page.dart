@@ -179,15 +179,15 @@ class _MenuTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(icon, size: dense ? 26 : 34, color: scheme.primary),
+              Icon(icon, size: dense ? 28 : 36, color: scheme.primary),
               const SizedBox(height: 10),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                maxLines: dense ? 4 : 2,
+                maxLines: 4,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: dense ? 11.5 : 13.5,
+                  fontSize: dense ? 14 : 16,
                   height: 1.2,
                   fontWeight: FontWeight.w700,
                   color: scheme.onSurface,
@@ -198,7 +198,7 @@ class _MenuTile extends StatelessWidget {
                 Text(
                   footer!,
                   style: TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: scheme.onSurfaceVariant,
                   ),

@@ -59,6 +59,7 @@ TICKET_KEYS = {
     "reporter_id",
     "reporter_name",
     "transcript",
+    "photo_base64",
     "location",
     "confidence",
     "ai_source",

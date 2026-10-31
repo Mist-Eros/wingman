@@ -1,12 +1,12 @@
-// =============================================================================
+﻿// =============================================================================
 // lib/main.dart
 //
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
 //
-//   /            → LoginScreen (hardcoded demo accounts, hashed passwords)
-//   /reporter    → lib/features/reporter/     (Cutulescu Andrei-Rares)
-//   /dispatcher  → lib/features/dispatcher/  (Fita Redu Mihai / admin)
-//   /crew        → lib/features/crew/        (Lica Rares Adelin / scoped crews)
+//   /            â†’ LoginScreen (hardcoded demo accounts, hashed passwords)
+//   /reporter    â†’ lib/features/reporter/     (Cutulescu Andrei-Rares)
+//   /dispatcher  â†’ lib/features/dispatcher/  (Fita Redu Mihai / admin)
+//   /crew        â†’ lib/features/crew/        (Lica Rares Adelin / scoped crews)
 //
 // Back behaviour: role screens are PUSHED over the login screen, so Android's
 // back button returns to the account chooser instead of killing the app.
@@ -25,6 +25,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'core/accessibility/accessibility_settings.dart';
 import 'core/api/api_client.dart';
 import 'core/auth/demo_accounts.dart';
 import 'core/auth/secure_token_store.dart';
@@ -264,6 +265,38 @@ class _AirportAppState extends State<AirportApp> {
         theme: WingmanTheme.light(),
         darkTheme: WingmanTheme.dark(),
         themeMode: ThemeMode.light,
+        builder: (context, child) {
+          final access = AccessibilitySettings.instance;
+          return AnimatedBuilder(
+            animation: access,
+            builder: (context, _) {
+              final base = WingmanTheme.light();
+              final scheme = ColorScheme.fromSeed(
+                seedColor: access.colorBlindSafe
+                    ? const Color(0xFF005F73)
+                    : WingmanColors.seed,
+                brightness: Brightness.light,
+                contrastLevel: access.highContrast ? 1.0 : 0.0,
+              );
+              final theme = base.copyWith(
+                colorScheme: scheme,
+                visualDensity: access.largeTargets
+                    ? VisualDensity.comfortable
+                    : VisualDensity.standard,
+                materialTapTargetSize: access.largeTargets
+                    ? MaterialTapTargetSize.padded
+                    : MaterialTapTargetSize.shrinkWrap,
+              );
+              final media = MediaQuery.of(context);
+              return MediaQuery(
+                data: media.copyWith(
+                  textScaler: TextScaler.linear(access.textScale),
+                ),
+                child: Theme(data: theme, child: child ?? const SizedBox()),
+              );
+            },
+          );
+        },
         initialRoute: '/',
         routes: <String, WidgetBuilder>{
           '/': (context) => _login(),

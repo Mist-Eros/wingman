@@ -19,6 +19,7 @@ import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/theme/wingman_theme.dart';
 import '../../core/widgets/sky_background.dart';
+import '../../core/accessibility/accessibility_screen.dart';
 import '../dev/dev_tools_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -162,6 +163,18 @@ class _Header extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Accesibilitate',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AccessibilityScreen(),
+                ),
+              ),
+              icon: const Icon(
+                Icons.accessibility_new_rounded,
+                color: Colors.white70,
               ),
             ),
             IconButton(

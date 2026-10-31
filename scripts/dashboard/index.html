@@ -91,6 +91,7 @@
   .detail .k { font-size: 9px; letter-spacing: 1.1px; color: var(--muted);
                text-transform: uppercase; margin-top: 8px; }
   .detail .v { font-size: 13px; }
+  .detail .photo { width:100%; border-radius:10px; margin-top:8px; border:1px solid var(--line); }
   .detail .spacer { flex: 1; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
            background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -513,6 +514,7 @@ function renderDetail() {
     kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
     kv('Voturi', (t.resolve_votes || 0) + ' / ' + (t.quorum || 1)) +
     kv('Transcriere', t.transcript) +
+    (t.photo_base64 ? '<img class="photo" src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">' : '') +
     (t.decided_by ? kv('Decis de', t.decided_by) : '') +
     (t.resolution_note ? kv('Notă', t.resolution_note) : '') +
     '<div class="spacer"></div>' + actions;

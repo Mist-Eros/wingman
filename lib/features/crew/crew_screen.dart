@@ -14,6 +14,7 @@ import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
+import '../account/account_screen.dart';
 import '../reporter/reporter_screen.dart';
 import 'crew_ticket_card.dart';
 import 'wss_banner.dart';
@@ -142,6 +143,15 @@ class _CrewScreenState extends State<CrewScreen> {
           ],
         ),
         actions: <Widget>[
+          _AppBarIconButton(
+            tooltip: 'Contul meu',
+            icon: Icons.person_outline_rounded,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AccountScreen(),
+              ),
+            ),
+          ),
           _AppBarIconButton(
             tooltip: 'Reîmprospătează',
             icon: Icons.refresh_rounded,

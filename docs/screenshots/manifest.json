@@ -8,7 +8,9 @@
     "Do not stretch the images; use dark navy #081120 backgrounds for phone shots.",
     "The logo appears only as the app icon (00_app_icon.png), not inside the app UI.",
     "The menu is 8x8x8 = 512 problems, 3 taps: category -> subcategory -> problem.",
-    "Quorum: 1 vote for low/medium, 2 votes for high/critical."
+    "Quorum: 1 vote for low/medium, 2 votes for high/critical.",
+    "Accessibility profiles: blind, mute, deaf, colorblind, motor, cognitive.",
+    "Quorum is one responder per primary department involved (not a fixed 2)."
   ],
   "images": [
     {
@@ -120,6 +122,26 @@
       "file": "team/lica-crew.png",
       "caption": "Lica Rares Adelin — Crew",
       "slide": "Team"
+    },
+    {
+      "file": "17_accessibility.png",
+      "caption": "Accessibility profiles/settings for blind, mute, deaf, colorblind, motor and cognitive staff",
+      "slide": "Accessibility"
+    },
+    {
+      "file": "18_live_gps.png",
+      "caption": "Live GPS map with real coordinates, accuracy and schematic airport",
+      "slide": "GPS map"
+    },
+    {
+      "file": "19_photo_prompt.png",
+      "caption": "Optional 5-second photo prompt with a large camera button",
+      "slide": "Photo"
+    },
+    {
+      "file": "20_account_points.png",
+      "caption": "Employee account: points and attended incidents",
+      "slide": "Rewards / account"
     }
   ]
 }

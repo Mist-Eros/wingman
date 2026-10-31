@@ -251,12 +251,7 @@ async def health() -> dict:
         "ws_clients": hub.count,
         "confidence_threshold": settings.confidence_threshold,
         "resolve_quorum": settings.resolve_quorum,
-        "resolve_quorum_by_urgency": {
-            "low": 1,
-            "medium": 1,
-            "high": 2,
-            "critical": 2,
-        },
+        "resolve_quorum_by": "one per primary department",
         "ollama": {
             "url": settings.ollama_url,
             "model": settings.ollama_model,
@@ -435,6 +430,7 @@ async def create_report(report: schemas.ReportIn) -> dict:
             reporter_name=report.reporter_name or "Anonim",
             location=location,
             classification=classification,
+            photo_base64=report.photo_base64,
         )
     except (ValueError, KeyError) as exc:
         raise _to_http(exc) from exc

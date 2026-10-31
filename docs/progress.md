@@ -168,3 +168,17 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Desktop control room restyled to match the phone admin view: light theme, urgency-tinted queue cards, stats, **Coadă / Istoric tabs**, history cards and **Golește istoricul**, report button, detail pane. | `scripts/dashboard/index.html` | Waterfox screenshots: queue + history + light report modal; JS syntax check OK |
 | Backend clear-history endpoint drives the dashboard too. | `POST /api/tickets/clear-history` | 2 history tickets shown, clear-all available |
 | Menu grid corrected to **4 rows × 2 columns** at all 3 levels. | `lib/features/reporter/type_picker_page.dart` | S24 capture; 8×8×8 data intact |
+
+---
+
+## 2026-10-31 — accessibility, GPS map, photos, account, reset
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Accessibility profiles** for blind, mute, deaf, colorblind, motor and cognitive staff; text scale, high contrast, colorblind palette, visual alerts/vibration, spoken guidance, typed-first, large targets, simplified language. Applied globally via `MaterialApp.builder`. | `lib/core/accessibility/**`, `lib/main.dart`, login icon | settings screen captured; docs in `docs/accessibility.md` |
+| **Live GPS map** with real location stream, schematic Craiova map, accuracy circle, coordinates and update status. | `lib/features/reporter/live_gps_map_screen.dart`, reporter button | screen captured |
+| **Optional 5-second photo** prompt with a large camera button; photo is attached to the ticket and shown in dispatcher/dashboard detail. Report never waits more than 5 s. | `lib/features/reporter/photo_prompt.dart`, reporter flow, `photo_base64` wire field, dashboard/dispatcher photo | prompt captured; smoke 103/103 |
+| **Quorum = one respondent per primary department** (instead of a global 2). | `backend/app/store.py`, demo tickets | low/medium resolve with fewer votes; fire+security needs 2 |
+| **Employee account**: points (join +2, resolved +10) and attended incidents; visible from crew/dispatcher app bar. | `lib/features/account/account_screen.dart` | account screen captured |
+| **Reset demo complet** in DevTools clears all tickets, history and therefore all points. | `lib/features/dev/dev_tools_screen.dart` | button + confirmation |
+| Full `Screenshots/` folder committed to the repo, plus `docs/screenshots/` manifest for the PPTX. | `Screenshots/`, `docs/screenshots/` | 37 files / PPTX manifest |

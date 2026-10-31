@@ -1,4 +1,4 @@
-# Wingman — screenshots for the PPTX
+﻿# Wingman — screenshots for the PPTX
 
 Folder pregătit pentru **RaresCut → Claude → PowerPoint**. Toate capturile sunt reale
 (Samsung S24 Ultra + Waterfox), nu mock-up-uri. Sunt luate din build-ul curent:
@@ -31,8 +31,8 @@ istoric cu clear-all.
 | 8 | Crew — join and vote (quorum by urgency) | `10_crew_queue.png`, `11_crew_joined.png` |
 | 9 | Notifications — only the involved departments | `12_notification_shade.png` |
 | 10 | Desktop control room — same admin view | `13_dashboard_queue.png`, `14_dashboard_history.png`, `15_dashboard_report_modal.png` |
-| 11 | Operability — local AI, TLS pinned, DevTools | `16_devtools.png` |
-| 12 | Team — who built what | `team/team-grid.png` (sau cele 4 carduri) |
+| 11 | Accessibility & safety | `17_accessibility.png`, `18_live_gps.png`, `19_photo_prompt.png` |\n| 12 | Rewards / account | `20_account_points.png` |\n| 13 | Operability — local AI, TLS pinned, DevTools | `16_devtools.png` |
+| 14 | Team — who built what | `team/team-grid.png` (sau cele 4 carduri) |
 
 ## Conținut
 
@@ -54,7 +54,7 @@ istoric cu clear-all.
 | `13_dashboard_queue.png` | Waterfox: coadă live, temă light admin |
 | `14_dashboard_history.png` | Waterfox: Istoric |
 | `15_dashboard_report_modal.png` | Waterfox: formular raportare |
-| `16_devtools.png` | DevTools: AI/STT/WSS/quorum |
+| `16_devtools.png` | DevTools: AI/STT/WSS/quorum |\n| `17_accessibility.png` | Accessibility profiles (blind/mute/deaf/colorblind/motor/cognitive) |\n| `18_live_gps.png` | Live GPS map, coordinates + accuracy |\n| `19_photo_prompt.png` | Optional 5-second photo prompt |\n| `20_account_points.png` | Employee account: points + attended incidents |
 | `team/*.png` | carduri egale + grid 2×2 |
 
 ## Note pentru slide design
@@ -67,3 +67,4 @@ istoric cu clear-all.
 - Numere pentru slide-ul de tehnologie: **512** incidente în meniu, **14** coduri
   operaționale, **103/103** smoke, **161** teste, **59** ocurențe oficiale în catalog,
   quorum **1** (low/medium) / **2** (high/critical).
+

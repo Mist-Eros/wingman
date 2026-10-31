@@ -467,7 +467,7 @@ class ReporterController extends ChangeNotifier {
 
   // ── sending ───────────────────────────────────────────────────────────────
 
-  Future<void> submit() async {
+  Future<void> submit({String? photoBase64}) async {
     if (_phase != ReporterPhase.confirming) return;
     if (_turns.isEmpty && _hintCode == null) return;
     final epoch = _epoch;
@@ -523,6 +523,7 @@ class ReporterController extends ChangeNotifier {
     IncidentType type, {
     String locationText = '',
     String? transcript,
+    String? photoBase64,
   }) async {
     if (isBusy || _disposed) return;
     _epoch++;

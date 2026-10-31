@@ -21,6 +21,7 @@ dependencies:
   flutter_tts: ^4.2.5
   geolocator: ^14.0.2
   record: ^7.1.2
+  image_picker: ^1.2.4
 dev_dependencies:
   flutter_test:
     sdk: flutter

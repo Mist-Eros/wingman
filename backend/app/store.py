@@ -131,6 +131,7 @@ class TicketStore:
         reporter_name: str,
         location: dict[str, Any],
         classification: Classification,
+        photo_base64: str | None = None,
     ) -> dict[str, Any]:
         incident_type = self._taxonomy.require(classification.incident_code)
         confidence = round(float(classification.confidence), 3)
@@ -154,6 +155,7 @@ class TicketStore:
             "reporter_id": reporter_id,
             "reporter_name": reporter_name,
             "transcript": transcript,
+            "photo_base64": photo_base64,
             "location": {
                 "terminal": str(location.get("terminal") or ""),
                 "zone": str(location.get("zone") or ""),
@@ -169,7 +171,7 @@ class TicketStore:
             "joined_crew_ids": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
-            "quorum": QUORUM_BY_URGENCY.get(urgency, self._settings.resolve_quorum),
+            "quorum": max(1, len(incident_type.primary_departments)),
             "override_deadline": None,
             "dispatched_at": now,
             "resolved_at": None,

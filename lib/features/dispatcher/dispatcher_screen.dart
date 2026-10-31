@@ -7,6 +7,8 @@
 //   • deps via CoreScope.sessionOf / boardOf
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -16,6 +18,7 @@ import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
+import '../account/account_screen.dart';
 import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
@@ -696,6 +699,15 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                 icon: const Icon(Icons.more_vert),
               ),
             IconButton(
+              tooltip: 'Contul meu',
+              icon: const Icon(Icons.person_outline_rounded),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AccountScreen(),
+                ),
+              ),
+            ),
+            IconButton(
               tooltip: 'Ieși din rol',
               icon: const Icon(Icons.logout),
               onPressed: () => CoreScope.of(context).onSignOut(),
@@ -1366,6 +1378,20 @@ class _DetailPane extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
+          if (ticket.photoBase64 != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(
+                  base64Decode(ticket.photoBase64!),
+                  height: 190,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) => const SizedBox(),
+                ),
+              ),
+            ),
           Row(
             children: <Widget>[
               Expanded(
