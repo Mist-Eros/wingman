@@ -7,6 +7,7 @@
 import 'dart:typed_data';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/models/transcription_result.dart';
 import '../reporter_language.dart';
 
 class TranscribeException implements Exception {
@@ -25,15 +26,17 @@ class WhisperTranscriber {
 
   /// [wav] is a 16 kHz mono WAV. The language is the one picked with the
   /// RO/EN toggle: forcing it avoids Whisper guessing wrong on a short phrase.
-  /// An empty string means the clip had no speech (the server's VAD trimmed it).
-  Future<String> transcribe(Uint8List wav, ReporterLanguage language) async {
+  /// Empty text means the clip had no speech (the server's VAD trimmed it).
+  Future<TranscriptionResult> transcribe(
+    Uint8List wav,
+    ReporterLanguage language,
+  ) async {
     try {
-      final result = await _api.transcribe(
+      return await _api.transcribe(
         wav,
         mimeType: 'audio/wav',
         language: language.code,
       );
-      return result.text;
     } on ApiException catch (error) {
       throw TranscribeException(_friendly(error));
     }

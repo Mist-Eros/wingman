@@ -12,6 +12,7 @@ import 'package:wingman/core/api/api_client.dart';
 import 'package:wingman/core/incidents/taxonomy.dart';
 import 'package:wingman/core/models/analyze_result.dart';
 import 'package:wingman/core/models/ticket.dart';
+import 'package:wingman/core/models/transcription_result.dart';
 import 'package:wingman/features/reporter/reporter_controller.dart';
 import 'package:wingman/features/reporter/reporter_language.dart';
 import 'package:wingman/features/reporter/reporter_screen.dart';
@@ -31,7 +32,7 @@ class FakeSpeech implements SpeechService {
 
   void Function(double level)? _onLevel;
   void Function()? _onProcessing;
-  void Function(String text)? _onResult;
+  void Function(TranscriptionResult result)? _onResult;
   void Function(String message)? _onError;
 
   @override
@@ -42,7 +43,7 @@ class FakeSpeech implements SpeechService {
     required ReporterLanguage language,
     required void Function(double level) onLevel,
     required void Function() onProcessing,
-    required void Function(String text) onResult,
+    required void Function(TranscriptionResult result) onResult,
     required void Function(String message) onError,
     bool autoStop = true,
   }) async {
@@ -56,9 +57,12 @@ class FakeSpeech implements SpeechService {
   }
 
   /// The reporter says something and releases: Whisper answers.
-  void say(String text) {
+  void say(
+    String text, {
+    List<TranscriptionWord> words = const <TranscriptionWord>[],
+  }) {
     _onProcessing?.call();
-    _onResult?.call(text);
+    _onResult?.call(TranscriptionResult(text: text, words: words));
   }
 
   void level(double value) => _onLevel?.call(value);
@@ -148,12 +152,15 @@ class Harness {
 
   /// Push-to-talk: hold the mic, say [text], release; then wait for the
   /// controller to settle (Whisper + analyze).
-  Future<void> speak(String text) async {
+  Future<void> speak(
+    String text, {
+    List<TranscriptionWord> words = const <TranscriptionWord>[],
+  }) async {
     await controller.micDown();
     await settle();
     await Future<void>.delayed(const Duration(milliseconds: 40));
     await controller.micUp();
-    speech.say(text);
+    speech.say(text, words: words);
     await settle();
   }
 
@@ -548,7 +555,7 @@ void main() {
       // the size the reporter volunteered is on the card
       expect(find.text('Dimensiune: '), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ActionChip, 'ulei'));
+      await tester.tap(find.text('ulei'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'petrol');
       await tester.tap(find.text('Salvează'));
@@ -556,7 +563,35 @@ void main() {
 
       expect(
           h.analyzeRequests.last.transcript, 'pată mare de petrol la poarta 3');
-      expect(find.widgetWithText(ActionChip, 'petrol'), findsOneWidget);
+      expect(find.text('petrol'), findsOneWidget);
+    });
+
+    test('Whisper word probabilities underline only low-confidence words',
+        () async {
+      final h = Harness();
+      await h.speak(
+        'este fum lângă poarta 12',
+        words: const <TranscriptionWord>[
+          TranscriptionWord(text: 'este', probability: 0.95),
+          TranscriptionWord(text: 'fum', probability: 0.92),
+          TranscriptionWord(text: 'poarta', probability: 0.35),
+          TranscriptionWord(text: '12', probability: 0.80),
+        ],
+      );
+      final c = h.controller;
+      expect(c.words, <String>['este', 'fum', 'poarta', '12']);
+      expect(c.lowConfidenceCount, 1);
+      expect(c.isLowConfidence(0), isFalse);
+      expect(c.isLowConfidence(2), isTrue);
+      expect(c.isWordEditable(0), isFalse);
+      expect(c.isWordEditable(2), isTrue);
+      c.editWord(0, 'nu-se-poate');
+      expect(c.words.first, 'este',
+          reason: 'high-confidence word is read-only');
+      c.editWord(2, 'Poarta');
+      expect(c.words[2], 'Poarta');
+      expect(c.isLowConfidence(2), isFalse,
+          reason: 'a corrected word becomes trusted');
     });
 
     testWidgets('holding the mic records, releasing it ends the take',

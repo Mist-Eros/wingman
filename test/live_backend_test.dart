@@ -259,6 +259,10 @@ void main() {
     expect(result.text, isNotEmpty);
     expect(result.isEmpty, isFalse);
     expect(result.provider, 'faster-whisper');
+    expect(result.words, isNotEmpty,
+        reason: 'Whisper must return word-level probabilities');
+    expect(result.words.every((w) => w.probability >= 0 && w.probability <= 1),
+        isTrue);
     final lower = result.text.toLowerCase();
     expect(lower.contains('smoke') || lower.contains('gate'), isTrue,
         reason: 'unexpected transcription: "${result.text}"');

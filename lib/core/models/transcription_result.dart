@@ -1,19 +1,17 @@
 // =============================================================================
 // lib/core/models/transcription_result.dart
 //
-// OWNER: Lead (lib/core/). Contract for the voice reporter flow.
-// Mirrors `POST /api/transcribe` in `backend/app/main.py` (local faster-whisper).
+// Contract for POST /api/transcribe (local faster-whisper).
 //
-// Flow: record a short clip -> api.transcribe(bytes) -> text -> feed that text
-// into api.analyze(...) (conversation) or api.report(...) (menu/submit).
-// Nothing about the classification contract changes: speech-to-text only adds
-// the mic hop, and it runs on the laptop so the demo works offline.
+// faster-whisper's `text` has no confidence. With word_timestamps=True each
+// word carries a `probability`; we expose those so the reporter screen can
+// underline only the uncertain words and let the reporter correct those.
 // =============================================================================
 
-/// Result of one speech-to-text call.
 class TranscriptionResult {
   const TranscriptionResult({
     required this.text,
+    this.words = const <TranscriptionWord>[],
     this.language = '',
     this.languageProbability = 0,
     this.durationMs = 0,
@@ -24,6 +22,10 @@ class TranscriptionResult {
 
   /// Transcribed text; may be empty when the clip had no speech (VAD trim).
   final String text;
+
+  /// Per-word recognition metadata. Empty when the server/model does not
+  /// support word timestamps (clients must keep the old editable-all fallback).
+  final List<TranscriptionWord> words;
 
   /// Detected/forced language code (`ro`, `en`, ...), or "" when unknown.
   final String language;
@@ -45,8 +47,15 @@ class TranscriptionResult {
   bool get isEmpty => text.trim().isEmpty;
 
   factory TranscriptionResult.fromJson(Map<String, dynamic> json) {
+    final rawWords = json['words'];
+    final words = <TranscriptionWord>[
+      if (rawWords is List)
+        for (final raw in rawWords)
+          if (raw is Map<String, dynamic>) TranscriptionWord.fromJson(raw),
+    ];
     return TranscriptionResult(
       text: json['text'] is String ? json['text'] as String : '',
+      words: words,
       language: json['language'] is String ? json['language'] as String : '',
       languageProbability: _double(json['language_probability']),
       durationMs: _int(json['duration_ms']),
@@ -55,6 +64,33 @@ class TranscriptionResult {
           ? json['provider'] as String
           : 'faster-whisper',
       latencyMs: _int(json['latency_ms']),
+    );
+  }
+}
+
+/// One word returned by Whisper. [probability] is 0..1; lower means the model
+/// was less sure — exactly the part the reporter should be able to fix.
+class TranscriptionWord {
+  const TranscriptionWord({
+    required this.text,
+    required this.probability,
+    this.start = 0,
+    this.end = 0,
+  });
+
+  final String text;
+  final double probability;
+  final double start;
+  final double end;
+
+  bool get isLowConfidence => probability < 0.70;
+
+  factory TranscriptionWord.fromJson(Map<String, dynamic> json) {
+    return TranscriptionWord(
+      text: json['text'] is String ? json['text'] as String : '',
+      probability: _double(json['probability']),
+      start: _double(json['start']),
+      end: _double(json['end']),
     );
   }
 }

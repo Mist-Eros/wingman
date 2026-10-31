@@ -124,6 +124,7 @@ class _ReporterScreenState extends State<ReporterScreen> {
   Future<void> _editWord(ReporterController c, int index) async {
     final words = c.words;
     if (index < 0 || index >= words.length) return;
+    if (!c.isWordEditable(index)) return;
     final replacement =
         await showEditWordDialog(context, Tr(c.language), words[index]);
     if (replacement == null) return;
@@ -374,11 +375,22 @@ class _ReporterScreenState extends State<ReporterScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
-        TranscriptChips(words: c.words, onTap: (i) => _editWord(c, i)),
+        TranscriptChips(
+          words: c.words,
+          confidences: c.wordConfidences,
+          onTap: (i) => _editWord(c, i),
+        ),
         const SizedBox(height: 4),
         Text(
-          tr('Atinge un cuvânt ca să-l corectezi.',
-              'Tap a word to correct it.'),
+          c.lowConfidenceCount > 0
+              ? tr(
+                  'Cuvintele subliniate au încredere mică — atinge-le ca să le corectezi.',
+                  'Underlined words have low confidence — tap them to correct them.',
+                )
+              : tr(
+                  'Textul are încredere bună. Dacă totuși ceva e greșit, reia înregistrarea.',
+                  'The transcript is confident. If something is still wrong, record again.',
+                ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),

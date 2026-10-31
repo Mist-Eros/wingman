@@ -20,6 +20,7 @@ import '../../core/api/api_client.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/analyze_result.dart';
 import '../../core/models/ticket.dart';
+import '../../core/models/transcription_result.dart';
 import 'brain/conversation_brain.dart';
 import 'reporter_language.dart';
 import 'services/location_service.dart';
@@ -53,13 +54,22 @@ enum ReporterError {
 typedef AnalyzeFn = Future<AnalyzeResult> Function(AnalyzeRequest request);
 typedef ReportFn = Future<Ticket> Function(ReportDraft draft);
 
+/// One recognised word; [confidence] is null for typed/menu input or when the
+/// STT server cannot provide word-level probabilities.
+class _Word {
+  _Word(this.text, this.confidence);
+
+  String text;
+  double? confidence;
+}
+
 /// One thing the reporter said (one press of the mic, or one typed text).
 class _Turn {
   _Turn(this.slot, this.words);
 
   /// The question this answers ('type', 'location', 'size', ...), or null.
   final String? slot;
-  final List<String> words;
+  final List<_Word> words;
 }
 
 class ReporterController extends ChangeNotifier {
@@ -150,8 +160,38 @@ class ReporterController extends ChangeNotifier {
   LocationFix? get fix => _fix;
 
   List<String> get words => <String>[
-        for (final turn in _turns) ...turn.words,
+        for (final turn in _turns)
+          for (final word in turn.words) word.text,
       ];
+
+  /// Parallel to [words]; null when Whisper had no word-level metadata.
+  List<double?> get wordConfidences => <double?>[
+        for (final turn in _turns)
+          for (final word in turn.words) word.confidence,
+      ];
+
+  /// True when Whisper was unsure about this word — the UI underlines it and
+  /// only these parts of the transcript are editable.
+  bool isLowConfidence(int index) {
+    final confidences = wordConfidences;
+    if (index < 0 || index >= confidences.length) return false;
+    final confidence = confidences[index];
+    return confidence != null && confidence < 0.70;
+  }
+
+  /// Words with no metadata (typed, old server) remain editable for backwards
+  /// compatibility; words with high confidence are read-only.
+  bool isWordEditable(int index) {
+    final confidences = wordConfidences;
+    if (index < 0 || index >= confidences.length) return false;
+    final confidence = confidences[index];
+    return confidence == null || confidence < 0.70;
+  }
+
+  int get lowConfidenceCount {
+    final confidences = wordConfidences;
+    return confidences.where((c) => c != null && c < 0.70).length;
+  }
 
   bool get isBusy =>
       _phase == ReporterPhase.transcribing ||
@@ -239,7 +279,7 @@ class ReporterController extends ChangeNotifier {
           _phase = ReporterPhase.transcribing;
           _notify();
         },
-        onResult: (text) => _onTranscribed(epoch, text),
+        onResult: (result) => _onTranscribed(epoch, result),
         onError: (message) {
           if (_stale(epoch)) return;
           _fail(ReporterError.transcribe, detail: message);
@@ -269,18 +309,18 @@ class ReporterController extends ChangeNotifier {
     _notify();
   }
 
-  void _onTranscribed(int epoch, String text) {
+  void _onTranscribed(int epoch, TranscriptionResult result) {
     if (_stale(epoch)) return;
     if (_phase != ReporterPhase.listening &&
         _phase != ReporterPhase.transcribing) {
       return;
     }
-    final heard = text.trim();
+    final heard = result.text.trim();
     if (heard.isEmpty) {
       _fail(ReporterError.noSpeech);
       return;
     }
-    _addUtterance(heard);
+    _addUtterance(heard, transcribedWords: result.words);
   }
 
   /// Typed fallback ("Scrie în loc să vorbești"): same pipeline as voice.
@@ -293,9 +333,24 @@ class ReporterController extends ChangeNotifier {
     _addUtterance(typed);
   }
 
-  void _addUtterance(String text) {
-    final words =
-        text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).toList();
+  void _addUtterance(
+    String text, {
+    List<TranscriptionWord>? transcribedWords,
+  }) {
+    final words = <_Word>[
+      if (transcribedWords != null && transcribedWords.isNotEmpty)
+        for (final word in transcribedWords)
+          if (word.text.trim().isNotEmpty)
+            _Word(word.text.trim(), word.probability),
+    ];
+    if (words.isEmpty) {
+      words.addAll(
+        text
+            .split(RegExp(r'\s+'))
+            .where((word) => word.isNotEmpty)
+            .map((word) => _Word(word, null)),
+      );
+    }
     if (words.isEmpty) {
       _fail(ReporterError.noSpeech);
       return;
@@ -337,7 +392,10 @@ class ReporterController extends ChangeNotifier {
     final assessment = _brain.assess(
       turns: <BrainTurn>[
         for (final turn in _turns)
-          BrainTurn(slot: turn.slot, text: turn.words.join(' ')),
+          BrainTurn(
+            slot: turn.slot,
+            text: turn.words.map((word) => word.text).join(' '),
+          ),
       ],
       server: server,
       hintCode: _hintCode,
@@ -401,6 +459,9 @@ class ReporterController extends ChangeNotifier {
   /// server again, so the understood fields follow the corrected text.
   void editWord(int index, String replacement) {
     if (_phase != ReporterPhase.confirming) return;
+    // Enforce the accessibility/confidence rule in the controller too, not only
+    // by disabling the chip: high-confidence words are read-only.
+    if (!isWordEditable(index)) return;
     var offset = 0;
     for (var t = 0; t < _turns.length; t++) {
       final turn = _turns[t];
@@ -411,7 +472,7 @@ class ReporterController extends ChangeNotifier {
           turn.words.removeAt(local);
           if (turn.words.isEmpty) _turns.removeAt(t);
         } else {
-          turn.words[local] = fixed;
+          turn.words[local] = _Word(fixed, 1.0);
         }
         break;
       }

@@ -12,6 +12,7 @@ import 'dart:typed_data';
 import 'package:record/record.dart';
 
 import '../reporter_language.dart';
+import '../../../core/models/transcription_result.dart';
 import 'whisper_transcriber.dart';
 
 abstract class SpeechService {
@@ -26,7 +27,7 @@ abstract class SpeechService {
     required ReporterLanguage language,
     required void Function(double level) onLevel,
     required void Function() onProcessing,
-    required void Function(String text) onResult,
+    required void Function(TranscriptionResult result) onResult,
     required void Function(String message) onError,
     bool autoStop = true,
   });
@@ -38,7 +39,7 @@ abstract class SpeechService {
   Future<void> cancel();
 }
 
-typedef TranscribeFn = Future<String> Function(
+typedef TranscribeFn = Future<TranscriptionResult> Function(
   Uint8List wav,
   ReporterLanguage language,
 );
@@ -68,7 +69,7 @@ class WhisperSpeechService implements SpeechService {
   File? _file;
   ReporterLanguage _language = ReporterLanguage.ro;
   void Function()? _onProcessing;
-  void Function(String text)? _onResult;
+  void Function(TranscriptionResult result)? _onResult;
   void Function(String message)? _onError;
 
   @override
@@ -85,7 +86,7 @@ class WhisperSpeechService implements SpeechService {
     required ReporterLanguage language,
     required void Function(double level) onLevel,
     required void Function() onProcessing,
-    required void Function(String text) onResult,
+    required void Function(TranscriptionResult result) onResult,
     required void Function(String message) onError,
     bool autoStop = true,
   }) async {
@@ -165,14 +166,14 @@ class WhisperSpeechService implements SpeechService {
     }
     if (session != _session) return;
     if (bytes.length < _minBytes) {
-      _onResult?.call('');
+      _onResult?.call(const TranscriptionResult(text: ''));
       return;
     }
 
     try {
-      final text = await transcribe(bytes, _language);
+      final result = await transcribe(bytes, _language);
       if (session != _session) return;
-      _onResult?.call(text.trim());
+      _onResult?.call(result);
     } on TranscribeException catch (error) {
       if (session != _session) return;
       _onError?.call(error.message);

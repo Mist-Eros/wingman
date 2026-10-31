@@ -61,10 +61,12 @@ class Transcription:
     model: str
     provider: str = "faster-whisper"
     latency_ms: int = 0
+    words: tuple[dict[str, Any], ...] = ()
 
     def to_wire(self) -> dict[str, Any]:
         return {
             "text": self.text,
+            "words": list(self.words),
             "language": self.language,
             "language_probability": round(self.language_probability, 3),
             "duration_ms": self.duration_ms,
@@ -168,12 +170,28 @@ def _transcribe_sync(
             language=language,
             vad_filter=True,
             beam_size=1,
+            word_timestamps=True,
         )
-        parts = [
-            segment.text.strip()
-            for segment in segments
-            if getattr(segment, "text", None) and segment.text.strip()
-        ]
+        parts: list[str] = []
+        words: list[dict[str, Any]] = []
+        for segment in segments:
+            segment_text = getattr(segment, "text", None)
+            if segment_text and segment_text.strip():
+                parts.append(segment_text.strip())
+            # faster-whisper word tokens include leading spaces/punctuation.
+            for word in getattr(segment, "words", None) or []:
+                token = str(getattr(word, "word", "") or "").strip()
+                if not token:
+                    continue
+                probability = float(getattr(word, "probability", 0.0) or 0.0)
+                words.append(
+                    {
+                        "text": token,
+                        "probability": round(max(0.0, min(1.0, probability)), 3),
+                        "start": round(float(getattr(word, "start", 0.0) or 0.0), 2),
+                        "end": round(float(getattr(word, "end", 0.0) or 0.0), 2),
+                    }
+                )
         text = " ".join(parts).strip()
         latency_ms = int((time.perf_counter() - started) * 1000)
         return Transcription(
@@ -185,6 +203,7 @@ def _transcribe_sync(
             duration_ms=int(float(getattr(info, "duration", 0.0) or 0.0) * 1000),
             model=settings.whisper_model,
             latency_ms=latency_ms,
+            words=tuple(words),
         )
     finally:
         if path is not None:

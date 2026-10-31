@@ -185,24 +185,92 @@ String errorMessage(ReporterController c, Tr tr) {
 
 /// Transcript as tappable words: tap a word to correct it.
 class TranscriptChips extends StatelessWidget {
-  const TranscriptChips({super.key, required this.words, required this.onTap});
+  const TranscriptChips({
+    super.key,
+    required this.words,
+    required this.onTap,
+    this.confidences = const <double?>[],
+  });
 
   final List<String> words;
   final void Function(int index) onTap;
+
+  /// Parallel to [words]; null = no metadata (typed/legacy server).
+  final List<double?> confidences;
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 6,
-      runSpacing: 2,
+      runSpacing: 4,
       children: <Widget>[
         for (var i = 0; i < words.length; i++)
-          ActionChip(
-            label: Text(words[i], style: const TextStyle(fontSize: 17)),
-            visualDensity: VisualDensity.compact,
-            onPressed: () => onTap(i),
+          _WordChip(
+            word: words[i],
+            confidence: i < confidences.length ? confidences[i] : null,
+            onTap: () => onTap(i),
           ),
       ],
+    );
+  }
+}
+
+class _WordChip extends StatelessWidget {
+  const _WordChip({
+    required this.word,
+    required this.confidence,
+    required this.onTap,
+  });
+
+  final String word;
+  final double? confidence;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final low = confidence != null && confidence! < 0.70;
+    final editable = confidence == null || low;
+    final theme = Theme.of(context);
+    return Semantics(
+      button: editable,
+      label: low
+          ? '$word, încredere mică, poate fi corectat'
+          : '$word, încredere mare',
+      child: Material(
+        color: low
+            ? const Color(0xFFFFF3CD)
+            : (editable
+                ? theme.colorScheme.surfaceContainerHighest
+                : theme.colorScheme.surface),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: low
+                ? const Color(0xFFD97706)
+                : theme.colorScheme.outlineVariant,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: editable ? onTap : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+            child: Text(
+              word,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: low ? FontWeight.w700 : FontWeight.w500,
+                decoration: low ? TextDecoration.underline : null,
+                decorationStyle: TextDecorationStyle.dashed,
+                decorationColor: const Color(0xFFB45309),
+                color: editable
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -293,6 +293,11 @@ void main() {
         'model': 'small',
         'provider': 'faster-whisper',
         'latency_ms': 1800,
+        'words': <Map<String, dynamic>>[
+          <String, dynamic>{'text': 'este', 'probability': 0.98},
+          <String, dynamic>{'text': 'fum', 'probability': 0.91},
+          <String, dynamic>{'text': 'poarta', 'probability': 0.42},
+        ],
       });
       expect(result.text, 'este fum lângă poarta 12');
       expect(result.language, 'ro');
@@ -301,6 +306,11 @@ void main() {
       expect(result.model, 'small');
       expect(result.provider, 'faster-whisper');
       expect(result.latencyMs, 1800);
+      expect(result.words, hasLength(3));
+      expect(result.words[2].text, 'poarta');
+      expect(result.words[2].probability, closeTo(0.42, 0.001));
+      expect(result.words[2].isLowConfidence, isTrue);
+      expect(result.words[0].isLowConfidence, isFalse);
       expect(result.isEmpty, isFalse);
     });
 

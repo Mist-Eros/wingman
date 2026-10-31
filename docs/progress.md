@@ -238,3 +238,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Duplicate reports now **enrich the existing ticket** with photo/GPS instead of returning an old ticket without them (broadcasts `ticket.updated`). | `backend/app/store.py` (`attach_media`), `main.py` duplicate path | API test: second duplicate returned same id with 65 KB photo |
 | Camera prompt now explains Samsung's **OK** confirmation; a cancelled/unconfirmed capture no longer auto-sends, it offers retry / send without photo. | `lib/features/reporter/photo_prompt.dart` | manual S24 flow; photo persisted and shown under Foto |
 | Debug logs retained for diagnostics (`[photo] launching/returned/read`). | `photo_prompt.dart` | logcat |
+
+---
+
+## 2026-10-31 — Whisper word confidence + selectively editable transcript
+
+| Change | Where | Evidence |
+|---|---|---|
+| Enabled faster-whisper `word_timestamps=True`; `/api/transcribe` now returns `words[]` with per-word `probability`, `start`, `end`. | `backend/app/stt.py` | real WAV: 9 words; low-confidence `gate` = 0.599 |
+| Reporter confirmation underlines low-confidence words (`probability < 0.70`) and makes **only those** editable; high-confidence words are read-only. | `transcription_result.dart`, `speech_service.dart`, `reporter_controller.dart`, `reporter_widgets.dart`, reporter screen | controller/widget tests |
+| Typed transcripts / old servers keep the editable-all fallback. | controller `isWordEditable` | transcript chips tests |

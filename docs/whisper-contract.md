@@ -39,7 +39,13 @@ Content-Type: application/json
   "duration_ms": 2400,
   "model": "small",
   "provider": "faster-whisper",
-  "latency_ms": 1800
+  "latency_ms": 1800,
+  "words": [
+    {"text": "There", "probability": 0.882, "start": 0.0, "end": 0.32},
+    {"text": "is", "probability": 0.994, "start": 0.32, "end": 0.48},
+    {"text": "smoke", "probability": 0.757, "start": 0.48, "end": 0.91},
+    {"text": "gate", "probability": 0.599, "start": 1.24, "end": 1.61}
+  ]
 }
 ```
 
@@ -102,3 +108,20 @@ MAX_AUDIO_BYTES=26214400       # 25 MB
 3. Confirmă limita de durată a clipului din UI (recomand 5-15 s; peste 20 s crește latența).
 4. Pe telefon, primul test real: înregistrezi „este fum lângă poarta 12" și trimiți textul la
    `/api/analyze` — verificăm cap-coadă.
+
+
+## Word confidence (UI underlining)
+
+`faster-whisper` does not put confidence in the `text` field. We enable
+`word_timestamps=True` and return one entry per recognised word:
+
+- `probability`: 0..1, the model's confidence for that word
+- `start` / `end`: seconds in the uploaded clip
+
+The reporter app underlines words with `probability < 0.70` and makes **only
+those words editable** (tap → correction dialog). High-confidence words are
+read-only; if no `words` array is present (old server/typed input), the app
+falls back to the legacy editable-all behaviour.
+
+Real fixture result (English, `small`): `gate` 0.599 is underlined; `There`
+0.882 / `smoke` 0.757 remain read-only.
