@@ -45,6 +45,8 @@ void main() {
       expect(config.id, 'stadium');
       expect(config.branding.appName, 'CrowdGuard');
       expect(config.branding.seedColorValue, 0xFF7C3AED);
+      expect(config.map.provider, 'openstreetmap');
+      expect(config.map.initialLat, closeTo(44.3189, 0.0001));
       expect(config.features.gpsMap, isFalse);
       expect(config.features.rewards, isTrue);
       expect(config.quorum.strategy, 'fixed');

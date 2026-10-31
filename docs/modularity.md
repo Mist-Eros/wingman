@@ -46,6 +46,7 @@ policies themselves.
 | `branding.appName`, `tagline`, `seedColor` | login title/tagline, Material seed colour, API status page |
 | `features.rewards` | hides the account/points entry point |
 | `features.gpsMap` | hides the live GPS map entry point |
+| `map.tileUrl` / `map.initialLat/Lng` | real tile map provider and airport/venue centre |
 | `features.photo` | disables the optional 5-second photo prompt |
 | `features.accessibility` | hides the accessibility entry point |
 | `features.history` | hides the admin History tab |

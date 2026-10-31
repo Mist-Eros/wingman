@@ -194,3 +194,12 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Quorum policy** (one per primary department or fixed) shared by app/server; store no longer hardcodes the count. | `lib/core/domain/quorum_policy.dart`, `backend/app/domain.py` | 4 Flutter + 3 backend unit tests |
 | **Demo reset service**, **configurable notification rules**, and feature switches for rewards/GPS/photo/accessibility/reset. | `core/demo/`, `core/notifications/`, `main.dart`, reporter/account/crew/dispatcher | app tests 172; smoke 103/103 |
 | **Domain unit tests + extension guide**: `docs/modularity.md`, `config/domains/README.md`. | docs/config | 7 backend unit tests pass |
+
+---
+
+## 2026-10-31 — real map tiles
+
+| Change | Where | Evidence |
+|---|---|---|
+| Replaced the schematic GPS map with a real **OpenStreetMap slippy map** (`flutter_map` + `latlong2`): live marker, accuracy circle, follow/recenter, attribution, coordinates/accuracy. | `lib/features/reporter/live_gps_map_screen.dart` | S24 screenshot shows Craiova airport tiles + GPS marker (49 m accuracy) |
+| Map provider/centre/zoom are profile-driven (`map` block in `config/domains/*.json`); OSM needs no API key, and the `tileUrl` seam allows a self-hosted tile server. | `lib/core/domain/domain_config.dart`, `config/domains/` | map loaded on device; analyze/tests clean |

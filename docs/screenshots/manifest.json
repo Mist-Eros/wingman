@@ -130,7 +130,7 @@
     },
     {
       "file": "18_live_gps.png",
-      "caption": "Live GPS map with real coordinates, accuracy and schematic airport",
+      "caption": "Live GPS map on OpenStreetMap tiles, marker + accuracy + coordinates",
       "slide": "GPS map"
     },
     {

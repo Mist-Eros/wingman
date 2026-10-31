@@ -1,4 +1,4 @@
-﻿// Contract tests: the frozen core API everything else depends on.
+// Contract tests: the frozen core API everything else depends on.
 // Run with:  flutter test
 //
 // These are deliberately about CONTRACTS, not UI: taxonomy integrity, enum
@@ -329,4 +329,3 @@ void main() {
     });
   });
 }
-

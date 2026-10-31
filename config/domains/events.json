@@ -7,6 +7,15 @@
     "seedColor": "#7C3AED",
     "icon": "stadium"
   },
+  "map": {
+    "provider": "openstreetmap",
+    "tileUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "attribution": "© OpenStreetMap contributors",
+    "initialLat": 44.4268,
+    "initialLng": 26.1025,
+    "initialZoom": 14.5,
+    "maxZoom": 19
+  },
   "features": {
     "rewards": true,
     "gpsMap": true,
@@ -28,7 +37,10 @@
     "pointsLabel": "CREDITE"
   },
   "notifications": {
-    "roles": ["crew", "dispatcher"],
+    "roles": [
+      "crew",
+      "dispatcher"
+    ],
     "scope": "primary_departments"
   },
   "demo": {

@@ -25,6 +25,7 @@ class DomainConfig {
     required this.schemaVersion,
     required this.id,
     required this.branding,
+    required this.map,
     required this.features,
     required this.quorum,
     required this.rewards,
@@ -40,6 +41,7 @@ class DomainConfig {
   final int schemaVersion;
   final String id;
   final DomainBranding branding;
+  final MapConfig map;
   final DomainFeatures features;
   final QuorumConfig quorum;
   final RewardConfig rewards;
@@ -55,6 +57,15 @@ class DomainConfig {
       tagline: 'Airport incident response · demo',
       seedColorValue: 0xFF1D4E89,
       icon: 'flight_takeoff',
+    ),
+    map: MapConfig(
+      provider: 'openstreetmap',
+      tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '© OpenStreetMap contributors',
+      initialLat: 44.3189,
+      initialLng: 23.8864,
+      initialZoom: 15.5,
+      maxZoom: 19,
     ),
     features: DomainFeatures(),
     quorum: QuorumConfig(
@@ -78,6 +89,7 @@ class DomainConfig {
 
   factory DomainConfig.fromJson(Map<String, dynamic> json) {
     final branding = _map(json['branding']);
+    final map = _map(json['map']);
     final features = _map(json['features']);
     final quorum = _map(json['quorum']);
     final rewards = _map(json['rewards']);
@@ -95,6 +107,19 @@ class DomainConfig {
         ),
         seedColorValue: _hexColor(branding['seedColor']),
         icon: _string(branding['icon'], 'flight_takeoff'),
+      ),
+      map: MapConfig(
+        provider: _string(map['provider'], 'openstreetmap'),
+        tileUrl: _string(
+          map['tileUrl'],
+          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        ),
+        attribution:
+            _string(map['attribution'], '© OpenStreetMap contributors'),
+        initialLat: _double(map['initialLat'], 44.3189),
+        initialLng: _double(map['initialLng'], 23.8864),
+        initialZoom: _double(map['initialZoom'], 15.5),
+        maxZoom: _double(map['maxZoom'], 19),
       ),
       features: DomainFeatures(
         rewards: _bool(features['rewards'], true),
@@ -167,6 +192,7 @@ class DomainConfig {
               '#${branding.seedColorValue.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
           'icon': branding.icon,
         },
+        'map': map.toJson(),
         'features': <String, dynamic>{
           'rewards': features.rewards,
           'gpsMap': features.gpsMap,
@@ -194,6 +220,36 @@ class DomainBranding {
   final String tagline;
   final int seedColorValue;
   final String icon;
+}
+
+class MapConfig {
+  const MapConfig({
+    required this.provider,
+    required this.tileUrl,
+    required this.attribution,
+    required this.initialLat,
+    required this.initialLng,
+    required this.initialZoom,
+    required this.maxZoom,
+  });
+
+  final String provider;
+  final String tileUrl;
+  final String attribution;
+  final double initialLat;
+  final double initialLng;
+  final double initialZoom;
+  final double maxZoom;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'provider': provider,
+        'tileUrl': tileUrl,
+        'attribution': attribution,
+        'initialLat': initialLat,
+        'initialLng': initialLng,
+        'initialZoom': initialZoom,
+        'maxZoom': maxZoom,
+      };
 }
 
 class DomainFeatures {
@@ -305,6 +361,12 @@ bool _bool(Object? value, bool fallback) {
   if (value is String) {
     return <String>{'1', 'true', 'yes', 'on'}.contains(value.toLowerCase());
   }
+  return fallback;
+}
+
+double _double(Object? value, double fallback) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? fallback;
   return fallback;
 }
 

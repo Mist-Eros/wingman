@@ -38,6 +38,15 @@ If the file is missing/invalid, both sides fall back to the airport profile.
     "seedColor": "#1D4E89",
     "icon": "flight_takeoff"
   },
+  "map": {
+    "provider": "openstreetmap",
+    "tileUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "attribution": "© OpenStreetMap contributors",
+    "initialLat": 44.3189,
+    "initialLng": 23.8864,
+    "initialZoom": 15.5,
+    "maxZoom": 19
+  },
   "features": {
     "rewards": true,        // account/points entry point
     "gpsMap": true,         // live GPS map
@@ -68,6 +77,10 @@ If the file is missing/invalid, both sides fall back to the airport profile.
   }
 }
 ```
+
+`map.tileUrl` can point at any XYZ tile server (OpenStreetMap by default, or a
+self-hosted one). Google Maps tiles require an API key/SDK and are not bundled;
+the provider field is the seam for adding one.
 
 Supported knobs are intentionally limited; unsupported concepts belong in a
 policy class, not in the profile. See [docs/modularity.md](../../docs/modularity.md).

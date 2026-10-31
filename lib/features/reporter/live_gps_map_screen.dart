@@ -1,12 +1,16 @@
-// Live GPS map for the reporter. Uses the real location stream and draws the
-// position on a schematic Craiova airport map, with the accuracy circle and
-// raw coordinates. No network map tiles — this works offline on the venue Wi-Fi.
+﻿// Real slippy map (OpenStreetMap tiles) with a live GPS marker and accuracy
+// circle. Tile provider/center/zoom are driven by DomainConfig.map, so another
+// application can point at a different area (or a self-hosted tile server)
+// without touching this screen.
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 
+import '../../../core/core_scope.dart';
 import '../../../core/theme/wingman_theme.dart';
 
 class LiveGpsMapScreen extends StatefulWidget {
@@ -17,10 +21,14 @@ class LiveGpsMapScreen extends StatefulWidget {
 }
 
 class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
+  final MapController _mapController = MapController();
   StreamSubscription<Position>? _sub;
   Position? _position;
   String? _error;
   DateTime? _updatedAt;
+  bool _mapReady = false;
+  bool _follow = true;
+  bool _movedOnce = false;
 
   @override
   void initState() {
@@ -41,7 +49,7 @@ class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       if (mounted) {
-        setState(() => _error = 'Permisiunea de locație nu este acordată.');
+        setState(() => _error = 'Permisiunea de locație nu este acordatÄƒ.');
       }
       return;
     }
@@ -58,6 +66,8 @@ class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
           _updatedAt = DateTime.now();
           _error = null;
         });
+        _centerOn(position, force: !_movedOnce);
+        _movedOnce = true;
       },
       onError: (Object error) {
         if (!mounted) return;
@@ -66,15 +76,35 @@ class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
     );
   }
 
+  void _centerOn(Position position, {bool force = false}) {
+    if (!_mapReady && !force) return;
+    if (!_follow && !force) return;
+    try {
+      _mapController.move(
+        LatLng(position.latitude, position.longitude),
+        _mapController.camera.zoom,
+      );
+    } on Object {
+      // Map is not ready yet; the next fix will center it.
+    }
+  }
+
   @override
   void dispose() {
     _sub?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final domain = CoreScope.domainOrFallbackOf(context);
+    final config = domain.map;
     final position = _position;
+    final center = position == null
+        ? LatLng(config.initialLat, config.initialLng)
+        : LatLng(position.latitude, position.longitude);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hartă live · GPS'),
@@ -85,77 +115,109 @@ class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
               _sub?.cancel();
               _start();
             },
-            icon: const Icon(Icons.my_location),
+            icon: const Icon(Icons.gps_fixed_rounded),
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: <Widget>[
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF0F7),
-                borderRadius: BorderRadius.circular(WingmanRadius.lg),
-                border: Border.all(color: WingmanColors.line),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: position == null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 14),
-                            Text(
-                              _error ??
-                                  'Aștept semnalul GPS…\n'
-                                      'Punctul apare când telefonul are poziție.',
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : CustomPaint(
-                      painter: _AirportMapPainter(position: position),
-                      size: Size.infinite,
-                    ),
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: center,
+              initialZoom: config.initialZoom,
+              minZoom: 3,
+              maxZoom: config.maxZoom,
+              onMapReady: () {
+                _mapReady = true;
+                if (position != null) _centerOn(position, force: true);
+              },
+              onPositionChanged: (camera, hasGesture) {
+                if (hasGesture && _follow) {
+                  setState(() => _follow = false);
+                }
+              },
             ),
+            children: <Widget>[
+              TileLayer(
+                urlTemplate: config.tileUrl,
+                userAgentPackageName: 'com.wingman.wingman',
+                maxZoom: config.maxZoom,
+                maxNativeZoom: config.maxZoom.toInt(),
+              ),
+              if (position != null)
+                CircleLayer(
+                  circles: <CircleMarker>[
+                    CircleMarker(
+                      point: LatLng(position.latitude, position.longitude),
+                      radius: position.accuracy,
+                      useRadiusInMeter: true,
+                      color: WingmanColors.seed.withValues(alpha: 0.16),
+                      borderColor: WingmanColors.seed.withValues(alpha: 0.55),
+                      borderStrokeWidth: 2,
+                    ),
+                  ],
+                ),
+              if (position != null)
+                MarkerLayer(
+                  markers: <Marker>[
+                    Marker(
+                      point: LatLng(position.latitude, position.longitude),
+                      width: 42,
+                      height: 42,
+                      child: const _GpsMarker(),
+                    ),
+                  ],
+                ),
+              RichAttributionWidget(
+                attributions: <SourceAttribution>[
+                  TextSourceAttribution(
+                    config.attribution,
+                    prependCopyright: false,
+                  ),
+                ],
+              ),
+            ],
           ),
           SafeArea(
-            top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    position == null
-                        ? 'Locație în așteptare'
-                        : '${position.latitude.toStringAsFixed(6)}, '
-                            '${position.longitude.toStringAsFixed(6)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
+                  _StatusPill(
+                    position: position,
+                    error: _error,
+                    provider: config.provider,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    position == null
-                        ? 'Pornește GPS-ul pentru poziția live.'
-                        : 'Precizie ±${position.accuracy.toStringAsFixed(0)} m · '
-                            'actualizat acum '
-                            '${DateTime.now().difference(_updatedAt ?? DateTime.now()).inSeconds}s',
-                    style: TextStyle(color: WingmanColors.muted),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Punctul se mișcă în timp real. Cercul arată precizia GPS; '
-                    'cu cât e mai mic, cu atât locația e mai exactă.',
-                    style: Theme.of(context).textTheme.bodySmall,
+                  const Spacer(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Expanded(
+                        child: _LocationCard(
+                          position: position,
+                          updatedAt: _updatedAt,
+                          error: _error,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FloatingActionButton.small(
+                        heroTag: 'recenter',
+                        tooltip: 'CentreazÄƒ pe GPS',
+                        onPressed: position == null
+                            ? null
+                            : () {
+                                setState(() => _follow = true);
+                                _centerOn(position, force: true);
+                              },
+                        child: Icon(
+                          _follow
+                              ? Icons.my_location
+                              : Icons.location_searching,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -167,125 +229,150 @@ class _LiveGpsMapScreenState extends State<LiveGpsMapScreen> {
   }
 }
 
-class _AirportMapPainter extends CustomPainter {
-  _AirportMapPainter({required this.position});
-
-  final Position position;
-
-  static const double _latMin = 44.308;
-  static const double _latMax = 44.331;
-  static const double _lngMin = 23.868;
-  static const double _lngMax = 23.906;
+class _GpsMarker extends StatelessWidget {
+  const _GpsMarker();
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final bg = Paint()..color = const Color(0xFFEAF0F7);
-    canvas.drawRect(Offset.zero & size, bg);
-
-    // Grid
-    final grid = Paint()
-      ..color = const Color(0xFFD6E1EE)
-      ..strokeWidth = 1;
-    for (var i = 1; i < 6; i++) {
-      final x = size.width * i / 6;
-      final y = size.height * i / 6;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
-    }
-
-    // Runway 09/27 (diagonal), taxiway, apron/terminal blocks.
-    final runway = Paint()
-      ..color = const Color(0xFF64748B)
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(size.width * 0.14, size.height * 0.30),
-      Offset(size.width * 0.86, size.height * 0.70),
-      runway,
-    );
-    final centerline = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2;
-    canvas.drawLine(
-      Offset(size.width * 0.14, size.height * 0.30),
-      Offset(size.width * 0.86, size.height * 0.70),
-      centerline,
-    );
-    final taxiway = Paint()
-      ..color = const Color(0xFF94A3B8)
-      ..strokeWidth = 4;
-    canvas.drawLine(
-      Offset(size.width * 0.30, size.height * 0.62),
-      Offset(size.width * 0.62, size.height * 0.52),
-      taxiway,
-    );
-    final building = Paint()..color = const Color(0xFFCBD5E1);
-    final terminal = RRect.fromRectAndRadius(
-      Rect.fromLTWH(size.width * 0.55, size.height * 0.62, size.width * 0.28,
-          size.height * 0.10),
-      const Radius.circular(8),
-    );
-    canvas.drawRRect(terminal, building);
-    canvas.drawRect(
-      Rect.fromLTWH(size.width * 0.58, size.height * 0.74, size.width * 0.18,
-          size.height * 0.08),
-      building,
-    );
-
-    _label(canvas, 'CRAIOVA · TERMINAL', size.width * 0.56, size.height * 0.64);
-    _label(canvas, 'PISTĂ 09/27', size.width * 0.44, size.height * 0.47);
-
-    // Real GPS position mapped to airport bounds.
-    final nx = ((position.longitude - _lngMin) / (_lngMax - _lngMin))
-        .clamp(0.03, 0.97);
-    final ny = (1 - (position.latitude - _latMin) / (_latMax - _latMin))
-        .clamp(0.03, 0.97);
-    final point = Offset(size.width * nx, size.height * ny);
-
-    // Accuracy circle: metres -> pixels using the longitude span.
-    final metresPerPixel = (_lngMax - _lngMin) * 111320 / size.width;
-    final radius = (position.accuracy / metresPerPixel).clamp(8.0, 140.0);
-
-    canvas.drawCircle(
-      point,
-      radius,
-      Paint()..color = WingmanColors.seed.withValues(alpha: 0.16),
-    );
-    canvas.drawCircle(
-      point,
-      radius,
-      Paint()
-        ..color = WingmanColors.seed.withValues(alpha: 0.45)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    canvas.drawCircle(point, 10, Paint()..color = Colors.white);
-    canvas.drawCircle(
-      point,
-      7,
-      Paint()..color = const Color(0xFFE11D48),
-    );
-  }
-
-  void _label(Canvas canvas, String text, double x, double y) {
-    final painter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          color: Color(0xFF334155),
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
-        ),
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFFE11D48),
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2)),
+        ],
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    painter.paint(canvas, Offset(x, y));
+    );
   }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.position,
+    required this.error,
+    required this.provider,
+  });
+
+  final Position? position;
+  final String? error;
+  final String provider;
 
   @override
-  bool shouldRepaint(covariant _AirportMapPainter oldDelegate) =>
-      oldDelegate.position.latitude != position.latitude ||
-      oldDelegate.position.longitude != position.longitude ||
-      oldDelegate.position.accuracy != position.accuracy;
+  Widget build(BuildContext context) {
+    final ok = position != null;
+    final color = ok
+        ? WingmanColors.live
+        : error != null
+            ? WingmanColors.critical
+            : WingmanColors.pending;
+    final label = ok
+        ? 'LIVE · ${providerLabel(provider)}'
+        : error != null
+            ? 'GPS indisponibil'
+            : 'AȘTEPT GPS';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationCard extends StatelessWidget {
+  const _LocationCard({
+    required this.position,
+    required this.updatedAt,
+    required this.error,
+  });
+
+  final Position? position;
+  final DateTime? updatedAt;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final pos = position;
+    final age = updatedAt == null
+        ? null
+        : DateTime.now().difference(updatedAt!).inSeconds;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: WingmanColors.line),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+              color: Colors.black12, blurRadius: 12, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            pos == null
+                ? (error ?? 'Aștept semnalul GPS…')
+                : '${pos.latitude.toStringAsFixed(6)}, '
+                    '${pos.longitude.toStringAsFixed(6)}',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            pos == null
+                ? 'Harta pornește pe centrul aeroportului. '
+                    'Punctul roșu apare cÃ¢nd telefonul are poziÈ›ie.'
+                : 'Precizie ±${pos.accuracy.toStringAsFixed(0)} m'
+                    '${age == null ? '' : ' · actualizat acum ${age}s'}',
+            style: const TextStyle(
+              color: WingmanColors.muted,
+              fontSize: 12,
+            ),
+          ),
+          if (pos != null) ...<Widget>[
+            const SizedBox(height: 2),
+            const Text(
+              'Marker roșu = poziția ta · cercul = precizia GPS. '
+              'Apasă pe hartă pentru a naviga, butonul din dreapta te recentrează.',
+              style: TextStyle(color: WingmanColors.muted, fontSize: 11),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+String providerLabel(String provider) {
+  return switch (provider) {
+    'openstreetmap' || 'osm' => 'OpenStreetMap',
+    'google' => 'Google Maps',
+    _ => provider,
+  };
 }

@@ -7,6 +7,15 @@
     "seedColor": "#1D4E89",
     "icon": "flight_takeoff"
   },
+  "map": {
+    "provider": "openstreetmap",
+    "tileUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "attribution": "© OpenStreetMap contributors",
+    "initialLat": 44.3189,
+    "initialLng": 23.8864,
+    "initialZoom": 15.5,
+    "maxZoom": 19
+  },
   "features": {
     "rewards": true,
     "gpsMap": true,
