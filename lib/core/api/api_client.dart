@@ -75,6 +75,8 @@ class ServerEvent {
   static const String typeTicketResolved = 'ticket.resolved';
   static const String typePing = 'ping';
   static const String typeError = 'error';
+  static const String typeStoreReset = 'store.reset';
+  static const String typeHistoryCleared = 'history.cleared';
 
   /// Client-side synthetic events (never sent by the server).
   static const String typeConnected = 'connection.connected';

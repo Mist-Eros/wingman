@@ -205,6 +205,27 @@ class TicketBoard extends ChangeNotifier {
       _notify();
       return;
     }
+    if (event.type == ServerEvent.typeStoreReset) {
+      // The demo reset endpoint clears the backend store. Drop stale cards so a
+      // crew phone doesn't keep showing tickets that no longer exist (which
+      // would make Join/Vote return 404).
+      _byId.clear();
+      _sorted = const <Ticket>[];
+      _lastActionError = 'Serverul a fost resetat — lista a fost golită.';
+      _notify();
+      return;
+    }
+    if (event.type == ServerEvent.typeHistoryCleared) {
+      final ids = event.data['ticket_ids'];
+      if (ids is List) {
+        for (final id in ids.whereType<String>()) {
+          _byId.remove(id);
+        }
+        _resort();
+        _notify();
+      }
+      return;
+    }
     final ticket = event.ticket;
     if (ticket == null) return;
     _upsert(ticket);
@@ -230,6 +251,14 @@ class TicketBoard extends ChangeNotifier {
       _notify();
       return true;
     } on ApiException catch (error) {
+      if (error.statusCode == 404) {
+        // Ticket was removed (usually by a demo/dev reset). Reload instead of
+        // leaving a dead card on screen; show a friendly message, not HTTP 404.
+        _lastActionError = 'Tichetul nu mai există — lista a fost reîncărcată.';
+        await refresh();
+        _notify();
+        return false;
+      }
       _lastActionError = error.isNetworkIssue
           ? 'Nu am putut trimite acțiunea — serverul nu răspunde. Reîncearcă.'
           : error.message;
