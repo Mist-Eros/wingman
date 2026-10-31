@@ -156,5 +156,15 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Change | Where | Evidence |
 |---|---|---|
 | **8 categories × 8 subcategories × 8 problems = 512** catalog, each mapped to one of the 14 operational codes and carrying exact label + location. | `lib/features/reporter/menu/incident_menu_data.dart`, generator | data test: 8/8/8, 512 unique IDs, valid codes |
-| Menu redesigned as a **full-screen 2×4 grid** at all 3 levels; **3 taps** (category → subcategory → problem) submit the report with the exact problem label/location. | `lib/features/reporter/type_picker_page.dart`, `reporter_screen.dart`, `reporter_controller.dart` | verified on S24; ticket transcript “Bagaj suspect — Terminal”, SC-BAG |
+| Menu redesigned as a **full-screen 4 rows × 2 columns grid** at all 3 levels; **3 taps** (category → subcategory → problem) submit the report with the exact problem label/location. | `lib/features/reporter/type_picker_page.dart`, `reporter_screen.dart`, `reporter_controller.dart` | verified on S24; ticket transcript “Bagaj suspect — Terminal”, SC-BAG |
 | New menu screenshots and equal cards. | `D:\Hackathon\Screenshots\Wingman\02_Reporter\06–09_*`, `Team/team-grid.png` | 4 captures |
+
+---
+
+## 2026-10-31 — PC dashboard rebuilt as admin view
+
+| Change | Where | Evidence |
+|---|---|---|
+| Desktop control room restyled to match the phone admin view: light theme, urgency-tinted queue cards, stats, **Coadă / Istoric tabs**, history cards and **Golește istoricul**, report button, detail pane. | `scripts/dashboard/index.html` | Waterfox screenshots: queue + history + light report modal; JS syntax check OK |
+| Backend clear-history endpoint drives the dashboard too. | `POST /api/tickets/clear-history` | 2 history tickets shown, clear-all available |
+| Menu grid corrected to **4 rows × 2 columns** at all 3 levels. | `lib/features/reporter/type_picker_page.dart` | S24 capture; 8×8×8 data intact |

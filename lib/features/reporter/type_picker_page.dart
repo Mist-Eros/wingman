@@ -126,16 +126,16 @@ class _IncidentMenuPageState extends State<IncidentMenuPage> {
                             ),
                         ];
 
-              // Two rows of four fill the available height exactly.
+              // Four rows of two fill the available height exactly.
               final height =
-                  ((constraints.maxHeight - 34) / 2).clamp(90.0, 460.0);
+                  ((constraints.maxHeight - 44) / 4).clamp(72.0, 260.0);
 
               return GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(12),
                 itemCount: 8,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
+                  crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                   mainAxisExtent: height,
@@ -184,10 +184,10 @@ class _MenuTile extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
-                maxLines: dense ? 5 : 3,
+                maxLines: dense ? 4 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: dense ? 10.5 : 12,
+                  fontSize: dense ? 11.5 : 13.5,
                   height: 1.2,
                   fontWeight: FontWeight.w700,
                   color: scheme.onSurface,

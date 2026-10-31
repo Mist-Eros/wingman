@@ -115,7 +115,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
-* **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 2×4 grid per level.
+* **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 4 rows × 2 columns grid per level.
 * **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are

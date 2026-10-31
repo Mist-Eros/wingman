@@ -24,7 +24,7 @@
    (system prompt). Keep charger connected, **Stay awake** ON, app open on the crew screen —
    notifications are local (no cloud push), so the phone must stay connected to the laptop.
 6. **Desktop control room**: `.\scripts\serve_dashboard.ps1` → **Waterfox** opens with the live
-   dashboard (same store as the phones: REST snapshot + WSS live, confirm/deny/reclassify).
+   dashboard (same store as the phones: REST snapshot + WSS live, Coadă/Istoric, deny/reclassify, clear history).
    Waterfox is launched with the dedicated demo profile so our CA is trusted automatically.
 7. **DevTools** (for Q&A / photos): on the login screen tap the **wrench icon** (top-right) to
    preview every time-of-day sky look, see live Ollama/STT/WSS health, simulate a report,
