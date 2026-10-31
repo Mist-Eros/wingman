@@ -453,6 +453,33 @@ async def run(args: argparse.Namespace) -> int:
             payload.get("ticket", {}).get("decided_by") == "smoke-dispatcher",
         )
 
+        # 8b ── admin history clear-all ─────────────────────────────────────
+        print("[8b] clear admin history")
+        status, payload = http_call(
+            base,
+            token,
+            "/api/tickets/clear-history",
+            method="POST",
+            insecure=insecure,
+        )
+        check("clear-history -> 200", status == 200, f"status={status}")
+        check(
+            "at least one terminal ticket cleared",
+            int(payload.get("cleared", 0)) >= 1,
+            str(payload.get("cleared")),
+        )
+        status, payload = http_call(base, token, "/api/tickets", insecure=insecure)
+        terminal_left = [
+            t
+            for t in payload.get("tickets", [])
+            if t.get("status") in ("resolved", "denied")
+        ]
+        check(
+            "history no longer contains terminal tickets",
+            status == 200 and terminal_left == [],
+            str(terminal_left),
+        )
+
         # 9 ── invalid override code ─────────────────────────────────────────
         print("[9] invalid reclassification code")
         status, payload = http_call(

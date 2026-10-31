@@ -35,7 +35,7 @@ Times are commit times from the git history.
 vote quorum); local Qwen2.5 classification + deterministic guards; faster-whisper STT; pinned CA;
 navy airport-ops theme with six time-of-day skies and DevTools; five hashed demo accounts with
 department-scoped notifications; Waterfox control room and report form; APK pipeline; verification
-gates (analyze, 160 tests, smoke 96/96, ALL GATES PASSED).
+gates (analyze, 160 tests, smoke 99/99, ALL GATES PASSED).
 **Showcase:** `Team/furtuna-lead.png`.
 
 ### Cutulescu Andrei-Rares — Reporter (@rarescu08)
@@ -70,6 +70,6 @@ progress, live resolution SnackBar, WSS banner, airport-ops card design, and wid
 |---|---|
 | `flutter analyze` | No issues |
 | App tests | 160 passed |
-| Backend smoke (strict TLS) | 96/96 |
+| Backend smoke (strict TLS) | 99/99 |
 | `scripts/verify_all.ps1 -Live` | ALL GATES PASSED |
 | Demo APKs | rebuilt + installed on the S24 Ultra |

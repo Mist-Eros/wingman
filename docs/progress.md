@@ -119,3 +119,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Large bottom report bar** on crew and dispatcher: full-width 60 px button, SafeArea, max-width 760 on desktop; app-bar report icons removed. | `lib/core/widgets/report_action_bar.dart`, `lib/features/crew/crew_screen.dart`, `lib/features/dispatcher/dispatcher_screen.dart` | verified on S24: bar visible on queue, crew and reporter return; content no longer covered |
 | **Fresh screenshot set** — login, reporter (voice/menu/typed/verification), dispatcher (queue/low/demo), crew (queue/joined), notification shade, Waterfox control room + modal, DevTools. Old design folders removed. | `D:\Hackathon\Screenshots\Wingman\`, `Screenshots/README.md` | 15 new real captures |
 | **Equal team cards** — same 1600×1450 template, 3 screenshots, 3 stats, 4 bullets each; 2×2 grid. | `D:\Hackathon\Screenshots\Team\` | `furtuna-lead.png`, `cutulescu-reporter.png`, `fita-dispatcher.png`, `lica-crew.png`, `team-grid.png` |
+
+---
+
+## 2026-10-31 — logo + admin history
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Real app logo** used once (login header) and as Android launcher icon; transparent banner, no duplicated wordmark; single branding asset. | `assets/branding/`, `pubspec.yaml`, `lib/features/auth/login_screen.dart`, `android/.../mipmap-*/ic_launcher.png` | S24 login + launcher; APK rebuilt |
+| **Admin Istoric tab** with every resolved/denied ticket and **Golește istoricul** (confirm dialog, backend endpoint, board refresh). | `lib/features/dispatcher/dispatcher_screen.dart`, `lib/core/api/api_client.dart`, `lib/core/state/ticket_board.dart`, `backend/app/main.py`, `backend/app/store.py` | 2 history tickets shown, cleared → 0; smoke 99/99 |
+| Screenshots updated with logo, tabs, history and cleared state; equal cards regenerated. | `D:\Hackathon\Screenshots\` | `Wingman/03_Dispatcher/04_history.png`, `05_history_cleared.png`, new `team-grid.png` |

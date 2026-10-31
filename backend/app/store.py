@@ -379,6 +379,28 @@ class TicketStore:
         await self._hub.broadcast("store.reset", {"removed": removed})
         return removed
 
+    async def clear_history(self) -> int:
+        """Remove every terminal ticket (resolved/denied) and broadcast it."""
+        async with self._lock:
+            removed_ids = [
+                ticket_id
+                for ticket_id in self._order
+                if self._tickets[ticket_id]["status"] in ("resolved", "denied")
+            ]
+            for ticket_id in removed_ids:
+                self._tickets.pop(ticket_id, None)
+            if removed_ids:
+                removed = set(removed_ids)
+                self._order = [
+                    ticket_id for ticket_id in self._order if ticket_id not in removed
+                ]
+        if removed_ids:
+            await self._hub.broadcast(
+                "history.cleared",
+                {"ticket_ids": removed_ids, "count": len(removed_ids)},
+            )
+        return len(removed_ids)
+
     # ── 5-second override window ──────────────────────────────────────────────
     def _schedule_auto_dispatch(self, ticket_id: str) -> None:
         self._cancel_timer(ticket_id)

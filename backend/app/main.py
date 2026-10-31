@@ -435,6 +435,13 @@ async def list_tickets(status: str | None = Query(default=None)) -> dict:
     return {"tickets": tickets, "count": len(tickets)}
 
 
+@api.post("/tickets/clear-history")
+async def clear_ticket_history() -> dict:
+    """Admin-only action: permanently remove resolved/denied tickets."""
+    cleared = await store.clear_history()
+    return {"cleared": cleared}
+
+
 @api.get("/tickets/{ticket_id}")
 async def get_ticket(ticket_id: str) -> dict:
     try:

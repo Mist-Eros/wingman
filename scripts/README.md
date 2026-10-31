@@ -28,7 +28,7 @@ Python scripts use the backend virtualenv (`backend\.venv\Scripts\python.exe`).
 | Script | What it does |
 |---|---|
 | `verify_all.ps1 [-Live]` | One command: taxonomy sync, wire parity, analyze, app tests, smoke, live Dart tests. |
-| `smoke_test.py` | Backend end-to-end gate (96 checks: auth, WSS, immediate dispatch, votes, zones, STT, catalog, wire keys). |
+| `smoke_test.py` | Backend end-to-end gate (99 checks: auth, WSS, immediate dispatch, votes, zones, STT, catalog, wire keys). |
 | `check_wire_parity.py` | Offline check that Dart JSON mapping and FastAPI schemas agree. |
 | `sync_taxonomy.py [--write]` | Regenerates `backend/taxonomy.json` from `lib/core/incidents/taxonomy.dart`. |
 | `render_occurrence_catalog.py` | Regenerates `docs/occurrence-catalog.md` from `backend/app/data/occurrences.json`. |

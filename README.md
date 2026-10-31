@@ -7,7 +7,7 @@ the departments the incident needs**. Tickets go straight to the dispatcher, who
 reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
 no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **96/96** ·
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **99/99** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -20,7 +20,7 @@ cd backend; .\run.ps1
 
 # 2) seed the stage data + prove the API
 cd ..; python backend\seed_demo.py
-python scripts\smoke_test.py --ca backend\certs\ca.crt     # 96/96
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 99/99
 
 # 3) phone (Android; APK is built by the script)
 .\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
@@ -134,6 +134,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
 | POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 2) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
+| POST | `/api/tickets/clear-history` | Admin: permanently clears resolved/denied tickets |
 | GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |
 | GET | `/api/health`, `/api/taxonomy`, `/healthz`, `/ca.crt` | Diagnostics / public checks |
 | WS | `/ws?token=` | `hello`, `ticket.created/updated/resolved`, `ping` |
