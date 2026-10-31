@@ -17,6 +17,7 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 | [phone-testing.md](phone-testing.md) | Install/test APKs on the phones |
 | [progress.md](progress.md) | Build log: what was done, evidence, current next steps |
 | [team-timeline.md](team-timeline.md) | How the four of us worked: commit timeline, per-person contributions, showcases |
+| [screenshots/README.md](screenshots/README.md) | Current screenshot set + manifest for the PPTX (for RaresCut/Claude) |
 | [occurrence-catalog.md](occurrence-catalog.md) | Source-backed incident database (59 occurrences, EU 2015/1018 + ASRS + ground handling) |
 | [backlog.md](backlog.md) | Deferred ideas (e.g. location gate, real push notifications) |
 

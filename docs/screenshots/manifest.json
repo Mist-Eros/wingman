@@ -1,0 +1,125 @@
+{
+  "project": "Wingman — airport incident response",
+  "purpose": "Screenshots for building a 16:9 PPTX with Claude",
+  "source": "https://github.com/Mist-Eros/wingman/tree/main/docs/screenshots",
+  "notes": [
+    "All screenshots are real captures (Samsung S24 Ultra + Waterfox).",
+    "Phone screenshots are 1080x2340 portrait; dashboard 1230x880; team cards 1600x1450.",
+    "Do not stretch the images; use dark navy #081120 backgrounds for phone shots.",
+    "The logo appears only as the app icon (00_app_icon.png), not inside the app UI.",
+    "The menu is 8x8x8 = 512 problems, 3 taps: category -> subcategory -> problem.",
+    "Quorum: 1 vote for low/medium, 2 votes for high/critical."
+  ],
+  "images": [
+    {
+      "file": "00_app_icon.png",
+      "caption": "App icon — the only place the logo is used",
+      "slide": "Title slide"
+    },
+    {
+      "file": "01_login.png",
+      "caption": "Login with five demo accounts and adaptive sky",
+      "slide": "Solution / access"
+    },
+    {
+      "file": "02_reporter_voice.png",
+      "caption": "Reporter voice screen: hold the microphone",
+      "slide": "Reporter flow"
+    },
+    {
+      "file": "03_menu_categories_4x2.png",
+      "caption": "Incident menu level 1: 8 categories in a 4×2 grid",
+      "slide": "3-tap menu"
+    },
+    {
+      "file": "04_menu_subcategories_4x2.png",
+      "caption": "Incident menu level 2: 8 subcategories",
+      "slide": "3-tap menu"
+    },
+    {
+      "file": "05_menu_problems_4x2.png",
+      "caption": "Incident menu level 3: 8 problems with operational code",
+      "slide": "3-tap menu / 512 catalog"
+    },
+    {
+      "file": "06_reporter_verification.png",
+      "caption": "Verification card: type, location, Craiova likelihood",
+      "slide": "Reporter flow"
+    },
+    {
+      "file": "07_dispatcher_queue.png",
+      "caption": "Admin view: live queue, Coadă/Istoric, report bar",
+      "slide": "Dispatcher"
+    },
+    {
+      "file": "08_dispatcher_history.png",
+      "caption": "History of resolved/denied tickets + clear all",
+      "slide": "History"
+    },
+    {
+      "file": "09_dispatcher_low_priority.png",
+      "caption": "Low-priority card (white) with 1-person quorum",
+      "slide": "Quorum by urgency"
+    },
+    {
+      "file": "10_crew_queue.png",
+      "caption": "Crew queue scoped by department",
+      "slide": "Crew"
+    },
+    {
+      "file": "11_crew_joined.png",
+      "caption": "Crew joins an intervention",
+      "slide": "Crew"
+    },
+    {
+      "file": "12_notification_shade.png",
+      "caption": "Department-scoped local notification",
+      "slide": "Notifications"
+    },
+    {
+      "file": "13_dashboard_queue.png",
+      "caption": "Waterfox desktop control room — light admin view",
+      "slide": "Desktop"
+    },
+    {
+      "file": "14_dashboard_history.png",
+      "caption": "Waterfox desktop history + clear all",
+      "slide": "History"
+    },
+    {
+      "file": "15_dashboard_report_modal.png",
+      "caption": "Waterfox report dialog",
+      "slide": "Desktop"
+    },
+    {
+      "file": "16_devtools.png",
+      "caption": "DevTools: AI, STT, WSS, quorum",
+      "slide": "Technology"
+    },
+    {
+      "file": "team/team-grid.png",
+      "caption": "Equal team cards, 2×2",
+      "slide": "Team"
+    },
+    {
+      "file": "team/furtuna-lead.png",
+      "caption": "Furtuna-Cola Andrei-Alexandru — Lead",
+      "slide": "Team"
+    },
+    {
+      "file": "team/cutulescu-reporter.png",
+      "caption": "Cutulescu Andrei-Rares — Reporter",
+      "slide": "Team"
+    },
+    {
+      "file": "team/fita-dispatcher.png",
+      "caption": "Fita Redu Mihai — Dispatcher",
+      "slide": "Team"
+    },
+    {
+      "file": "team/lica-crew.png",
+      "caption": "Lica Rares Adelin — Crew",
+      "slide": "Team"
+    }
+  ]
+}
