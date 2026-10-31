@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // OWNER: Fita Redu Mihai (lib/features/dispatcher/).
 //
 // Frozen contract for main.dart:
@@ -108,18 +108,17 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   bool _usingDemo(TicketBoard board) => _forceDemo || board.isEmpty;
 
   List<Ticket> _sourceTickets(TicketBoard board) =>
-      _usingDemo(board) ? _demoTickets : board.tickets;
+      (_usingDemo(board) ? _demoTickets : board.tickets)
+          .where((t) => !t.status.isTerminal)
+          .toList(growable: false);
 
-  List<Ticket> _pending(TicketBoard board) {
-    final list = _usingDemo(board)
-        ? _demoTickets.where((t) => t.isPendingOverride)
-        : board.pendingOverrides;
-    return sortDispatcherTickets(list);
-  }
+  // The 5-second dispatcher override window was removed: nothing waits for a
+  // human decision, so the pending list is always empty.
+  List<Ticket> _pending(TicketBoard board) => const <Ticket>[];
 
   List<Ticket> _feed(TicketBoard board) {
     if (_usingDemo(board)) {
-      return _filters.applyToList(_demoTickets, excludePending: true);
+      return _filters.applyToList(_sourceTickets(board), excludePending: true);
     }
     return _filters.apply(board, excludePending: true);
   }
@@ -196,8 +195,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
           at: DateTime.now().toUtc(),
           kind: DispatcherHistoryKind.created,
           ticketId: ticket.id,
-          summary: 'Pending 5s: ${shortTicketLabel(ticket)}',
-          detail: 'Încredere ${ticket.confidenceLabel}',
+          summary: 'Tichet nou: ${shortTicketLabel(ticket)}',
+          detail: 'Probabilitate Craiova ${ticket.likelihoodLabel}',
         ),
       );
     } else {
@@ -1134,7 +1133,10 @@ class _FilterSidebar extends StatelessWidget {
           const SizedBox(height: 12),
           Text('Listă', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
-          for (final option in DispatcherListFilter.values)
+          for (final option in const [
+            DispatcherListFilter.all,
+            DispatcherListFilter.active,
+          ])
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: ChoiceChip(
@@ -1326,7 +1328,9 @@ class _DetailPane extends StatelessWidget {
                 _DetailRow(label: 'Cod', value: ticket.incidentCode),
                 _DetailRow(label: 'Status', value: ticket.status.labelRo),
                 _DetailRow(label: 'Urgență', value: ticket.urgency.labelRo),
-                _DetailRow(label: 'Încredere', value: ticket.confidenceLabel),
+                _DetailRow(
+                    label: 'Probabilitate Craiova',
+                    value: ticket.likelihoodLabel),
                 _DetailRow(label: 'Sursă AI', value: ticket.aiSource.labelRo),
                 _DetailRow(
                   label: 'Decis de',
@@ -1592,5 +1596,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-

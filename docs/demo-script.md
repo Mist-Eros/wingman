@@ -12,7 +12,7 @@
    - STT: `STT available: true` (first transcription may load the model, ~1 s extra).
 3. Seed the stage data: `python backend\seed_demo.py --base https://<ip>:8443 --reset`
    → 5 tickets: fire/smoke (critical), unattended bag, belt fault (menu), spill (janitor),
-   forced-override.
+   a low-confidence report.
 4. **Accounts** (hardcoded, hashed passwords): `admin/admin123` (Andy Admin — sees and
    decides everything), `engineer/engineer123` (Earl Engineer — maintenance/IT/baggage/airside),
    `janitor/janitor123` (John Janitor — terminal only), `firefighter/firefighter123`
@@ -27,8 +27,8 @@
    dashboard (same store as the phones: REST snapshot + WSS live, confirm/deny/reclassify).
    Waterfox is launched with the dedicated demo profile so our CA is trusted automatically.
 7. **DevTools** (for Q&A / photos): on the login screen tap the **wrench icon** (top-right) to
-   preview every time-of-day sky look, see live Ollama/STT/WSS health, fire a forced 5-second
-   override ticket, reset the store, or check the account scopes.
+   preview every time-of-day sky look, see live Ollama/STT/WSS health, simulate a report,
+   reset the store, or check the account scopes.
 8. **Progress screenshots**: `D:\Hackathon\ProgressPics\Steep_01…09` — one folder per milestone
    (toolchain → crew → dispatcher → reporter → design → accounts → dashboard → skies → final).
 9. Emergency APK also installed: `wingman-insecure-release.apk` + `backend\run_insecure.ps1`.
@@ -43,7 +43,7 @@
 | 1:00 | Engineer phone | Echipaj | Sign in as **Earl Engineer** → the same ticket is there; tap **Preia** → **Rezolvat** (vote 1/2). |
 | 1:30 | Janitor phone | Echipaj | Sign in as **John Janitor** → only terminal incidents (spill shown, security/bag hidden). „Different crew, different alert." |
 | 2:00 | Admin | Dashboard | Show urgency counters + ticket detail; Reclasifică shows the closed 14-type taxonomy. |
-| 2:30 | Lead | laptop | „Why it's real": local Qwen2.5 (0.3–0.6 s/classification), local Whisper, TLS pinned private CA, hashed demo accounts + department scoping + **scoped Android notifications**, 14-type taxonomy with deterministic guards, gates green, 5 s override + quorum server-side. |
+| 2:30 | Lead | laptop | „Why it's real": local Qwen2.5 (0.3–0.6 s/classification), local Whisper, TLS pinned private CA, hashed demo accounts + department scoping + **scoped Android notifications**, 14-type taxonomy with deterministic guards, gates green, immediate dispatch + quorum server-side. |
 | 2:50 | Lead | — | Close: offline-capable, no cloud keys, rebuildable APKs, desktop control room for ops. |
 
 ## Fallbacks (say nothing, keep moving)
@@ -54,11 +54,11 @@
 - **TLS issue on a phone** → install `wingman-insecure-release.apk`, start `backend\run_insecure.ps1`,
   20 s switch, no debugging on stage.
 - **AI model missing** → backend falls back to deterministic keyword classifier; ticket still lands
-  in the dispatcher override window (low confidence).
+  in the dispatcher queue for deny/reclassify.
 
 ## Phrases the judges remember
 
 - „Everything you just saw ran on this laptop: no cloud, no API key, no data leaving the room."
-- „The 5-second window exists because the model is allowed to be unsure — the human is the tie-breaker."
+- „The model is allowed to be unsure — every ticket lands in front of a human, who can deny or reclassify it."
 - „14 closed types, not free text: the dispatcher always knows which department to wake up."
 

@@ -81,7 +81,7 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         },
     },
     {
-        "name": "voice · forced override (demo)",
+        "name": "voice · low-confidence (demo)",
         "body": {
             "source": "voice",
             "transcript": (
@@ -94,7 +94,6 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
             "use_ai": True,
             # Forces the 5-second dispatcher override path deterministically,
             # so the demo never depends on the model's confidence.
-            "force_override": True,
         },
     },
 )
@@ -164,7 +163,7 @@ def main() -> int:
         )
 
     print("\nDone. Open the dispatcher screen: the last ticket should be in the")
-    print("5-second override window (auto-dispatches if nobody acts).")
+    print("Every report dispatches immediately; the dispatcher can deny/reclassify.")
     return 0
 
 

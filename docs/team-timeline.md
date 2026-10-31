@@ -31,11 +31,11 @@ Times are commit times from the git history.
 
 ### Furtuna-Cola Andrei-Alexandru — Lead (@Mist-Eros)
 **Owns:** `lib/core/**`, `lib/main.dart`, `backend/**`, `scripts/**`, `docs/**`, design system, demo hardening.
-**Built:** closed 14-type taxonomy; one-listener TLS backend (REST + WSS, in-memory store, 5 s override,
+**Built:** closed 14-type taxonomy; one-listener TLS backend (REST + WSS, in-memory store, dispatch-first,
 vote quorum); local Qwen2.5 classification + deterministic guards; faster-whisper STT; pinned CA;
 navy airport-ops theme with six time-of-day skies and DevTools; five hashed demo accounts with
 department-scoped notifications; Waterfox control room and report form; APK pipeline; verification
-gates (analyze, 160 tests, smoke 90/90, ALL GATES PASSED).
+gates (analyze, 160 tests, smoke 88/88, ALL GATES PASSED).
 **Showcase:** `Team/furtuna-lead.png`.
 
 ### Cutulescu Andrei-Rares — Reporter (@rarescu08)
@@ -50,7 +50,7 @@ Lead's dispatch-first policy (no "is anyone in danger?" question).
 ### Fita Redu Mihai — Dispatcher (@RaduFita23)
 **Owns:** `lib/features/dispatcher/**`.
 **Built:** dispatcher dashboard with live/demo modes, urgency counters, department distribution,
-per-ticket timeline, zones, filters, history, density control, and the 5-second override card
+per-ticket timeline, zones, filters, history, density control, and dispatcher actions
 (Confirmă / Respinge / Reclasifică) with keyboard shortcuts; Windows runner additions.
 **Commits:** `60051a3`, `f563740` · merged `c1e3d7e`.
 **Showcase:** `Team/fita-dispatcher.png`.
@@ -70,6 +70,6 @@ progress, live resolution SnackBar, WSS banner, airport-ops card design, and wid
 |---|---|
 | `flutter analyze` | No issues |
 | App tests | 160 passed |
-| Backend smoke (strict TLS) | 90/90 |
+| Backend smoke (strict TLS) | 88/88 |
 | `scripts/verify_all.ps1 -Live` | ALL GATES PASSED |
 | Demo APKs | rebuilt + installed on the S24 Ultra |

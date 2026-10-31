@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // LOCAL PREVIEW ONLY — crew feature (Lica Rares Adelin).
 // Opens the Crew UI with fake tickets. No backend. Works on Chrome (no dart:io).
 //
@@ -353,5 +353,3 @@ Ticket _ticket({
     version: 1,
   );
 }
-
-

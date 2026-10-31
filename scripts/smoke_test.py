@@ -14,7 +14,7 @@ It verifies, in order:
   3. /api/taxonomy serves the same 14 codes as backend/taxonomy.json
   4. WSS handshake + `hello`
   5. manual report (menu flow) -> dispatched, ai_source=manual, exact wire keys
-  6. forced low-confidence report -> pending_override -> auto-dispatch after 5 s
+  6. low-confidence/vague report -> dispatched immediately (no override window)
   7. crew join -> in_progress, 1 vote -> still open, 2nd vote -> resolved
   8. dispatcher deny -> denied
   9. invalid override code -> HTTP 400
@@ -283,46 +283,31 @@ async def run(args: argparse.Namespace) -> int:
         manual_id = manual.get("id", "")
 
         # 6 ── override window ───────────────────────────────────────────────
-        print("[6] low-confidence override window")
+        print("[6] low-confidence report dispatches immediately")
         status, payload = report(
             base,
             token,
             {
                 "source": "voice",
-                "transcript": "Ceva pare în neregulă pe hol, nu îmi dau seama exact ce.",
+                "transcript": "Ceva pare in neregula pe hol, nu imi dau seama exact ce.",
                 "reporter_id": "smoke-reporter",
                 "reporter_name": "Smoke Test",
-                "force_override": True,
             },
             insecure,
         )
-        check("forced-override report -> 201", status == 201, f"status={status}")
+        check("vague report -> 201", status == 201, f"status={status}")
         override = payload.get("ticket", {})
-        if args.skip_override_wait:
-            print("  SKIP  auto-dispatch wait (--skip-override-wait)")
-        else:
-            check(
-                "status is pending_override",
-                override.get("status") == "pending_override",
-                str(override.get("status")),
-            )
-            check("override_deadline present", bool(override.get("override_deadline")))
-            check(
-                "confidence below threshold",
-                float(override.get("confidence", 1)) < 0.65,
-                str(override.get("confidence")),
-            )
-            await asyncio.sleep(5.6)
-            status, payload = http_call(
-                base, token, f"/api/tickets/{override.get('id')}", insecure=insecure
-            )
-            auto = payload.get("ticket", {})
-            check(
-                "auto-dispatched after 5 s",
-                auto.get("status") == "dispatched",
-                str(auto.get("status")),
-            )
-            check("auto-dispatch has no dispatcher", auto.get("decided_by") is None)
+        check(
+            "dispatches immediately (no pending state)",
+            override.get("status") == "dispatched",
+            str(override.get("status")),
+        )
+        check(
+            "no override deadline on the ticket",
+            override.get("override_deadline") is None,
+            str(override.get("override_deadline")),
+        )
+        check("dispatched_at is set", bool(override.get("dispatched_at")))
 
         # 7 ── join + vote quorum ────────────────────────────────────────────
         print("[7] crew join + vote")

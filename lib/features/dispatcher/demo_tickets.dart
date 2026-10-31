@@ -55,19 +55,18 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
   }
 
   return <Ticket>[
-    // Pending override — low confidence, live 5s window for UI practice
+    // Low-confidence demo ticket — dispatched immediately, no override window.
     fromType(
       id: 'demo-pending-01',
       code: 'SF-FOD',
       urgency: Urgency.critical,
-      status: TicketStatus.pendingOverride,
+      status: TicketStatus.dispatched,
       confidence: 0.52,
       transcript: 'ceva pe pista nu stiu exact, langa stand 7',
       locationZone: 'Stand 7 · pistă',
       reporterName: 'Andrei P.',
       aiRationale:
-          'Posibil corp străin pe pistă — natura neclară, confirmare dispecer necesară.',
-      overrideDeadline: n.add(const Duration(seconds: 5)),
+          'Posibil corp străin pe pistă — natura neclară, natura raportării e ambiguă.',
       createdAt: n.subtract(const Duration(seconds: 2)),
     ),
     fromType(

@@ -19,6 +19,7 @@
 // brain works with or without it, so questions keep flowing even if the
 // server is slow or down.
 
+import '../../../core/incidents/likelihood.dart';
 import '../../../core/incidents/taxonomy.dart';
 import '../../../core/models/analyze_result.dart';
 import '../../../core/models/ticket.dart';
@@ -205,6 +206,8 @@ class ConversationBrain {
         severity: severity,
         local: local,
         confidence: confidence,
+        incidentCode: type?.code,
+        location: location,
         serverRationale: fromServer ? server!.fields.rationale : null,
         manual: hintCode != null,
       ),
@@ -359,6 +362,8 @@ class ConversationBrain {
     required Severity severity,
     required ConfidenceResult? local,
     required double confidence,
+    required String? incidentCode,
+    required String location,
     required String? serverRationale,
     required bool manual,
   }) {
@@ -376,19 +381,24 @@ class ConversationBrain {
           ? '$urgencyPart. Type picked by you.'
           : '$urgencyPart. Tip ales de tine.';
     }
-    final percent = (confidence * 100).round();
+    final likelihood = airportLikelihoodOf(
+      incidentCode: incidentCode,
+      location: location,
+      urgency: severity.urgency,
+    );
+    final percent = (likelihood * 100).round();
     final String confidencePart;
     if (local != null) {
       final notes = local.notes
           .map((key) => confidenceNoteText(key, english: english))
           .join(', ');
       confidencePart = english
-          ? 'Confidence $percent% (estimated: $notes)'
-          : 'Încredere $percent% (estimat: $notes)';
+          ? 'Craiova likelihood $percent% (estimated: $notes)'
+          : 'Probabilitate Craiova $percent% (estimat: $notes)';
     } else {
       confidencePart = english
-          ? 'Confidence $percent% (from the AI server)'
-          : 'Încredere $percent% (de la serverul AI)';
+          ? 'Craiova likelihood $percent% (from the AI server)'
+          : 'Probabilitate Craiova $percent% (de la serverul AI)';
     }
     final base = serverRationale == null || serverRationale.isEmpty
         ? ''

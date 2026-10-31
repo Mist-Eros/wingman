@@ -222,7 +222,7 @@ void main() {
       expect(fields.incidentCode, 'SF-FIRE');
       expect(fields.urgency, Urgency.critical);
       expect(fields.rationale, contains('pericol de foc sau explozie'));
-      expect(fields.rationale, contains('Încredere'));
+      expect(fields.rationale, contains('Probabilitate Craiova'));
       expect(lava(english: true).result.fields.rationale,
           contains('fire or explosion hazard'));
     });

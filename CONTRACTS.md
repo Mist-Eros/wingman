@@ -72,8 +72,8 @@ CoreScope.of(context).onSignOut();            // back to the role picker
 
 | Member | Meaning |
 |---|---|
-| `tickets` | sorted list: pending override → urgency → newest |
-| `pendingOverrides` | tickets in the 5 s window (dispatcher screen top section) |
+| `tickets` | sorted list: urgency → newest (open tickets) |
+| `pendingOverrides` | always empty (legacy helper; override window removed) |
 | `activeTickets` | dispatched + in_progress |
 | `forDepartment(Department.security)` | tickets whose primary or standby includes it |
 | `find(id)` | one ticket or null |
@@ -102,7 +102,7 @@ Always render inside `ListenableBuilder(listenable: board, builder: ...)`.
 | `reporter_id`, `reporter_name` | string | who reported |
 | `transcript` | string | STT text or menu label |
 | `location` | object | `{terminal, zone, lat, lng, note}` |
-| `confidence` | number 0–1 | below `0.65` ⇒ override window |
+| `confidence` | number 0–1 | model certainty (diagnostics; no longer gates dispatch) |
 | `ai_source` | string | `ollama` · `fallback` · `manual` |
 | `ai_rationale` | string \| null | ≤ 200 chars, Romanian |
 | `primary_departments` | string[] | from the taxonomy |
@@ -111,14 +111,14 @@ Always render inside `ListenableBuilder(listenable: board, builder: ...)`.
 | `resolve_votes` | int | approving votes |
 | `resolve_voter_ids` | string[] | who approved (prevents double counting) |
 | `quorum` | int | approvals needed (default 2) |
-| `override_deadline` | ISO date \| null | only while `pending_override` |
+| `override_deadline` | ISO date \| null | always null (legacy field) |
 | `dispatched_at`, `resolved_at` | ISO date \| null | |
 | `resolution_note` | string \| null | dispatcher denial reason / vote summary |
 | `decided_by` | string \| null | dispatcher id, `null` = auto-dispatch |
 | `created_at`, `updated_at` | ISO date | UTC, `...Z` |
 | `version` | int | server revision; `TicketBoard` ignores older versions |
 
-Dart helpers you can use directly: `isPendingOverride`, `remainingOverrideSeconds()`,
+Legacy Dart helpers still exist (`isPendingOverride`, `remainingOverrideSeconds()`), but the server
 `confidenceLabel` (`"87%"`), `isJoinedBy(crewId)`, `hasVotedBy(crewId)`, `ageSeconds()`,
 `departmentsLabel`, `location.display`, `status.labelRo`, `urgency.labelRo`,
 `category.labelRo`, `source.labelRo`, `aiSource.labelRo`.
@@ -236,7 +236,7 @@ Rules (server-enforced, tested):
 * **Max 3 questions.** At `clarifications_asked >= 3` → `question: null`.
 * **Incomplete or unsure ⇒ dispatcher.** When it stops with `missing` slots or confidence
   below `0.65`, `fields.confidence` is capped at **0.40**, so the resulting ticket lands in the
-  dispatcher 5-second override window automatically.
+  dispatcher queue immediately for deny/reclassify.
 * `missing` contains only required slots that are absent: currently `incident_code`, `location`.
   `people_at_risk` is optional and is only asked (`Esté cineva în pericol?`) for high/critical.
 * `ready: true` ⇔ `question: null` — the app may then call `POST /api/reports` with the full
@@ -312,9 +312,9 @@ Envelope:
 
 | `type` | when | `data` |
 |---|---|---|
-| `hello` | on connect | `{server, taxonomy_version, incident_types, override_window_seconds}` |
+| `hello` | on connect | `{server, taxonomy_version, incident_types}` |
 | `ticket.created` | after `POST /api/reports` | `{ticket}` |
-| `ticket.updated` | confirm/deny/override/join/vote/auto-dispatch | `{ticket, action, ...}` |
+| `ticket.updated` | confirm/deny/override/join/vote | `{ticket, action, ...}` |
 | `ticket.resolved` | quorum reached | `{ticket, action: "voted"}` |
 | `store.reset` | dev reset | `{removed}` |
 | `ping` | every 20 s | `{}` |

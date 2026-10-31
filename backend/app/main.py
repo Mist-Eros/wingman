@@ -117,12 +117,10 @@ async def lifespan(app: FastAPI):
             ", ".join(unknown_codes),
         )
     logger.info(
-        "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f "
-        "OVERRIDE_WINDOW=%.1fs RESOLVE_QUORUM=%s",
+        "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f RESOLVE_QUORUM=%s",
         settings.ollama_url,
         settings.ollama_model,
         settings.confidence_threshold,
-        settings.override_window_seconds,
         settings.resolve_quorum,
     )
 
@@ -237,7 +235,6 @@ async def health() -> dict:
         "incident_types": len(taxonomy.types),
         "tickets": store.count,
         "ws_clients": hub.count,
-        "override_window_seconds": settings.override_window_seconds,
         "confidence_threshold": settings.confidence_threshold,
         "resolve_quorum": settings.resolve_quorum,
         "ollama": {
@@ -369,15 +366,6 @@ async def create_report(report: schemas.ReportIn) -> dict:
             report.hint_code,
             report.use_ai,
         )
-        if report.force_override:
-            # Demo switch: guarantee the dispatcher 5-second window is shown.
-            classification = replace(
-                classification,
-                confidence=min(classification.confidence, 0.40),
-                rationale=(
-                    classification.rationale + " [demo: low confidence override]"
-                ).strip(),
-            )
         ticket = await store.create(
             source=report.source,
             transcript=report.transcript.strip(),
@@ -526,7 +514,6 @@ async def websocket_endpoint(
                     "server": "wingman-api",
                     "taxonomy_version": taxonomy.version,
                     "incident_types": len(taxonomy.types),
-                    "override_window_seconds": settings.override_window_seconds,
                 },
             }
         )

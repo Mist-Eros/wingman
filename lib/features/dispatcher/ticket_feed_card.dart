@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/incidents/likelihood.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
 import 'dispatcher_density.dart';
@@ -59,8 +60,7 @@ class TicketCardBody extends StatelessWidget {
                 icon: Icons.notifications_paused_outlined,
                 label: 'Standby: $standby',
               ),
-            if (ticket.confidence < 0.65 || ticket.isPendingOverride)
-              const _WhyChip(),
+            if (ticket.craiovaLikelihood < 0.70) const _WhyChip(),
           ],
         ),
         if (ticket.aiRationale != null &&
@@ -113,7 +113,7 @@ class _WhyChip extends StatelessWidget {
           Icon(Icons.help_outline, size: 14, color: Colors.white),
           SizedBox(width: 4),
           Text(
-            'De ce e aici: încredere < 65% · așteaptă dispecerul',
+            'Probabilitate Craiova < 70% · de verificat',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -218,7 +218,7 @@ class TicketFeedCard extends StatelessWidget {
                                 children: <Widget>[
                                   _UrgencyBadge(urgency: ticket.urgency),
                                   _ConfidenceChip(
-                                      confidence: ticket.confidence),
+                                      likelihood: ticket.craiovaLikelihood),
                                   _StatusChip(status: ticket.status),
                                   Text(
                                     _ageLabel(ticket.ageSeconds()),
@@ -401,13 +401,13 @@ class _UrgencyBadge extends StatelessWidget {
 }
 
 class _ConfidenceChip extends StatelessWidget {
-  const _ConfidenceChip({required this.confidence});
+  const _ConfidenceChip({required this.likelihood});
 
-  final double confidence;
+  final double likelihood;
 
   @override
   Widget build(BuildContext context) {
-    final low = confidence < 0.65;
+    final low = likelihood < 0.70;
     final color = low ? const Color(0xFFB42318) : const Color(0xFF027A48);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -424,7 +424,7 @@ class _ConfidenceChip extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(
-            '${(confidence * 100).round()}%',
+            airportLikelihoodPercent(likelihood),
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,

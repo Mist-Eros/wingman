@@ -188,7 +188,7 @@
       <span class="count" id="queueCount">0</span>
       <span style="flex:1"></span>
       <button class="chip" onclick="openReport()">＋ Raportează</button>
-      <button id="filterBtn" class="chip on" onclick="toggleFilter()">Doar active</button>
+      
     </div>
     <div class="list" id="list"></div>
   </main>
@@ -255,7 +255,7 @@
 const CFG = window.WINGMAN_CONFIG || { api: 'https://192.168.0.170:8443', token: 'demo-token' };
 const URGENCY_COLOR = { critical: '#ff6b6b', high: '#ffa94d', medium: '#ffd43b', low: '#3dd68c' };
 const STATUS_COLOR = {
-  pending_override: '#ffa94d', dispatched: '#5ba7ff', in_progress: '#ffd43b',
+  dispatched: '#5ba7ff', in_progress: '#ffd43b',
   resolved: '#3dd68c', denied: '#8fa3bd'
 };
 let tickets = new Map();
@@ -324,11 +324,29 @@ function connectWs() {
   };
 }
 
-function isActive(t) { return ['pending_override', 'dispatched', 'in_progress'].includes(t.status); }
+function isActive(t) { return ['dispatched', 'in_progress'].includes(t.status); }
+
+function airportLikelihood(t) {
+  const byCode = {
+    'SF-FIRE': .95, 'SF-SPILL': .93, 'SF-FOD': .86, 'SF-EQUIP': .84,
+    'SC-BAG': .90, 'SC-ACCESS': .82, 'SC-ITEM': .78, 'SC-BEHAV': .74,
+    'MT-BELT': .90, 'MT-ESC': .82, 'MT-JBRIDGE': .78,
+    'OP-QUEUE': .86, 'OP-IT': .72, 'OP-OTHER': .60
+  };
+  const byCategory = { safety_fire: .90, security: .84, maintenance: .87, operations: .80 };
+  let score = byCode[t.incident_code] || byCategory[t.category] || .55;
+  const loc = [t.location && t.location.terminal, t.location && t.location.zone, t.location && t.location.note]
+    .filter(Boolean).join(' ').trim();
+  score += loc && !/nespecificat|unknown/i.test(loc) ? .03 : -.20;
+  if (t.urgency === 'critical') score += .02;
+  else if (t.urgency === 'high') score += .01;
+  return Math.min(.98, Math.max(.05, score));
+}
+function likelihoodPct(t) { return Math.round(airportLikelihood(t) * 100) + '%'; }
 
 function visibleTickets() {
   return [...tickets.values()]
-    .filter(t => !onlyActive || isActive(t))
+    .filter(t => isActive(t))
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
@@ -347,7 +365,7 @@ function badge(text, color) {
 function render() {
   const list = visibleTickets();
   $('queueCount').textContent = list.length;
-  $('total').textContent = tickets.size;
+  $('total').textContent = [...tickets.values()].filter(isActive).length;
   const counts = { critical: 0, high: 0, medium: 0, low: 0 };
   for (const t of tickets.values()) if (isActive(t)) counts[t.urgency] = (counts[t.urgency] || 0) + 1;
   $('c-critical').textContent = counts.critical;
@@ -367,7 +385,7 @@ function render() {
       return '<div class="ticket' + (selected === t.id ? ' sel' : '') + '" onclick="selectTicket(\'' + t.id + '\')">' +
         '<div class="bar" style="background:' + uc + '"></div>' +
         '<div class="main"><div class="top">' + badge(t.incident_code, uc) + badge(t.urgency, uc) + badge(t.status, sc) +
-        '<span class="when">' + (t.confidence ?? 0).toFixed(2) + ' · ' + ago(t.created_at) + '</span></div>' +
+        '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
         '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' + esc(depts || '—') + '</div></div></div>';
     }).join('');
@@ -389,10 +407,7 @@ function renderDetail() {
   const loc = t.location ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ') : '—';
   const kv = (k, v) => '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v || '—') + '</div>';
   let actions = '';
-  if (t.status === 'pending_override') {
-    actions = '<div class="row"><button class="btn primary grow" onclick="act(\'confirm\',\'' + t.id + '\')">✓ Confirmă</button>' +
-              '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
-  } else if (isActive(t)) {
+  if (isActive(t)) {
     actions = '<div class="row"><button class="btn grow" onclick="openModal(\'' + t.id + '\')">⇄ Reclasifică</button>' +
               '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
   } else if (t.status === 'resolved') {
@@ -402,7 +417,7 @@ function renderDetail() {
     '<div class="code" style="color:' + uc + '">' + esc(t.incident_code) + '</div>' +
     '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
     '<div class="row" style="flex-wrap:wrap">' + badge(t.urgency, uc) + badge(t.status, sc) +
-    badge('Încredere ' + Math.round((t.confidence ?? 0) * 100) + '%', '#5ba7ff') + '</div>' +
+    badge('Probabilitate Craiova ' + likelihoodPct(t), '#5ba7ff') + '</div>' +
     kv('Locație', loc) + kv('Departamente', (t.primary_departments || []).join(' · ')) +
     kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
     kv('Transcriere', t.transcript) + kv('Raționament AI', t.ai_rationale) +
@@ -495,13 +510,6 @@ async function submitReport() {
   }
 }
 
-function toggleFilter() {
-  onlyActive = !onlyActive;
-  const btn = $('filterBtn');
-  btn.classList.toggle('on', onlyActive);
-  btn.textContent = onlyActive ? 'Doar active' : 'Toate';
-  render();
-}
 
 // keyboard: R = reload, N = new report, Ctrl+Enter = submit report, Esc = close
 document.addEventListener('keydown', (e) => {

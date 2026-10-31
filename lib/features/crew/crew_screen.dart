@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // OWNER: Lica Rares Adelin (lib/features/crew/).
 //
 // FROZEN CONTRACT (main.dart depends on it):
@@ -380,5 +380,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-

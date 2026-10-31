@@ -131,16 +131,17 @@ class TicketStore:
             if classification.urgency in URGENCY_LEVELS
             else incident_type.urgency
         )
-        needs_override = confidence < self._settings.confidence_threshold
         now = utc_now()
 
+        # No pending/override state: every report is dispatched immediately.
+        # The dispatcher can still deny or reclassify it from the live queue.
         ticket: dict[str, Any] = {
             "id": str(uuid.uuid4()),
             "incident_code": incident_type.code,
             "label_ro": incident_type.label_ro,
             "category": incident_type.category,
             "urgency": urgency,
-            "status": "pending_override" if needs_override else "dispatched",
+            "status": "dispatched",
             "source": source,
             "reporter_id": reporter_id,
             "reporter_name": reporter_name,
@@ -161,12 +162,8 @@ class TicketStore:
             "resolve_votes": 0,
             "resolve_voter_ids": [],
             "quorum": self._settings.resolve_quorum,
-            "override_deadline": (
-                _deadline_iso(self._settings.override_window_seconds)
-                if needs_override
-                else None
-            ),
-            "dispatched_at": None if needs_override else now,
+            "override_deadline": None,
+            "dispatched_at": now,
             "resolved_at": None,
             "resolution_note": None,
             "decided_by": None,
@@ -181,14 +178,6 @@ class TicketStore:
             snapshot = copy.deepcopy(ticket)
 
         await self._hub.broadcast("ticket.created", {"ticket": snapshot})
-        if needs_override:
-            self._schedule_auto_dispatch(ticket["id"])
-            logger.info(
-                "Ticket %s needs dispatcher override (confidence %.2f < %.2f)",
-                ticket["id"],
-                confidence,
-                self._settings.confidence_threshold,
-            )
         return snapshot
 
     # ── dispatcher actions ────────────────────────────────────────────────────

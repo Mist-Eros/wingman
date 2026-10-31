@@ -84,4 +84,16 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 3. Optional: project the Waterfox control room on the big screen (F11).
 4. iOS stays **cloud Mac later** (Apple Developer account needed for device installs).
 
+---
 
+## 2026-10-31 — demo polish (round 2)
+
+| Change | Where | Evidence |
+|---|---|---|
+| **5-second override window removed end-to-end**: reports dispatch immediately, no `pending_override`, no deadline, no countdown UI, no bell badge, no DevTools simulation. Dispatcher can still deny/reclassify. | `backend/app/store.py`, `backend/app/main.py`, `lib/features/dispatcher/**`, `lib/features/dev/dev_tools_screen.dart`, `scripts/dashboard/index.html` | backend smoke **88/88**; app tests **160**; live report lands directly as `dispatched` |
+| **Admin queue hides closed/denied tickets** (clutter removed); counts/queue are active-only. | `lib/features/dispatcher/dispatcher_filters.dart`, `scripts/dashboard/index.html` | denied MT-BELT disappeared from queue and counters; 6 open tickets shown, denied one absent |
+| **Low-priority cards are white** instead of blue. | `lib/features/dispatcher/urgency_style.dart` | verified on the S24: OP-OTHER low card is white |
+| **"Confidence" now means likelihood of happening at Craiova airport** (type + named zone + urgency heuristic), shown in the reporter card, dispatcher cards/detail, Waterfox control room and optional Flutter web dashboard. | `lib/core/incidents/likelihood.dart`, models' `craiovaLikelihood`, `lib/features/dispatcher/**`, `scripts/dashboard/index.html` | OP-OTHER 63%, SF-FIRE 98%, SC-BAG 94% in the control room |
+| **Compact dispatcher top bar fixed** — pending bell removed, no overlap with the back/route controls. | `lib/features/dispatcher/dispatcher_screen.dart` | clean phone screenshot: WSS pill · Demo/Live · overflow · logout |
+| **Dashboard launcher repaired** (lost newline + out-of-order profile/CA setup); supports `-ApiBase`. | `scripts/serve_dashboard.ps1` | Waterfox control room opens and connects live |
+| **Live-demo over USB** while the venue Wi-Fi isolates clients: `adb reverse tcp:8443 tcp:8443` + APK built for `https://127.0.0.1:8443` (cert already covers 127.0.0.1). | `scripts/serve_dashboard.ps1`, APK build | desktop report at 10:56 → phone queue count updated to 7 via WSS |

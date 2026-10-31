@@ -712,7 +712,7 @@ class _ControlRoomState extends State<ControlRoom> {
                   Ops.urgency(ticket.urgency)),
               _badge(
                   'Stare: ${ticket.status.labelRo}', Ops.status(ticket.status)),
-              _badge('Încredere ${(ticket.confidence * 100).round()}%',
+              _badge('Probabilitate Craiova ${ticket.likelihoodLabel}',
                   Ops.accent),
             ],
           ),
