@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "events",
+  "branding": {
+    "appName": "CrowdGuard",
+    "tagline": "Event incident response · demo",
+    "seedColor": "#7C3AED",
+    "icon": "stadium"
+  },
+  "features": {
+    "rewards": true,
+    "gpsMap": true,
+    "photo": true,
+    "accessibility": true,
+    "history": true,
+    "demoReset": true
+  },
+  "quorum": {
+    "strategy": "fixed",
+    "minimum": 1,
+    "fixed": 1
+  },
+  "rewards": {
+    "strategy": "rule_based",
+    "attendedPoints": 1,
+    "resolvedBonus": 5,
+    "deniedPoints": 0,
+    "pointsLabel": "CREDITE"
+  },
+  "notifications": {
+    "roles": ["crew", "dispatcher"],
+    "scope": "primary_departments"
+  },
+  "demo": {
+    "seedTickets": 3,
+    "resetEnabled": true
+  }
+}

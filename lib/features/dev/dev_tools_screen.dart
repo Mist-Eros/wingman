@@ -85,10 +85,11 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
   }
 
   Future<void> _resetStore() async {
+    if (!mounted) return;
+    final reset = CoreScope.of(context).demoReset;
     setState(() => _busy = true);
     try {
-      await _api.devReset();
-      await CoreScope.boardOf(context).refresh();
+      await reset.reset();
       if (!mounted) return;
       setState(() {
         _busy = false;
@@ -309,13 +310,14 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _busy ? null : _resetDemo,
-                        icon: const Icon(Icons.restart_alt_rounded),
-                        label: const Text('Reset demo complet'),
+                    if (CoreScope.domainOf(context).features.demoReset)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _busy ? null : _resetDemo,
+                          icon: const Icon(Icons.restart_alt_rounded),
+                          label: const Text('Reset demo complet'),
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

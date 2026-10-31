@@ -6,6 +6,7 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 
 | Doc | What it covers |
 |---|---|
+| [modularity.md](modularity.md) | Domain profiles, rewards/quorum/notification policies, and how to reuse Wingman for another app |
 | [demo-script.md](demo-script.md) | 3-minute rehearsal flow, T-10 checklist, fallbacks |
 | [airport-zones.md](airport-zones.md) | Craiova airport zone catalog + map sources used by the AI extractor |
 | [design-tokens.md](design-tokens.md) | Wingman design system: palette, spacing, radius, components |

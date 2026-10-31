@@ -18,6 +18,7 @@ from fastapi import WebSocket
 
 from .ai import Classification
 from .config import Settings
+from .domain import DomainConfig, load_domain_config
 from .taxonomy import URGENCY_LEVELS, Taxonomy
 
 logger = logging.getLogger("airport.store")
@@ -108,10 +109,17 @@ class Hub:
 
 
 class TicketStore:
-    def __init__(self, taxonomy: Taxonomy, hub: Hub, settings: Settings) -> None:
+    def __init__(
+        self,
+        taxonomy: Taxonomy,
+        hub: Hub,
+        settings: Settings,
+        domain: DomainConfig | None = None,
+    ) -> None:
         self._taxonomy = taxonomy
         self._hub = hub
         self._settings = settings
+        self._domain = domain or load_domain_config()
         self._tickets: dict[str, dict[str, Any]] = {}
         self._order: list[str] = []  # creation order (oldest → newest)
         self._timers: dict[str, asyncio.Task[None]] = {}
@@ -171,7 +179,9 @@ class TicketStore:
             "joined_crew_ids": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
-            "quorum": max(1, len(incident_type.primary_departments)),
+            "quorum": self._domain.quorum.required_for(
+                len(incident_type.primary_departments)
+            ),
             "override_deadline": None,
             "dispatched_at": now,
             "resolved_at": None,

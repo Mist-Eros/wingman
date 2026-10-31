@@ -14,7 +14,7 @@ import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
-import '../account/account_screen.dart';
+import '../rewards/account_screen.dart';
 import '../reporter/reporter_screen.dart';
 import 'crew_ticket_card.dart';
 import 'wss_banner.dart';

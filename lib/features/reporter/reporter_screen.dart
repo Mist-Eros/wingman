@@ -87,7 +87,9 @@ class _ReporterScreenState extends State<ReporterScreen> {
       ),
     );
     if (selection == null || !mounted) return;
-    final photo = await showIncidentPhotoPrompt(context);
+    final photo = CoreScope.domainOrFallbackOf(context).features.photo
+        ? await showIncidentPhotoPrompt(context)
+        : null;
     if (!mounted) return;
     await c.submitMenu(
       selection.type,
@@ -286,18 +288,20 @@ class _ReporterScreenState extends State<ReporterScreen> {
             ],
           ),
         ] else ...<Widget>[
-          TextButton.icon(
-            icon: const Icon(Icons.map_outlined),
-            label: Text(tr('Hartă live GPS', 'Live GPS map')),
-            onPressed: listening
-                ? null
-                : () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const LiveGpsMapScreen(),
+          if (CoreScope.domainOrFallbackOf(context).features.gpsMap)
+            TextButton.icon(
+              icon: const Icon(Icons.map_outlined),
+              label: Text(tr('Hartă live GPS', 'Live GPS map')),
+              onPressed: listening
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LiveGpsMapScreen(),
+                        ),
                       ),
-                    ),
-          ),
-          const SizedBox(height: 2),
+            ),
+          if (CoreScope.domainOrFallbackOf(context).features.gpsMap)
+            const SizedBox(height: 2),
           FilledButton.tonalIcon(
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(56),
@@ -318,6 +322,10 @@ class _ReporterScreenState extends State<ReporterScreen> {
   }
 
   Future<void> _submitWithPhoto(ReporterController c) async {
+    if (!CoreScope.domainOrFallbackOf(context).features.photo) {
+      await c.submit();
+      return;
+    }
     final bytes = await showIncidentPhotoPrompt(context);
     if (!mounted) return;
     await c.submit(

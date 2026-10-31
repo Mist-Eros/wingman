@@ -63,6 +63,9 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   ├── core/                    shared contracts (owned by Lead)
 │   │   ├── api/                 REST + WSS client (dart:io, pinned TLS)
 │   │   ├── auth/                demo accounts, session/token stores
+│   │   ├── domain/              DomainConfig, quorum policy
+│   │   ├── rewards/             RewardPolicy, ledger, RewardService
+│   │   ├── demo/                demo reset service
 │   │   ├── incidents/           taxonomy — single source of truth (14 types)
 │   │   ├── models/              Ticket, Session, AnalyzeResult, Transcription
 │   │   ├── notifications/       department-scoped local notification policy
@@ -71,6 +74,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   │   └── widgets/             time-of-day sky background
 │   ├── features/
 │   │   ├── auth/                login + account chooser
+│   │   ├── rewards/             account UI (renders the reward ledger)
 │   │   ├── dev/                 DevTools (sky preview, health, demo actions)
 │   │   ├── reporter/            voice/typed report flow + local conversation brain
 │   │   ├── dispatcher/          live dashboard, open queue + filters
@@ -79,10 +83,12 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   └── features/crew/crew_preview_main.dart  local preview of the crew UI (no backend)
 ├── backend/
 │   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
+│   │   ├── domain.py            same domain profile + quorum/reward policies
 │   │   └── data/occurrences.json  source-backed incident database (59 entries)
 │   ├── seed_demo.py             seeds the 5 rehearsal tickets
 │   └── run.ps1 / run_insecure.ps1
 ├── assets/certs/ca.crt          public CA bundle pinned by the app
+├── config/domains/              application profiles (branding, features, rewards, quorum)
 ├── tool/emit_taxonomy.dart      taxonomy generator (backend/taxonomy.json)
 ├── scripts/                     certificates, builds, dashboard, gates (see scripts/README.md)
 ├── docs/                        project docs (see docs/README.md)
@@ -92,7 +98,25 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 
 ---
 
-## 4. How it works
+## 4. Reuse for another application
+
+The reusable knobs live in `config/domains/airport.json` and are loaded by both
+the Flutter app and FastAPI:
+
+```powershell
+Copy-Item config/domains/airport.json config/domains/stadium.json
+# edit branding / features / rewards / quorum
+$env:DOMAIN_CONFIG = 'config/domains/stadium.json'
+backend\run.ps1
+flutter build apk --release --dart-define=DOMAIN_CONFIG=config/domains/stadium.json
+```
+
+Rewards, quorum, notifications and demo reset are policy modules, not hardcoded
+UI arithmetic. See [docs/modularity.md](docs/modularity.md) for the module map,
+extension points and what is deliberately still domain-specific (incident
+catalog, demo accounts, localisation).
+
+## 5. How it works
 
 ```text
  phone (voice/menu)                         crew phones
@@ -128,7 +152,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 
 ---
 
-## 5. Backend quick reference
+## 6. Backend quick reference
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -149,7 +173,7 @@ Field-level contract: [CONTRACTS.md](CONTRACTS.md). Wire parity is enforced by
 
 ---
 
-## 6. DevTools & looks
+## 7. DevTools & looks
 
 Login → **wrench icon** (top-right): preview all six time-of-day looks (Zori / Dimineață /
 Amiază / După-amiază / Apus / Noapte), live backend health (Ollama/STT/WSS/tickets), simulate a
@@ -160,7 +184,7 @@ Deterministic build for photos: `--dart-define=SKY_PERIOD=night` (also `dawn`, `
 
 ---
 
-## 7. Gates
+## 8. Gates
 
 ```powershell
 .\scripts\verify_all.ps1 -Live     # analyze + tests + parity + taxonomy + smoke + live
@@ -172,7 +196,7 @@ repo** at `D:\Hackathon\Screenshots`.
 
 ---
 
-## 8. Documentation
+## 9. Documentation
 
 Full index: **[docs/README.md](docs/README.md)**. Most useful now:
 

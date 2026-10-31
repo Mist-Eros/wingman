@@ -182,3 +182,15 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Employee account**: points (join +2, resolved +10) and attended incidents; visible from crew/dispatcher app bar. | `lib/features/account/account_screen.dart` | account screen captured |
 | **Reset demo complet** in DevTools clears all tickets, history and therefore all points. | `lib/features/dev/dev_tools_screen.dart` | button + confirmation |
 | Full `Screenshots/` folder committed to the repo, plus `docs/screenshots/` manifest for the PPTX. | `Screenshots/`, `docs/screenshots/` | 37 files / PPTX manifest |
+
+---
+
+## 2026-10-31 — modular domain profile, rewards and policies
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Application profile JSON** drives branding, feature switches, reward rules and quorum for both Flutter + FastAPI (`airport.json`; example `events.json`). | `config/domains/`, `lib/core/domain/domain_config.dart`, `backend/app/domain.py` | `/api/domain` smoke output; `flutter analyze` clean |
+| **Rewards module** with pure `RewardPolicy` → `RewardLedger` → account UI; points/labels come from the profile, not the screen. | `lib/features/rewards/` | 7 new Flutter tests |
+| **Quorum policy** (one per primary department or fixed) shared by app/server; store no longer hardcodes the count. | `lib/core/domain/quorum_policy.dart`, `backend/app/domain.py` | 4 Flutter + 3 backend unit tests |
+| **Demo reset service**, **configurable notification rules**, and feature switches for rewards/GPS/photo/accessibility/reset. | `core/demo/`, `core/notifications/`, `main.dart`, reporter/account/crew/dispatcher | app tests 172; smoke 103/103 |
+| **Domain unit tests + extension guide**: `docs/modularity.md`, `config/domains/README.md`. | docs/config | 7 backend unit tests pass |

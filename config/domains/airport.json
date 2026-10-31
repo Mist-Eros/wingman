@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "airport",
+  "branding": {
+    "appName": "Wingman",
+    "tagline": "Airport incident response · demo",
+    "seedColor": "#1D4E89",
+    "icon": "flight_takeoff"
+  },
+  "features": {
+    "rewards": true,
+    "gpsMap": true,
+    "photo": true,
+    "accessibility": true,
+    "history": true,
+    "demoReset": true
+  },
+  "quorum": {
+    "strategy": "one_per_primary_department",
+    "minimum": 1,
+    "fixed": 2
+  },
+  "rewards": {
+    "strategy": "rule_based",
+    "attendedPoints": 2,
+    "resolvedBonus": 10,
+    "deniedPoints": 0,
+    "pointsLabel": "PUNCTE"
+  },
+  "notifications": {
+    "roles": ["crew", "dispatcher"],
+    "scope": "primary_departments"
+  },
+  "demo": {
+    "seedTickets": 5,
+    "resetEnabled": true
+  }
+}

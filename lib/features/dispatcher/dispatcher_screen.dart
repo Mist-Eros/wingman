@@ -18,7 +18,7 @@ import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
-import '../account/account_screen.dart';
+import '../rewards/account_screen.dart';
 import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
