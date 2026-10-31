@@ -265,6 +265,10 @@ class _CrewScreenState extends State<CrewScreen> {
                                     ticket.id,
                                     crewId: session.userId,
                                   ),
+                                  onLeave: () => board.leave(
+                                    ticket.id,
+                                    crewId: session.userId,
+                                  ),
                                   lastActionError: () => board.lastActionError,
                                 ),
                               );

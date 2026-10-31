@@ -611,6 +611,16 @@ async def join_ticket(ticket_id: str, body: schemas.JoinIn) -> dict:
     return {"ticket": ticket}
 
 
+@api.post("/tickets/{ticket_id}/leave")
+async def leave_ticket(ticket_id: str, body: schemas.JoinIn) -> dict:
+    """Retract an accidental join; also removes the crew member's vote."""
+    try:
+        ticket = await store.leave(ticket_id, body.crew_id)
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
 @api.post("/tickets/{ticket_id}/vote")
 async def vote_ticket(ticket_id: str, body: schemas.VoteIn) -> dict:
     try:

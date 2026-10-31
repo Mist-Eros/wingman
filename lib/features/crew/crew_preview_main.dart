@@ -129,6 +129,31 @@ class _PreviewBoard extends ChangeNotifier {
     return true;
   }
 
+  Future<bool> leave(String ticketId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    final current = find(ticketId);
+    if (current == null) {
+      lastActionError = 'Ticket inexistent';
+      notifyListeners();
+      return false;
+    }
+    if (!current.isJoinedBy(crewId)) return true;
+    final joined = current.joinedCrewIds.where((id) => id != crewId).toList();
+    final voters = current.resolveVoterIds.where((id) => id != crewId).toList();
+    lastActionError = null;
+    _replace(
+      current.copyWith(
+        joinedCrewIds: joined,
+        resolveVoterIds: voters,
+        resolveVotes: voters.length,
+        status: joined.isEmpty ? TicketStatus.dispatched : current.status,
+        version: current.version + 1,
+        updatedAt: DateTime.now().toUtc(),
+      ),
+    );
+    return true;
+  }
+
   Future<bool> vote(String ticketId) async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
     final current = find(ticketId);
@@ -302,6 +327,7 @@ class _CrewPreviewScreenState extends State<_CrewPreviewScreen> {
                       crewId: _PreviewBoard.crewId,
                       onJoin: () => _board.join(ticket.id),
                       onVote: () => _board.vote(ticket.id),
+                      onLeave: () => _board.leave(ticket.id),
                       lastActionError: () => _board.lastActionError,
                     ),
                   );

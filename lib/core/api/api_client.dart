@@ -260,6 +260,14 @@ class ApiClient {
         'crew_name': crewName,
       });
 
+  Future<Ticket> leave(
+    String ticketId, {
+    required String crewId,
+  }) =>
+      _mutate('POST', '/api/tickets/$ticketId/leave', <String, dynamic>{
+        'crew_id': crewId,
+      });
+
   Future<Ticket> vote(
     String ticketId, {
     required String crewId,

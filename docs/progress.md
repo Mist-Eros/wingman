@@ -305,3 +305,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | Self-report + self-resolve alone, high/critical | **7** |
 
 Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backend ledgers, account copy and tests.
+
+---
+
+## 2026-10-31 — “am apăsat din greșeală” / leave
+
+| Change | Where | Evidence |
+|---|---|---|
+| Crew can retract an accidental **Preia**: endpoint removes the crew member and their vote, reverts `in_progress` → `dispatched` when nobody remains, and broadcasts `ticket.updated`. | `POST /api/tickets/{id}/leave`, `store.leave`, `api_client.leave`, `TicketBoard.leave` | API test: join → in_progress; leave → dispatched, empty crew, 0 votes |
+| Expanded crew card shows a confirm dialog: **„Uh oh, am apăsat din greșeală — retrage-mă”**. | `crew_ticket_card.dart` | Flutter analyze/tests |
+| Leaving before resolution earns 0 points; no resolved ticket can be left. | rewards + store guard | backend tests |

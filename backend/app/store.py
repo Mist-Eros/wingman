@@ -446,6 +446,36 @@ class TicketStore:
             )
         return snapshot
 
+    async def leave(
+        self,
+        ticket_id: str,
+        crew_id: str,
+    ) -> dict[str, Any]:
+        """Undo an accidental join: remove the crew member and their vote."""
+        async with self._lock:
+            ticket = self._require_ticket(ticket_id)
+            if ticket["status"] in ("pending_override", "resolved", "denied"):
+                raise Conflict("Cannot leave a closed ticket")
+            if crew_id not in ticket["joined_crew_ids"]:
+                return copy.deepcopy(ticket)
+            ticket["joined_crew_ids"].remove(crew_id)
+            if crew_id in ticket["resolve_voter_ids"]:
+                ticket["resolve_voter_ids"].remove(crew_id)
+                ticket["resolve_votes"] = len(ticket["resolve_voter_ids"])
+            if not ticket["joined_crew_ids"] and ticket["status"] == "in_progress":
+                ticket["status"] = "dispatched"
+            self._bump(ticket)
+            snapshot = copy.deepcopy(ticket)
+        await self._hub.broadcast(
+            "ticket.updated",
+            {
+                "ticket": snapshot,
+                "action": "left",
+                "crew_id": crew_id,
+            },
+        )
+        return snapshot
+
     async def vote(
         self,
         ticket_id: str,

@@ -14,6 +14,7 @@ class CrewTicketCard extends StatefulWidget {
     required this.crewId,
     required this.onJoin,
     required this.onVote,
+    required this.onLeave,
     this.lastActionError,
   });
 
@@ -21,6 +22,7 @@ class CrewTicketCard extends StatefulWidget {
   final String crewId;
   final Future<bool> Function() onJoin;
   final Future<bool> Function() onVote;
+  final Future<bool> Function() onLeave;
   final String? Function()? lastActionError;
 
   @override
@@ -30,12 +32,13 @@ class CrewTicketCard extends StatefulWidget {
 class _CrewTicketCardState extends State<CrewTicketCard> {
   bool _joining = false;
   bool _voting = false;
+  bool _leaving = false;
   bool _expanded = false;
 
   Ticket get _ticket => widget.ticket;
   bool get _joined => _ticket.isJoinedBy(widget.crewId);
   bool get _voted => _ticket.hasVotedBy(widget.crewId);
-  bool get _busy => _joining || _voting;
+  bool get _busy => _joining || _voting || _leaving;
 
   Color get _accent {
     switch (_ticket.category) {
@@ -88,6 +91,43 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
     if (!ok) {
       _showError(
         widget.lastActionError?.call() ?? 'Votul nu a putut fi înregistrat.',
+      );
+    }
+  }
+
+  Future<void> _onLeave() async {
+    if (!_joined || _busy || _ticket.status.isTerminal) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Retragi intervenția?'),
+        content: const Text(
+          'Ai apăsat din greșeală „Preia”? Te scoatem din tichet, '
+          'votul tău se șterge, iar tichetul revine în coadă.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Rămân'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Retrage-mă'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _leaving = true);
+    final ok = await widget.onLeave();
+    if (!mounted) return;
+    setState(() {
+      _leaving = false;
+      if (ok) _expanded = false;
+    });
+    if (!ok) {
+      _showError(
+        widget.lastActionError?.call() ?? 'Nu am putut retrage intervenția.',
       );
     }
   }
@@ -258,6 +298,8 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                                           quorum: _ticket.quorum,
                                           onJoin: _onJoin,
                                           onVote: _onVote,
+                                          onLeave: _onLeave,
+                                          leaving: _leaving,
                                           accent: _accent,
                                         ),
                                       ],
@@ -374,6 +416,8 @@ class _DispatchPanel extends StatelessWidget {
     required this.quorum,
     required this.onJoin,
     required this.onVote,
+    required this.onLeave,
+    required this.leaving,
     required this.accent,
   });
 
@@ -387,6 +431,8 @@ class _DispatchPanel extends StatelessWidget {
   final int quorum;
   final VoidCallback onJoin;
   final VoidCallback onVote;
+  final VoidCallback onLeave;
+  final bool leaving;
   final Color accent;
 
   @override
@@ -500,6 +546,23 @@ class _DispatchPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              onPressed: (leaving || voting) ? null : onLeave,
+              icon: leaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.undo_rounded, size: 18),
+              label: Text(
+                leaving
+                    ? 'Se retrage…'
+                    : 'Uh oh, am apăsat din greșeală — retrage-mă',
+                style: const TextStyle(fontSize: 12),
               ),
             ),
           ] else
