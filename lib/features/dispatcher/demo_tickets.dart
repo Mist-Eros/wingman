@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
 
 /// Local demo data for UI work before the mobile/backend link is live.
-/// Uses real [Ticket] models from core — never invents parallel types.
+/// Uses real [Ticket] models from core â€” never invents parallel types.
 List<Ticket> buildDemoTickets({DateTime? now}) {
   final n = (now ?? DateTime.now()).toUtc();
 
@@ -45,12 +47,10 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       standbyDepartments: type.standbyDepartments,
       joinedCrewIds: joined,
       resolveVotes: resolveVotes,
-      quorum: switch (urgency) {
-        Urgency.low => 1,
-        Urgency.medium => 1,
-        Urgency.high => 2,
-        Urgency.critical => 2,
-      },
+      quorum: max(
+        1,
+        IncidentTaxonomy.byCode(code)?.primaryDepartments.length ?? 1,
+      ),
       overrideDeadline: overrideDeadline,
       decidedBy: decidedBy,
       createdAt: created,
@@ -60,7 +60,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
   }
 
   return <Ticket>[
-    // Low-confidence demo ticket — dispatched immediately, no override window.
+    // Low-confidence demo ticket â€” dispatched immediately, no override window.
     fromType(
       id: 'demo-pending-01',
       code: 'SF-FOD',
@@ -68,10 +68,10 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       status: TicketStatus.dispatched,
       confidence: 0.52,
       transcript: 'ceva pe pista nu stiu exact, langa stand 7',
-      locationZone: 'Stand 7 · pistă',
+      locationZone: 'Stand 7 Â· pistÄƒ',
       reporterName: 'Andrei P.',
       aiRationale:
-          'Posibil corp străin pe pistă — natura neclară, natura raportării e ambiguă.',
+          'Posibil corp strÄƒin pe pistÄƒ â€” natura neclarÄƒ, natura raportÄƒrii e ambiguÄƒ.',
       createdAt: n.subtract(const Duration(seconds: 2)),
     ),
     fromType(
@@ -80,10 +80,11 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       urgency: Urgency.critical,
       status: TicketStatus.dispatched,
       confidence: 0.94,
-      transcript: 'Este fum lângă poarta 12, miroase a ars',
+      transcript: 'Este fum lÃ¢ngÄƒ poarta 12, miroase a ars',
       locationZone: 'Poarta 12',
       reporterName: 'Maria I.',
-      aiRationale: 'Fum raportat în zona porții 12 — pompieri + securitate.',
+      aiRationale:
+          'Fum raportat Ã®n zona porÈ›ii 12 â€” pompieri + securitate.',
       decidedBy: null,
       createdAt: n.subtract(const Duration(minutes: 3)),
     ),
@@ -94,9 +95,9 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       status: TicketStatus.inProgress,
       confidence: 0.88,
       transcript: 'persoana fara autorizatie langa echipamente airside',
-      locationZone: 'Airside · Zona B',
+      locationZone: 'Airside Â· Zona B',
       reporterName: 'Vlad R.',
-      aiRationale: 'Acces neautorizat pe platformă — securitate în teren.',
+      aiRationale: 'Acces neautorizat pe platformÄƒ â€” securitate Ã®n teren.',
       joined: const <String>['crew-1', 'crew-2'],
       resolveVotes: 1,
       decidedBy: 'dispatcher-1',
@@ -111,7 +112,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       transcript: 'extinctorul de la stand 3 lipseste',
       locationZone: 'Stand 3',
       reporterName: 'Elena M.',
-      aiRationale: 'Echipament de stingere lipsă pe poziție.',
+      aiRationale: 'Echipament de stingere lipsÄƒ pe poziÈ›ie.',
       createdAt: n.subtract(const Duration(minutes: 12)),
     ),
     fromType(
@@ -123,7 +124,8 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       transcript: 'am o pata de ulei la sectorul 3',
       locationZone: 'Sector 3',
       reporterName: 'Ion C.',
-      aiRationale: 'Scurgere de ulei în sectorul 3 — mentenanță + terminal.',
+      aiRationale:
+          'Scurgere de ulei Ã®n sectorul 3 â€” mentenanÈ›Äƒ + terminal.',
       joined: const <String>['crew-clean-1'],
       resolveVotes: 0,
       decidedBy: 'dispatcher-1',
@@ -138,7 +140,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       transcript: 'bagaj nesupravegheat langa check-in 4',
       locationZone: 'Check-in 4',
       reporterName: 'Sofia D.',
-      aiRationale: 'Bagaj abandonat la check-in — securitate.',
+      aiRationale: 'Bagaj abandonat la check-in â€” securitate.',
       createdAt: n.subtract(const Duration(minutes: 6)),
     ),
     fromType(
@@ -150,7 +152,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       transcript: 'iluminat slab pe culoarul dinspre bagaje',
       locationZone: 'Claim band 2',
       reporterName: 'Radu T.',
-      aiRationale: 'Problemă operațională minoră — rutare generală.',
+      aiRationale: 'ProblemÄƒ operaÈ›ionalÄƒ minorÄƒ â€” rutare generalÄƒ.',
       createdAt: n.subtract(const Duration(minutes: 22)),
     ),
     fromType(
@@ -162,7 +164,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       transcript: 'lichid pe podea la poarta 5, am izolat zona',
       locationZone: 'Poarta 5',
       reporterName: 'Ana B.',
-      aiRationale: 'Scurgere curățată — vot quorum atins.',
+      aiRationale: 'Scurgere curÄƒÈ›atÄƒ â€” vot quorum atins.',
       joined: const <String>['crew-a', 'crew-b'],
       resolveVotes: 2,
       decidedBy: 'dispatcher-1',

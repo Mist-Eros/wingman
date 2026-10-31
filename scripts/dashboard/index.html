@@ -6,9 +6,9 @@
 <title>Wingman · Control Room</title>
 <style>
   :root {
-    --bg:#081120; --panel:#0e1a2b; --card:#132238; --line:#22324a;
-    --ink:#e8f0fa; --muted:#8fa3bd; --accent:#5ba7ff;
-    --red:#ff6b6b; --orange:#ffa94d; --yellow:#ffd43b; --green:#3dd68c;
+    --bg:#F4F6F9; --panel:#FFFFFF; --card:#FFFFFF; --line:#E2E8F0;
+    --ink:#0F172A; --muted:#64748B; --accent:#0F4C81;
+    --red:#D92D20; --orange:#DC6803; --yellow:#CA8A04; --green:#027A48;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -91,6 +91,7 @@
   .detail .k { font-size: 9px; letter-spacing: 1.1px; color: var(--muted);
                text-transform: uppercase; margin-top: 8px; }
   .detail .v { font-size: 13px; }
+  .detail .photo { width:100%; border-radius:10px; margin-top:8px; border:1px solid var(--line); }
   .detail .spacer { flex: 1; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
            background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -108,7 +109,9 @@
                 cursor: pointer; font-size: 12px; }
   .tax button:hover { border-color: var(--accent); }
   ::-webkit-scrollbar { width: 10px; }
-  ::-webkit-scrollbar-thumb { background: #22324a; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+.tabs { display:flex; gap:6px; align-items:center; }
+.tab-count { background:#E8F1FD; color:#0F4C81; border-radius:999px; padding:1px 7px; font-size:11px; margin-left:4px; }
   /* ── report dialog ───────────────────────────────────────────────────── */
   .modal-bg { backdrop-filter: blur(5px); }
   .report-modal {
@@ -141,6 +144,49 @@
   .report-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
   .report-actions .btn.primary { padding: 11px 20px; font-size: 13px; box-shadow: 0 6px 20px rgba(91,167,255,.25); }
   .report-actions .btn.primary:disabled { opacity: .6; cursor: wait; }
+
+  /* ── admin-view theme overrides ──────────────────────────────────────── */
+  body { background:#F4F6F9; color:#0F172A; }
+  .panel { background:#fff; border-color:#E2E8F0; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .brand .logo { background:#E8F1FD; border-color:#B2D4FF; color:#0F4C81; }
+  .brand .sub, .label, .tiny, .stat .name, .kv span:first-child,
+  .ticket .meta, .ticket .when, .empty, .detail .k, .event { color:#64748B; }
+  .stat .n, .kv span:last-child { color:#0F172A; }
+  .pill.ok { color:#027A48; background:#ECFDF3; border-color:#A6F4C5; }
+  .pill.bad { color:#B42318; background:#FEF3F2; border-color:#FDA29B; }
+  .btn { background:#fff; border-color:#E2E8F0; color:#0F172A; }
+  .btn:hover { border-color:#0F4C81; color:#0F4C81; }
+  .btn.primary { background:#0F4C81; color:#fff; border-color:#0F4C81; }
+  .btn.danger { color:#B42318; border-color:#FDA29B; }
+  .chip { background:#fff; border-color:#E2E8F0; color:#0F172A; }
+  .chip.on { background:#E8F1FD; border-color:#0F4C81; color:#0F4C81; }
+  .count { background:#E8F1FD; color:#0F4C81; border-color:#B2D4FF; }
+  .ticket { background:#fff; border-color:#E2E8F0; }
+  .ticket h3 { color:#0F172A; }
+  .ticket .meta { color:#64748B; }
+  .ticket.sel { border-color:#0F4C81; box-shadow:0 0 0 1px #0F4C81 inset; }
+  .when { color:#94A3B8; }
+  .detail { background:#fff; }
+  .toast { background:#0F172A; color:#fff; border-color:#0F172A; }
+  .modal { background:#fff; border-color:#E2E8F0; color:#0F172A; }
+  .tax button { background:#F8FAFC; border-color:#E2E8F0; color:#0F172A; }
+  .tax button:hover { border-color:#0F4C81; }
+  .report-modal { background:#fff; border-color:#E2E8F0; color:#0F172A; box-shadow:0 30px 80px rgba(15,23,42,.22); }
+  .report-head { background:#F8FAFC; border-bottom-color:#E2E8F0; }
+  .report-head h3 { color:#0F172A; }
+  .report-head .tiny { color:#64748B; }
+  .report-icon { color:#0F4C81; background:#E8F1FD; border-color:#B2D4FF; }
+  .report-close { color:#64748B; }
+  .report-close:hover { background:#EEF2F7; color:#0F172A; }
+  .report-body textarea, .report-body input { background:#fff; color:#0F172A; border-color:#E2E8F0; }
+  .report-body textarea:focus, .report-body input:focus { border-color:#0F4C81; box-shadow:0 0 0 3px rgba(15,76,129,.12); }
+  .report-body textarea::placeholder, .report-body input::placeholder { color:#94A3B8; }
+  .report-foot { background:#F8FAFC; border-top-color:#E2E8F0; }
+  .report-hint { color:#64748B; }
+  .kbd { background:#fff; color:#0F172A; border-color:#CBD5E1; }
+  .report-actions .btn.primary { box-shadow:0 6px 20px rgba(15,76,129,.18); }
+  .modal-bg { background:rgba(15,23,42,.42); }
+  .empty .big { opacity:.35; }
 </style></head>
 <body>
 <div class="app">
@@ -151,7 +197,7 @@
         <div class="logo">✈</div>
         <div>
           <h1>Wingman</h1>
-          <div class="sub">CONTROL ROOM · LIVE</div>
+          <div class="sub">ADMIN VIEW · LIVE</div>
         </div>
       </div>
       <div style="margin-top:12px">
@@ -184,11 +230,15 @@
   <!-- feed -->
   <main class="feed">
     <div class="feed-head">
-      <h2>Coadă incidente</h2>
+      <h2 id="feedTitle">Coadă incidente</h2>
       <span class="count" id="queueCount">0</span>
       <span style="flex:1"></span>
+      <div class="tabs">
+        <button id="tabQueue" class="chip on" onclick="setTab('queue')">Coadă</button>
+        <button id="tabHistory" class="chip" onclick="setTab('history')">Istoric <span class="tab-count" id="historyCount">0</span></button>
+      </div>
+      <button id="clearHistory" class="btn danger" style="display:none" onclick="clearHistory()">🗑 Golește istoricul</button>
       <button class="chip" onclick="openReport()">＋ Raportează</button>
-      
     </div>
     <div class="list" id="list"></div>
   </main>
@@ -253,14 +303,17 @@
 <script>
 // Generated at serve time by scripts/serve_dashboard.ps1 → config.js
 const CFG = window.WINGMAN_CONFIG || { api: 'https://192.168.0.170:8443', token: 'demo-token' };
-const URGENCY_COLOR = { critical: '#ff6b6b', high: '#ffa94d', medium: '#ffd43b', low: '#3dd68c' };
+const URGENCY_COLOR = { critical: '#D92D20', high: '#DC6803', medium: '#CA8A04', low: '#475467' };
+const URGENCY_FILL = { critical: '#FEE4E2', high: '#FFF1E3', medium: '#FEF9C3', low: '#FFFFFF' };
+const URGENCY_LABEL = { critical: 'Critică', high: 'Ridicată', medium: 'Medie', low: 'Scăzută' };
 const STATUS_COLOR = {
-  dispatched: '#5ba7ff', in_progress: '#ffd43b',
-  resolved: '#3dd68c', denied: '#8fa3bd'
+  dispatched: '#0F4C81', in_progress: '#B45309',
+  resolved: '#027A48', denied: '#64748B'
 };
+const STATUS_LABEL = { dispatched: 'Dispecerizat', in_progress: 'În lucru', resolved: 'Rezolvat', denied: 'Respins' };
 let tickets = new Map();
 let selected = null;
-let onlyActive = true;
+let activeTab = 'queue';
 let ws = null;
 let wsRetry = null;
 let taxonomy = [];
@@ -295,6 +348,7 @@ async function loadTickets(notify = false) {
     const data = await request('/api/tickets');
     const list = data.tickets || [];
     tickets = new Map(list.map(t => [t.id, t]));
+    if (selected && !tickets.has(selected)) selected = null;
     render();
     if (notify) toast('Listă reîncărcată · ' + list.length + ' tichete');
   } catch (err) {
@@ -314,6 +368,7 @@ function connectWs() {
     let msg;
     try { msg = JSON.parse(event.data); } catch { return; }
     if (msg.type === 'hello') { setConnection(true); $('lastEvent').textContent = 'Conectat la fluxul live'; return; }
+    if (msg.type === 'history.cleared') { selected = null; loadTickets(); return; }
     if (msg.ticket) {
       tickets.set(msg.ticket.id, msg.ticket);
       const labels = { ticket_created: 'Tichet nou', ticket_updated: 'Actualizare', ticket_resolved: 'Rezolvat' };
@@ -325,6 +380,8 @@ function connectWs() {
 }
 
 function isActive(t) { return ['dispatched', 'in_progress'].includes(t.status); }
+function isTerminal(t) { return ['resolved', 'denied'].includes(t.status); }
+function setTab(tab) { activeTab = tab; selected = null; render(); }
 
 function airportLikelihood(t) {
   const byCode = {
@@ -345,8 +402,9 @@ function airportLikelihood(t) {
 function likelihoodPct(t) { return Math.round(airportLikelihood(t) * 100) + '%'; }
 
 function visibleTickets() {
+  const filter = activeTab === 'queue' ? isActive : isTerminal;
   return [...tickets.values()]
-    .filter(t => isActive(t))
+    .filter(filter)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
@@ -364,10 +422,20 @@ function badge(text, color) {
 
 function render() {
   const list = visibleTickets();
+  const activeList = [...tickets.values()].filter(isActive);
+  const historyList = [...tickets.values()].filter(isTerminal);
+
   $('queueCount').textContent = list.length;
-  $('total').textContent = [...tickets.values()].filter(isActive).length;
+  $('feedTitle').textContent = activeTab === 'queue' ? 'Coadă incidente' : 'Istoric';
+  $('tabQueue').classList.toggle('on', activeTab === 'queue');
+  $('tabHistory').classList.toggle('on', activeTab === 'history');
+  $('historyCount').textContent = historyList.length;
+  $('clearHistory').style.display =
+    activeTab === 'history' && historyList.length ? 'inline-flex' : 'none';
+  $('total').textContent = activeList.length;
+
   const counts = { critical: 0, high: 0, medium: 0, low: 0 };
-  for (const t of tickets.values()) if (isActive(t)) counts[t.urgency] = (counts[t.urgency] || 0) + 1;
+  for (const t of activeList) counts[t.urgency] = (counts[t.urgency] || 0) + 1;
   $('c-critical').textContent = counts.critical;
   $('c-high').textContent = counts.high;
   $('c-medium').textContent = counts.medium;
@@ -375,19 +443,37 @@ function render() {
 
   const box = $('list');
   if (!list.length) {
-    box.innerHTML = '<div class="empty"><div class="big">🛬</div><div style="margin-top:10px;font-weight:700;color:var(--ink)">Niciun incident activ</div><div style="margin-top:4px">Pornește un raport din aplicația de pe telefon.</div></div>';
+    const title = activeTab === 'queue' ? 'Niciun incident activ' : 'Istoricul este gol';
+    const sub = activeTab === 'queue'
+      ? 'Pornește un raport din aplicația de pe telefon.'
+      : 'Tichetele rezolvate sau respinse apar aici.';
+    box.innerHTML = '<div class="empty"><div class="big">' +
+      (activeTab === 'queue' ? '🛬' : '🗂️') + '</div>' +
+      '<div style="margin-top:10px;font-weight:700;color:var(--ink)">' + title + '</div>' +
+      '<div style="margin-top:4px">' + sub + '</div></div>';
   } else {
     box.innerHTML = list.map(t => {
-      const uc = URGENCY_COLOR[t.urgency] || '#5ba7ff';
-      const sc = STATUS_COLOR[t.status] || '#8fa3bd';
+      const uc = URGENCY_COLOR[t.urgency] || '#0F4C81';
+      const fill = URGENCY_FILL[t.urgency] || '#FFFFFF';
+      const sc = STATUS_COLOR[t.status] || '#64748B';
+      const border = t.urgency === 'critical' ? '#FDA29B'
+        : t.urgency === 'high' ? '#FED7AA'
+        : t.urgency === 'medium' ? '#FEF08A' : '#E2E8F0';
       const depts = (t.primary_departments || []).join(' · ');
-      const loc = t.location ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ') : '';
-      return '<div class="ticket' + (selected === t.id ? ' sel' : '') + '" onclick="selectTicket(\'' + t.id + '\')">' +
+      const loc = t.location
+        ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ')
+        : '';
+      return '<div class="ticket' + (selected === t.id ? ' sel' : '') +
+        '" style="background:' + fill + ';border-color:' + border +
+        '" onclick="selectTicket(\'' + t.id + '\')">' +
         '<div class="bar" style="background:' + uc + '"></div>' +
-        '<div class="main"><div class="top">' + badge(t.incident_code, uc) + badge(t.urgency, uc) + badge(t.status, sc) +
+        '<div class="main"><div class="top">' +
+        badge(t.incident_code, uc) + badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
+        badge(STATUS_LABEL[t.status] || t.status, sc) +
         '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
-        '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' + esc(depts || '—') + '</div></div></div>';
+        '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' +
+        esc(depts || '—') + '</div></div></div>';
     }).join('');
   }
   renderDetail();
@@ -402,27 +488,48 @@ function renderDetail() {
     d.innerHTML = '<div class="empty"><div class="big">🎯</div><div style="margin-top:8px;font-weight:700;color:var(--ink)">Selectează un incident</div><div style="margin-top:4px">Detaliile și acțiunile apar aici.</div></div>';
     return;
   }
-  const uc = URGENCY_COLOR[t.urgency] || '#5ba7ff';
-  const sc = STATUS_COLOR[t.status] || '#8fa3bd';
-  const loc = t.location ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ') : '—';
+  const uc = URGENCY_COLOR[t.urgency] || '#0F4C81';
+  const sc = STATUS_COLOR[t.status] || '#64748B';
+  const loc = t.location
+    ? [t.location.terminal, t.location.zone, t.location.gate].filter(Boolean).join(' · ')
+    : '—';
   const kv = (k, v) => '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v || '—') + '</div>';
+  const history = isTerminal(t);
   let actions = '';
-  if (isActive(t)) {
+  if (!history) {
     actions = '<div class="row"><button class="btn grow" onclick="openModal(\'' + t.id + '\')">⇄ Reclasifică</button>' +
               '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
-  } else if (t.status === 'resolved') {
-    actions = '<div class="v" style="color:var(--green)">✓ Rezolvat</div>';
+  } else {
+    actions = '<div class="v" style="color:' + sc + '">' +
+      (t.status === 'resolved' ? '✓ Tichet rezolvat' : '✕ Tichet respins') + '</div>';
   }
   d.innerHTML =
     '<div class="code" style="color:' + uc + '">' + esc(t.incident_code) + '</div>' +
     '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
-    '<div class="row" style="flex-wrap:wrap">' + badge(t.urgency, uc) + badge(t.status, sc) +
-    badge('Probabilitate Craiova ' + likelihoodPct(t), '#5ba7ff') + '</div>' +
+    '<div class="row" style="flex-wrap:wrap">' +
+    badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
+    badge(STATUS_LABEL[t.status] || t.status, sc) +
+    badge('Probabilitate Craiova ' + likelihoodPct(t), '#0F4C81') + '</div>' +
     kv('Locație', loc) + kv('Departamente', (t.primary_departments || []).join(' · ')) +
     kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
-    kv('Transcriere', t.transcript) + kv('Raționament AI', t.ai_rationale) +
-    (t.resolution_note ? kv('Notă rezolvare', t.resolution_note) : '') +
+    kv('Voturi', (t.resolve_votes || 0) + ' / ' + (t.quorum || 1)) +
+    kv('Transcriere', t.transcript) +
+    (t.photo_base64 ? '<img class="photo" src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">' : '') +
+    (t.decided_by ? kv('Decis de', t.decided_by) : '') +
+    (t.resolution_note ? kv('Notă', t.resolution_note) : '') +
     '<div class="spacer"></div>' + actions;
+}
+
+async function clearHistory() {
+  if (!confirm('Golești istoricul? Tichetele rezolvate și respinse vor fi șterse definitiv.')) return;
+  try {
+    const data = await request('/api/tickets/clear-history', { method: 'POST' });
+    selected = null;
+    await loadTickets();
+    toast('Istoric golit · ' + (data.cleared || 0) + ' tichete');
+  } catch (err) {
+    toast('Golirea istoricului a eșuat: ' + err.message);
+  }
 }
 
 async function act(kind, id) {

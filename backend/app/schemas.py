@@ -39,6 +39,10 @@ class ReportIn(BaseModel):
     hint_code: str | None = Field(default=None, max_length=40)
     use_ai: bool = True
 
+    # Optional photo (base64 JPEG/PNG). Not mandatory: dangerous scenes often
+    # cannot wait for a camera.
+    photo_base64: str | None = Field(default=None, max_length=2_500_000)
+
     # DEMO-ONLY: forces the low-confidence path so the 5-second dispatcher
     # override window can be triggered deterministically during rehearsal and
     # during the judged demo. The mobile app never sends this field.

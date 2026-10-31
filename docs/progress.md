@@ -148,3 +148,58 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 |---|---|---|
 | Crew resolution quorum now depends on danger: **low/medium = 1 vote**, **high/critical = 2 votes** (was always 2). | `backend/app/store.py` (`QUORUM_BY_URGENCY`), `lib/features/dispatcher/demo_tickets.dart` | smoke: low OP-OTHER resolves with 1 vote; critical SF-FIRE still needs 2; 103/103 |
 | DevTools shows the mapping; docs updated. | `lib/features/dev/dev_tools_screen.dart`, README/CONTRACTS | health exposes `resolve_quorum_by_urgency` |
+
+---
+
+## 2026-10-31 — 8×8×8 full-screen incident menu
+
+| Change | Where | Evidence |
+|---|---|---|
+| **8 categories × 8 subcategories × 8 problems = 512** catalog, each mapped to one of the 14 operational codes and carrying exact label + location. | `lib/features/reporter/menu/incident_menu_data.dart`, generator | data test: 8/8/8, 512 unique IDs, valid codes |
+| Menu redesigned as a **full-screen 4 rows × 2 columns grid** at all 3 levels; **3 taps** (category → subcategory → problem) submit the report with the exact problem label/location. | `lib/features/reporter/type_picker_page.dart`, `reporter_screen.dart`, `reporter_controller.dart` | verified on S24; ticket transcript “Bagaj suspect — Terminal”, SC-BAG |
+| New menu screenshots and equal cards. | `D:\Hackathon\Screenshots\Wingman\02_Reporter\06–09_*`, `Team/team-grid.png` | 4 captures |
+
+---
+
+## 2026-10-31 — PC dashboard rebuilt as admin view
+
+| Change | Where | Evidence |
+|---|---|---|
+| Desktop control room restyled to match the phone admin view: light theme, urgency-tinted queue cards, stats, **Coadă / Istoric tabs**, history cards and **Golește istoricul**, report button, detail pane. | `scripts/dashboard/index.html` | Waterfox screenshots: queue + history + light report modal; JS syntax check OK |
+| Backend clear-history endpoint drives the dashboard too. | `POST /api/tickets/clear-history` | 2 history tickets shown, clear-all available |
+| Menu grid corrected to **4 rows × 2 columns** at all 3 levels. | `lib/features/reporter/type_picker_page.dart` | S24 capture; 8×8×8 data intact |
+
+---
+
+## 2026-10-31 — accessibility, GPS map, photos, account, reset
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Accessibility profiles** for blind, mute, deaf, colorblind, motor and cognitive staff; text scale, high contrast, colorblind palette, visual alerts/vibration, spoken guidance, typed-first, large targets, simplified language. Applied globally via `MaterialApp.builder`. | `lib/core/accessibility/**`, `lib/main.dart`, login icon | settings screen captured; docs in `docs/accessibility.md` |
+| **Live GPS map** with real location stream, schematic Craiova map, accuracy circle, coordinates and update status. | `lib/features/reporter/live_gps_map_screen.dart`, reporter button | screen captured |
+| **Optional 5-second photo** prompt with a large camera button; photo is attached to the ticket and shown in dispatcher/dashboard detail. Report never waits more than 5 s. | `lib/features/reporter/photo_prompt.dart`, reporter flow, `photo_base64` wire field, dashboard/dispatcher photo | prompt captured; smoke 103/103 |
+| **Quorum = one respondent per primary department** (instead of a global 2). | `backend/app/store.py`, demo tickets | low/medium resolve with fewer votes; fire+security needs 2 |
+| **Employee account**: points (join +2, resolved +10) and attended incidents; visible from crew/dispatcher app bar. | `lib/features/account/account_screen.dart` | account screen captured |
+| **Reset demo complet** in DevTools clears all tickets, history and therefore all points. | `lib/features/dev/dev_tools_screen.dart` | button + confirmation |
+| Full `Screenshots/` folder committed to the repo, plus `docs/screenshots/` manifest for the PPTX. | `Screenshots/`, `docs/screenshots/` | 37 files / PPTX manifest |
+
+---
+
+## 2026-10-31 — modular domain profile, rewards and policies
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Application profile JSON** drives branding, feature switches, reward rules and quorum for both Flutter + FastAPI (`airport.json`; example `events.json`). | `config/domains/`, `lib/core/domain/domain_config.dart`, `backend/app/domain.py` | `/api/domain` smoke output; `flutter analyze` clean |
+| **Rewards module** with pure `RewardPolicy` → `RewardLedger` → account UI; points/labels come from the profile, not the screen. | `lib/features/rewards/` | 7 new Flutter tests |
+| **Quorum policy** (one per primary department or fixed) shared by app/server; store no longer hardcodes the count. | `lib/core/domain/quorum_policy.dart`, `backend/app/domain.py` | 4 Flutter + 3 backend unit tests |
+| **Demo reset service**, **configurable notification rules**, and feature switches for rewards/GPS/photo/accessibility/reset. | `core/demo/`, `core/notifications/`, `main.dart`, reporter/account/crew/dispatcher | app tests 172; smoke 103/103 |
+| **Domain unit tests + extension guide**: `docs/modularity.md`, `config/domains/README.md`. | docs/config | 7 backend unit tests pass |
+
+---
+
+## 2026-10-31 — real map tiles
+
+| Change | Where | Evidence |
+|---|---|---|
+| Replaced the schematic GPS map with a real **OpenStreetMap slippy map** (`flutter_map` + `latlong2`): live marker, accuracy circle, follow/recenter, attribution, coordinates/accuracy. | `lib/features/reporter/live_gps_map_screen.dart` | S24 screenshot shows Craiova airport tiles + GPS marker (49 m accuracy) |
+| Map provider/centre/zoom are profile-driven (`map` block in `config/domains/*.json`); OSM needs no API key, and the `tileUrl` seam allows a self-hosted tile server. | `lib/core/domain/domain_config.dart`, `config/domains/` | map loaded on device; analyze/tests clean |

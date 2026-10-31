@@ -43,6 +43,7 @@ from .ai import (
     extract_location,
 )
 from .config import BASE_DIR, settings
+from .domain import load_domain_config
 from .stt import stt_available, stt_error, transcribe_audio
 from .store import Conflict, Hub, NotFound, TicketStore, utc_now
 from .taxonomy import get_taxonomy
@@ -61,7 +62,8 @@ _MULTIPART_AVAILABLE = importlib.util.find_spec("multipart") is not None
 
 taxonomy = get_taxonomy()
 hub = Hub()
-store = TicketStore(taxonomy, hub, settings)
+domain = load_domain_config()
+store = TicketStore(taxonomy, hub, settings, domain=domain)
 ollama = OllamaClient(
     settings.ollama_url, settings.ollama_model, settings.ollama_timeout_seconds
 )
@@ -195,6 +197,22 @@ def _location_label(location: dict) -> str:
     return label or "locație nespecificată"
 
 
+@app.get("/api/domain")
+async def get_domain(_: None = Depends(require_token)) -> dict:
+    """Active application profile shared with the Flutter DomainConfig."""
+    return domain.to_public_dict()
+
+
+@app.get("/api/accounts/{crew_id}/rewards")
+async def account_rewards(
+    crew_id: str,
+    _: None = Depends(require_token),
+) -> dict:
+    """Reward ledger computed by the domain RewardPolicy (same rules as app)."""
+    tickets = await store.list_tickets()
+    return domain.reward_ledger(crew_id, tickets)
+
+
 # ── public endpoints (phone certificate checks) ───────────────────────────────
 @app.get("/healthz", include_in_schema=False)
 async def healthz() -> dict:
@@ -203,6 +221,9 @@ async def healthz() -> dict:
         "service": "wingman-api",
         "time": utc_now(),
         "taxonomy_version": taxonomy.version,
+        "domain": domain.id,
+        "quorum_strategy": domain.quorum.strategy,
+        "reward_strategy": domain.rewards.strategy,
         "tickets": store.count,
         "ws_clients": hub.count,
     }
@@ -213,10 +234,10 @@ async def status_page() -> str:
     return f"""<!doctype html>
 <html lang="ro"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wingman API</title></head>
+<title>{domain.app_name} API</title></head>
 <body style="font-family:system-ui;padding:24px;line-height:1.5">
-<h1>Wingman API pornit ✔</h1>
-<p>Taxonomia v{taxonomy.version} · {len(taxonomy.types)} tipuri de incident · {store.count} tichete live.</p>
+<h1>{domain.app_name} API pornit ✔</h1>
+<p>Domeniu <b>{domain.id}</b> · taxonomia v{taxonomy.version} · {len(taxonomy.types)} tipuri de incident · {store.count} tichete live.</p>
 <p>Dacă vezi această pagină în Safari/Chrome <b>fără avertisment TLS</b>, profilul CA este instalat corect pe acest device.</p>
 <p><a href="/ca.crt">descarcă certificatul CA</a> · <a href="/healthz">/healthz</a> · <a href="/docs">/docs</a></p>
 </body></html>"""
@@ -250,12 +271,14 @@ async def health() -> dict:
         "tickets": store.count,
         "ws_clients": hub.count,
         "confidence_threshold": settings.confidence_threshold,
-        "resolve_quorum": settings.resolve_quorum,
-        "resolve_quorum_by_urgency": {
-            "low": 1,
-            "medium": 1,
-            "high": 2,
-            "critical": 2,
+        "domain": domain.id,
+        "resolve_quorum": domain.quorum.required_for(1),
+        "resolve_quorum_by": domain.quorum.strategy,
+        "rewards": {
+            "strategy": domain.rewards.strategy,
+            "attendedPoints": domain.rewards.attended_points,
+            "resolvedBonus": domain.rewards.resolved_bonus,
+            "pointsLabel": domain.rewards.points_label,
         },
         "ollama": {
             "url": settings.ollama_url,
@@ -435,6 +458,7 @@ async def create_report(report: schemas.ReportIn) -> dict:
             reporter_name=report.reporter_name or "Anonim",
             location=location,
             classification=classification,
+            photo_base64=report.photo_base64,
         )
     except (ValueError, KeyError) as exc:
         raise _to_http(exc) from exc

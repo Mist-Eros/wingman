@@ -59,11 +59,37 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     }
   }
 
+  Future<void> _resetDemo() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset demo complet?'),
+        content: const Text(
+          'Șterge toate tichetele, istoricul și punctele tuturor conturilor. '
+          'Acțiunea este definitivă.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Anulează'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Resetează'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _resetStore();
+  }
+
   Future<void> _resetStore() async {
+    if (!mounted) return;
+    final reset = CoreScope.of(context).demoReset;
     setState(() => _busy = true);
     try {
-      await _api.devReset();
-      await CoreScope.boardOf(context).refresh();
+      await reset.reset();
       if (!mounted) return;
       setState(() {
         _busy = false;
@@ -263,12 +289,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                       : '${_health!['stt']?['available'] == true ? 'disponibil' : 'indisponibil'} '
                           '(${_health!['stt']?['model'] ?? '?'})',
                 ),
-                _kv(
-                  'Quorum echipaj',
-                  _health?['resolve_quorum_by_urgency'] is Map
-                      ? '1 (minor) · 2 (periculos)'
-                      : '${_health?['resolve_quorum'] ?? 2}',
-                ),
+                _kv('Quorum echipaj', '1 / departament implicat'),
               ],
             ),
           ),
@@ -289,13 +310,14 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _busy ? null : _resetStore,
-                        icon: const Icon(Icons.delete_outline_rounded),
-                        label: const Text('Resetează store'),
+                    if (CoreScope.domainOf(context).features.demoReset)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _busy ? null : _resetDemo,
+                          icon: const Icon(Icons.restart_alt_rounded),
+                          label: const Text('Reset demo complet'),
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

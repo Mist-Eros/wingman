@@ -21,8 +21,27 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/session.dart';
 import '../models/ticket.dart';
 
+/// Configurable rules for who should receive alerts. The active DomainConfig
+/// maps its `notifications.roles` list into these rule flags.
+class TicketAlertRules {
+  const TicketAlertRules({
+    this.roles = const <String>{'crew', 'dispatcher'},
+  });
+
+  final Set<String> roles;
+
+  bool wants(Session session) {
+    if (session.role == UserRole.crew) return roles.contains('crew');
+    if (session.isAdmin) return roles.contains('dispatcher');
+    return false;
+  }
+}
+
 /// Pure alerting policy: no plugin, no I/O — easy to test.
 class TicketAlertPolicy {
+  TicketAlertPolicy({this.rules = const TicketAlertRules()});
+
+  final TicketAlertRules rules;
   final Set<String> _seen = <String>{};
 
   /// Remember current tickets without alerting (called after the first
@@ -38,7 +57,7 @@ class TicketAlertPolicy {
     required Iterable<Ticket> tickets,
     required Session session,
   }) {
-    if (!wantsAlerts(session)) return const <Ticket>[];
+    if (!rules.wants(session)) return const <Ticket>[];
     final alerts = <Ticket>[];
     for (final ticket in tickets) {
       if (!_seen.add(ticket.id)) continue; // already seen
@@ -50,6 +69,7 @@ class TicketAlertPolicy {
   }
 
   /// Reporters don't receive alerts; crew and dispatchers do.
+  /// Kept static for tests/legacy callers; the instance reads [rules].
   static bool wantsAlerts(Session session) =>
       session.role == UserRole.crew || session.isAdmin;
 

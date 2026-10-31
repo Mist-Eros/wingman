@@ -110,7 +110,7 @@ Always render inside `ListenableBuilder(listenable: board, builder: ...)`.
 | `joined_crew_ids` | string[] | crew ids |
 | `resolve_votes` | int | approving votes |
 | `resolve_voter_ids` | string[] | who approved (prevents double counting) |
-| `quorum` | int | approvals needed: 1 for low/medium, 2 for high/critical |
+| `quorum` | int | approvals needed: one per primary department involved |
 | `override_deadline` | ISO date \| null | always null (legacy field) |
 | `dispatched_at`, `resolved_at` | ISO date \| null | |
 | `resolution_note` | string \| null | dispatcher denial reason / vote summary |
@@ -397,7 +397,51 @@ value changes, and announces in the team channel. Never "just add it" locally.
 - [ ] Works after a cold app start (no hot reload) on a physical phone.
 - [ ] 30-second manual test: report → see it appear on the dispatcher screen → act on it.
 
+---
 
+## 12. Application profile + policy endpoints
 
+The active profile is read from `config/domains/*.json` (Flutter asset +
+`DOMAIN_CONFIG` on FastAPI). It controls branding, feature switches, reward rules
+and quorum without changing screen code.
 
+### `GET /api/domain` (Bearer token)
 
+Returns the safe public profile:
+
+```json
+{
+  "id": "airport",
+  "branding": {"appName": "Wingman", "tagline": "...", "seedColor": "#1D4E89"},
+  "features": {"rewards": true, "gpsMap": true, "photo": true},
+  "quorum": {"strategy": "one_per_primary_department", "minimum": 1, "fixed": 2},
+  "rewards": {"attendedPoints": 2, "resolvedBonus": 10, "deniedPoints": 0,
+               "pointsLabel": "PUNCTE"}
+}
+```
+
+### `GET /api/accounts/{crew_id}/rewards` (Bearer token)
+
+Computes the same ledger as the Flutter `RewardPolicy`:
+
+```json
+{
+  "crewId": "engineer",
+  "totalPoints": 12,
+  "attendedCount": 1,
+  "resolvedCount": 1,
+  "inProgressCount": 0,
+  "pointsLabel": "PUNCTE",
+  "entries": [
+    {"ticketId": "...", "incidentCode": "SF-FIRE", "status": "resolved",
+     "points": 12, "reason": "resolved", "updatedAt": "..."}
+  ]
+}
+```
+
+Policy changes are made in:
+- `lib/core/rewards/reward_policy.dart`
+- `lib/core/domain/quorum_policy.dart`
+- `backend/app/domain.py`
+
+and must stay in parity with the same profile file.

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Furtuna-Cola Andrei-Alexandru — Lead</title>
+<style>
+:root { --bg:#081120; --panel:#0e1a2b; --card:#132238; --line:#22324a;
+  --ink:#e8f0fa; --muted:#8fa3bd; --accent:#5ba7ff; --green:#3dd68c; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1600px; height: 1450px; }
+body { background: var(--bg); color: var(--ink); font-family: "Segoe UI", system-ui, sans-serif;
+  padding: 34px 40px; }
+.card { height: 1382px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 22px; padding: 26px 28px; display: flex; flex-direction: column; }
+.head { display: flex; align-items: flex-start; gap: 18px; height: 142px; }
+.avatar { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 18px; display: grid;
+  place-items: center; font-size: 28px; font-weight: 800; color: var(--accent);
+  background: rgba(91,167,255,.13); border: 1px solid rgba(91,167,255,.4); }
+.who { flex: 1; }
+.eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  font-weight: 800; }
+h1 { margin: 5px 0 2px; font-size: 33px; letter-spacing: -.7px; line-height: 1.05; }
+.role { color: var(--muted); font-size: 14px; }
+.handle { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 11px;
+  margin-top: 6px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 4px 0 12px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 9px 13px; display: flex; align-items: baseline; gap: 9px; }
+.stat b { font-size: 19px; color: var(--accent); }
+.stat span { font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.bullets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px 26px; margin: 0 0 8px;
+  height: 104px; align-content: start; }
+.bullets p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.bullets p::before { content: "•"; color: var(--accent); font-weight: 800; margin-right: 7px; }
+.shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; min-height: 0; }
+.shot { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 8px; display: flex; flex-direction: column; min-height: 0; }
+.frame { flex: 1; min-height: 0; border-radius: 10px; overflow: hidden; background: #fff; }
+.frame img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cap { height: 32px; padding-top: 7px; font-size: 10.5px; line-height: 1.25; color: var(--muted); }
+.cap b { color: var(--ink); }
+.footer { height: 28px; display: flex; justify-content: space-between; align-items: flex-end;
+  color: var(--muted); font-size: 10.5px; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+</style></head><body>
+<div class="card">
+  <div class="head">
+    <div class="avatar">FC</div>
+    <div class="who">
+      <div class="eyebrow">Wingman · cine a făcut ce</div>
+      <h1>Furtuna-Cola Andrei-Alexandru</h1>
+      <div class="role">Lead · core, backend, AI local, design system, deploy</div>
+      <div class="handle">@Mist-Eros</div>
+    </div>
+  </div>
+  <div class="stats"><div class="stat"><b>14</b><span>coduri</span></div><div class="stat"><b>59</b><span>incidente</span></div><div class="stat"><b>160</b><span>teste</span></div></div>
+  <div class="bullets"><p>Contracte înghețate, taxonomie închisă + catalog oficial.</p><p>FastAPI + WSS, TLS pinned, store in-memory, quorum.</p><p>Ollama + Whisper local, fallback determinist.</p><p>Design aeroport, DevTools, dashboard Waterfox, APK.</p></div>
+  <div class="shots"><div class="shot"><div class="frame"><img src="../Wingman/01_Login/login.png"></div><div class="cap"><b>Login</b> — roluri demo, sky adaptiv</div></div><div class="shot"><div class="frame"><img src="../Wingman/06_Desktop/01_queue_portrait.png"></div><div class="cap"><b>Control room</b> — coadă live pe WSS</div></div><div class="shot"><div class="frame"><img src="../Wingman/07_DevTools/devtools.png"></div><div class="cap"><b>DevTools</b> — AI, STT, WSS, demo</div></div></div>
+  <div class="footer"><span>48h · hackathon · echipa Wingman</span><span>commit 95a83f5</span></div>
+</div>
+</body></html>

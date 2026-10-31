@@ -22,6 +22,7 @@ Map<String, dynamic> sampleTicketJson() => <String, dynamic>{
       'reporter_id': 'reporter-1',
       'reporter_name': 'Andrei P.',
       'transcript': 'Este fum lângă poarta 12.',
+      'photo_base64': null,
       'location': <String, dynamic>{
         'terminal': 'T1',
         'zone': 'Poarta 12',

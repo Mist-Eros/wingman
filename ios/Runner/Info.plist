@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -26,7 +26,7 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Wingman uses the microphone so you can report an incident by voice.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
+	<key>NSCameraUsageDescription</key>`n`t<string>Wingman folosește camera pentru a atașa o poză incidentului.</string>`n`t<key>NSPhotoLibraryUsageDescription</key>`n`t<string>Wingman poate atașa o poză din galerie incidentului.</string>`n`t<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Wingman attaches your approximate position to an incident report.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -72,3 +72,4 @@
 	</array>
 </dict>
 </plist>
+

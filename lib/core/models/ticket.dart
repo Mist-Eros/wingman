@@ -208,6 +208,7 @@ class Ticket {
     required this.reporterId,
     required this.reporterName,
     required this.transcript,
+    this.photoBase64,
     required this.location,
     required this.confidence,
     required this.aiSource,
@@ -248,6 +249,9 @@ class Ticket {
 
   /// Verbatim STT transcript for voice reports, or the menu label text.
   final String transcript;
+
+  /// Optional base64 JPEG/PNG attached by the reporter.
+  final String? photoBase64;
 
   final IncidentLocation location;
 
@@ -348,6 +352,7 @@ class Ticket {
         'reporter_id': reporterId,
         'reporter_name': reporterName,
         'transcript': transcript,
+        'photo_base64': photoBase64,
         'location': location.toJson(),
         'confidence': confidence,
         'ai_source': aiSource.wire,
@@ -384,6 +389,7 @@ class Ticket {
       reporterId: _asString(json['reporter_id'], 'reporter_id'),
       reporterName: _asString(json['reporter_name'], 'reporter_name'),
       transcript: _asString(json['transcript'], 'transcript'),
+      photoBase64: _asStringOrNull(json['photo_base64']),
       location: IncidentLocation.fromJson(json['location']),
       confidence: _asDouble(json['confidence'], 'confidence'),
       aiSource: AiSource.fromWire(_asString(json['ai_source'], 'ai_source')),
@@ -489,6 +495,7 @@ class ReportDraft {
     this.hintCode,
     this.useAi = true,
     this.forceOverride = false,
+    this.photoBase64,
   });
 
   final ReportSource source;
@@ -503,6 +510,9 @@ class ReportDraft {
   /// Force the AI even when [hintCode] is set (used by the "verify" toggle).
   final bool useAi;
 
+  /// Optional base64 JPEG/PNG attached by the reporter.
+  final String? photoBase64;
+
   /// DEV/DEMO ONLY (DevTools + rehearsals): forces the server to cap
   /// confidence and take the 5-second dispatcher override path. The normal
   /// reporter flow never sets it.
@@ -516,6 +526,7 @@ class ReportDraft {
         'location': location.toJson(),
         'hint_code': hintCode,
         'use_ai': useAi,
+        if (photoBase64 != null) 'photo_base64': photoBase64,
         // Only serialized when enabled so the normal wire body stays byte-for-
         // byte identical to the frozen contract.
         if (forceOverride) 'force_override': true,

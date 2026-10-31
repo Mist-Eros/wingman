@@ -35,7 +35,7 @@ Times are commit times from the git history.
 vote quorum); local Qwen2.5 classification + deterministic guards; faster-whisper STT; pinned CA;
 navy airport-ops theme with six time-of-day skies and DevTools; five hashed demo accounts with
 department-scoped notifications; Waterfox control room and report form; APK pipeline; verification
-gates (analyze, 160 tests, smoke 103/103, ALL GATES PASSED).
+gates (analyze, 161 tests, smoke 103/103, ALL GATES PASSED).
 **Showcase:** `Team/furtuna-lead.png`.
 
 ### Cutulescu Andrei-Rares — Reporter (@rarescu08)

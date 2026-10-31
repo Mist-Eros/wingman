@@ -467,7 +467,7 @@ class ReporterController extends ChangeNotifier {
 
   // ── sending ───────────────────────────────────────────────────────────────
 
-  Future<void> submit() async {
+  Future<void> submit({String? photoBase64}) async {
     if (_phase != ReporterPhase.confirming) return;
     if (_turns.isEmpty && _hintCode == null) return;
     final epoch = _epoch;
@@ -519,7 +519,12 @@ class ReporterController extends ChangeNotifier {
   }
 
   /// Button-menu report: no questions, no AI, goes straight to the server.
-  Future<void> submitMenu(IncidentType type, {String locationText = ''}) async {
+  Future<void> submitMenu(
+    IncidentType type, {
+    String locationText = '',
+    String? transcript,
+    String? photoBase64,
+  }) async {
     if (isBusy || _disposed) return;
     _epoch++;
     final epoch = _epoch;
@@ -534,7 +539,7 @@ class ReporterController extends ChangeNotifier {
       _fix = fix;
       final ticket = await _reportFn(ReportDraft(
         source: ReportSource.menu,
-        transcript: type.labelRo,
+        transcript: transcript ?? type.labelRo,
         reporterId: reporterId,
         reporterName: reporterName,
         location: IncidentLocation(

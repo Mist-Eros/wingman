@@ -19,6 +19,7 @@ import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/theme/wingman_theme.dart';
 import '../../core/widgets/sky_background.dart';
+import '../../core/accessibility/accessibility_screen.dart';
 import '../dev/dev_tools_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -113,6 +114,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final domain = CoreScope.domainOrFallbackOf(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -126,8 +128,8 @@ class _Header extends StatelessWidget {
                 borderRadius: BorderRadius.circular(WingmanRadius.lg),
                 border: Border.all(color: Colors.white24),
               ),
-              child: const Icon(
-                Icons.flight_takeoff_rounded,
+              child: Icon(
+                _brandIcon(domain.branding.icon),
                 color: Colors.white,
                 size: 26,
               ),
@@ -137,9 +139,9 @@ class _Header extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Text(
-                    'Wingman',
-                    style: TextStyle(
+                  Text(
+                    domain.branding.appName,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 30,
                       fontWeight: FontWeight.w800,
@@ -151,7 +153,7 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Airport incident response · demo · '
+                    '${domain.branding.tagline} · '
                     '${SkyPeriod.current().labelRo}',
                     style: const TextStyle(
                       color: Colors.white70,
@@ -164,6 +166,19 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
+            if (domain.features.accessibility)
+              IconButton(
+                tooltip: 'Accesibilitate',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AccessibilityScreen(),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.accessibility_new_rounded,
+                  color: Colors.white70,
+                ),
+              ),
             IconButton(
               tooltip: 'DevTools · aspect, server, acțiuni demo',
               onPressed: () => Navigator.of(context).push(
@@ -526,4 +541,14 @@ class _Footer extends StatelessWidget {
       ],
     );
   }
+}
+
+IconData _brandIcon(String name) {
+  return switch (name) {
+    'flight' || 'plane' => Icons.flight_rounded,
+    'stadium' || 'event' => Icons.stadium_rounded,
+    'hospital' || 'health' => Icons.local_hospital_rounded,
+    'train' || 'transit' => Icons.train_rounded,
+    _ => Icons.flight_takeoff_rounded,
+  };
 }

@@ -6,6 +6,7 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 
 | Doc | What it covers |
 |---|---|
+| [modularity.md](modularity.md) | Domain profiles, rewards/quorum/notification policies, and how to reuse Wingman for another app |
 | [demo-script.md](demo-script.md) | 3-minute rehearsal flow, T-10 checklist, fallbacks |
 | [airport-zones.md](airport-zones.md) | Craiova airport zone catalog + map sources used by the AI extractor |
 | [design-tokens.md](design-tokens.md) | Wingman design system: palette, spacing, radius, components |
@@ -17,6 +18,8 @@ Current docs are the ones you need for the demo; **historical** docs are kept fo
 | [phone-testing.md](phone-testing.md) | Install/test APKs on the phones |
 | [progress.md](progress.md) | Build log: what was done, evidence, current next steps |
 | [team-timeline.md](team-timeline.md) | How the four of us worked: commit timeline, per-person contributions, showcases |
+| [screenshots/README.md](screenshots/README.md) | Current screenshot set + manifest for the PPTX (for RaresCut/Claude) |
+| [accessibility.md](accessibility.md) | Profiles, settings and airport roles for employees with disabilities |
 | [occurrence-catalog.md](occurrence-catalog.md) | Source-backed incident database (59 occurrences, EU 2015/1018 + ASRS + ground handling) |
 | [backlog.md](backlog.md) | Deferred ideas (e.g. location gate, real push notifications) |
 

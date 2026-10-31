@@ -1,12 +1,12 @@
-// =============================================================================
+﻿// =============================================================================
 // lib/main.dart
 //
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
 //
-//   /            → LoginScreen (hardcoded demo accounts, hashed passwords)
-//   /reporter    → lib/features/reporter/     (Cutulescu Andrei-Rares)
-//   /dispatcher  → lib/features/dispatcher/  (Fita Redu Mihai / admin)
-//   /crew        → lib/features/crew/        (Lica Rares Adelin / scoped crews)
+//   /            â†’ LoginScreen (hardcoded demo accounts, hashed passwords)
+//   /reporter    â†’ lib/features/reporter/     (Cutulescu Andrei-Rares)
+//   /dispatcher  â†’ lib/features/dispatcher/  (Fita Redu Mihai / admin)
+//   /crew        â†’ lib/features/crew/        (Lica Rares Adelin / scoped crews)
 //
 // Back behaviour: role screens are PUSHED over the login screen, so Android's
 // back button returns to the account chooser instead of killing the app.
@@ -25,18 +25,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'core/accessibility/accessibility_settings.dart';
 import 'core/api/api_client.dart';
 import 'core/auth/demo_accounts.dart';
 import 'core/auth/secure_token_store.dart';
 import 'core/auth/session_store.dart';
 import 'core/auth/token_store.dart';
 import 'core/core_scope.dart';
+import 'core/domain/domain_config.dart';
 import 'core/incidents/taxonomy.dart';
 import 'core/models/session.dart';
 import 'core/notifications/ticket_notifier.dart';
 import 'core/state/ticket_board.dart';
 import 'core/theme/wingman_theme.dart';
 import 'features/auth/login_screen.dart';
+import 'core/rewards/reward_service.dart';
 import 'features/crew/crew_screen.dart';
 import 'features/dispatcher/dispatcher_screen.dart';
 import 'features/reporter/reporter_screen.dart';
@@ -99,6 +102,8 @@ Future<void> main() async {
     '${IncidentTaxonomy.all.length} types, API=$kApiBase, insecure=$kDevInsecure',
   );
 
+  final domain = await DomainConfig.load();
+
   final caPem = await _loadCaPem();
   final api = ApiClient(
     baseUrl: kApiBase,
@@ -124,6 +129,7 @@ Future<void> main() async {
       tokenStore: tokenStore,
       sessionStore: sessionStore,
       initialSession: initialSession,
+      domain: domain,
     ),
   );
 }
@@ -156,6 +162,7 @@ class AirportApp extends StatefulWidget {
     required this.tokenStore,
     required this.sessionStore,
     this.initialSession,
+    required this.domain,
   });
 
   final ApiClient api;
@@ -166,6 +173,9 @@ class AirportApp extends StatefulWidget {
   /// Restored on launch so the account identity survives an app restart.
   final Session? initialSession;
 
+  /// Active application profile (branding, features, rewards, quorum).
+  final DomainConfig domain;
+
   @override
   State<AirportApp> createState() => _AirportAppState();
 }
@@ -173,7 +183,7 @@ class AirportApp extends StatefulWidget {
 class _AirportAppState extends State<AirportApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final TicketNotifier _notifier = TicketNotifier();
-  final TicketAlertPolicy _alertPolicy = TicketAlertPolicy();
+  late final TicketAlertPolicy _alertPolicy;
   Session? _session;
   bool _notifierReady = false;
   bool _initialSnapshotHandled = false;
@@ -182,6 +192,11 @@ class _AirportAppState extends State<AirportApp> {
   void initState() {
     super.initState();
     _session = widget.initialSession;
+    _alertPolicy = TicketAlertPolicy(
+      rules: TicketAlertRules(
+        roles: widget.domain.notifications.roles,
+      ),
+    );
     // One WSS connection for the whole app lifetime; the board fans events out
     // to every screen through ListenableBuilder.
     unawaited(widget.board.start());
@@ -233,7 +248,7 @@ class _AirportAppState extends State<AirportApp> {
     _alertPolicy.seed(widget.board.tickets);
     _initialSnapshotHandled = true;
     unawaited(widget.sessionStore.write(session));
-    if (TicketAlertPolicy.wantsAlerts(session)) {
+    if (_alertPolicy.rules.wants(session)) {
       unawaited(_notifier.requestPermissions());
     }
     // PUSH over the login screen (not replace): Android back returns to the
@@ -257,13 +272,47 @@ class _AirportAppState extends State<AirportApp> {
       tokenStore: widget.tokenStore,
       session: _session,
       onSignOut: _signOut,
+      domainConfig: widget.domain,
+      rewardService: RewardService.fromDomain(widget.domain),
       child: MaterialApp(
-        title: 'Wingman',
+        title: widget.domain.branding.appName,
         debugShowCheckedModeBanner: false,
         navigatorKey: _navigatorKey,
         theme: WingmanTheme.light(),
         darkTheme: WingmanTheme.dark(),
         themeMode: ThemeMode.light,
+        builder: (context, child) {
+          final access = AccessibilitySettings.instance;
+          return AnimatedBuilder(
+            animation: access,
+            builder: (context, _) {
+              final base = WingmanTheme.light();
+              final scheme = ColorScheme.fromSeed(
+                seedColor: access.colorBlindSafe
+                    ? const Color(0xFF005F73)
+                    : Color(widget.domain.branding.seedColorValue),
+                brightness: Brightness.light,
+                contrastLevel: access.highContrast ? 1.0 : 0.0,
+              );
+              final theme = base.copyWith(
+                colorScheme: scheme,
+                visualDensity: access.largeTargets
+                    ? VisualDensity.comfortable
+                    : VisualDensity.standard,
+                materialTapTargetSize: access.largeTargets
+                    ? MaterialTapTargetSize.padded
+                    : MaterialTapTargetSize.shrinkWrap,
+              );
+              final media = MediaQuery.of(context);
+              return MediaQuery(
+                data: media.copyWith(
+                  textScaler: TextScaler.linear(access.textScale),
+                ),
+                child: Theme(data: theme, child: child ?? const SizedBox()),
+              );
+            },
+          );
+        },
         initialRoute: '/',
         routes: <String, WidgetBuilder>{
           '/': (context) => _login(),

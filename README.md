@@ -7,7 +7,7 @@ the departments the incident needs**. Tickets go straight to the dispatcher, who
 reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
 no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **103/103** ·
+**Status:** demo-ready. `flutter analyze` clean · **161 app tests** · backend smoke **103/103** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -63,6 +63,9 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   ├── core/                    shared contracts (owned by Lead)
 │   │   ├── api/                 REST + WSS client (dart:io, pinned TLS)
 │   │   ├── auth/                demo accounts, session/token stores
+│   │   ├── domain/              DomainConfig, quorum policy
+│   │   ├── rewards/             RewardPolicy, ledger, RewardService
+│   │   ├── demo/                demo reset service
 │   │   ├── incidents/           taxonomy — single source of truth (14 types)
 │   │   ├── models/              Ticket, Session, AnalyzeResult, Transcription
 │   │   ├── notifications/       department-scoped local notification policy
@@ -71,6 +74,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   │   └── widgets/             time-of-day sky background
 │   ├── features/
 │   │   ├── auth/                login + account chooser
+│   │   ├── rewards/             account UI (renders the reward ledger)
 │   │   ├── dev/                 DevTools (sky preview, health, demo actions)
 │   │   ├── reporter/            voice/typed report flow + local conversation brain
 │   │   ├── dispatcher/          live dashboard, open queue + filters
@@ -79,10 +83,12 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   └── features/crew/crew_preview_main.dart  local preview of the crew UI (no backend)
 ├── backend/
 │   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
+│   │   ├── domain.py            same domain profile + quorum/reward policies
 │   │   └── data/occurrences.json  source-backed incident database (59 entries)
 │   ├── seed_demo.py             seeds the 5 rehearsal tickets
 │   └── run.ps1 / run_insecure.ps1
 ├── assets/certs/ca.crt          public CA bundle pinned by the app
+├── config/domains/              application profiles (branding, features, rewards, quorum)
 ├── tool/emit_taxonomy.dart      taxonomy generator (backend/taxonomy.json)
 ├── scripts/                     certificates, builds, dashboard, gates (see scripts/README.md)
 ├── docs/                        project docs (see docs/README.md)
@@ -92,7 +98,25 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 
 ---
 
-## 4. How it works
+## 4. Reuse for another application
+
+The reusable knobs live in `config/domains/airport.json` and are loaded by both
+the Flutter app and FastAPI:
+
+```powershell
+Copy-Item config/domains/airport.json config/domains/stadium.json
+# edit branding / features / rewards / quorum
+$env:DOMAIN_CONFIG = 'config/domains/stadium.json'
+backend\run.ps1
+flutter build apk --release --dart-define=DOMAIN_CONFIG=config/domains/stadium.json
+```
+
+Rewards, quorum, notifications and demo reset are policy modules, not hardcoded
+UI arithmetic. See [docs/modularity.md](docs/modularity.md) for the module map,
+extension points and what is deliberately still domain-specific (incident
+catalog, demo accounts, localisation).
+
+## 5. How it works
 
 ```text
  phone (voice/menu)                         crew phones
@@ -115,6 +139,10 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
+* **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 4 rows × 2 columns grid per level.
+* **Accessibility**: profiles for blind, mute, deaf, colorblind, motor and cognitive staff (text size, contrast, visual alerts, spoken guidance, typed-first, large targets). See `docs/accessibility.md`.
+* **Live GPS map on real OpenStreetMap tiles** (configurable tile server) with coordinates/accuracy, and an **optional 5-second photo** prompt (never blocks a report).
+* **Account tab** with points and attended incidents; **Reset demo complet** clears tickets/history/points.
 * **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
@@ -124,7 +152,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 
 ---
 
-## 5. Backend quick reference
+## 6. Backend quick reference
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -133,7 +161,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/transcribe` | Audio → text (local faster-whisper) |
 | GET | `/api/tickets[?status=]`, `/api/tickets/{id}` | List / read |
 | POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
-| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 1–2 by urgency) |
+| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (one per primary department) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
 | POST | `/api/tickets/clear-history` | Admin: permanently clears resolved/denied tickets |
 | GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |
@@ -145,7 +173,7 @@ Field-level contract: [CONTRACTS.md](CONTRACTS.md). Wire parity is enforced by
 
 ---
 
-## 6. DevTools & looks
+## 7. DevTools & looks
 
 Login → **wrench icon** (top-right): preview all six time-of-day looks (Zori / Dimineață /
 Amiază / După-amiază / Apus / Noapte), live backend health (Ollama/STT/WSS/tickets), simulate a
@@ -156,7 +184,7 @@ Deterministic build for photos: `--dart-define=SKY_PERIOD=night` (also `dawn`, `
 
 ---
 
-## 7. Gates
+## 8. Gates
 
 ```powershell
 .\scripts\verify_all.ps1 -Live     # analyze + tests + parity + taxonomy + smoke + live
@@ -168,7 +196,7 @@ repo** at `D:\Hackathon\Screenshots`.
 
 ---
 
-## 8. Documentation
+## 9. Documentation
 
 Full index: **[docs/README.md](docs/README.md)**. Most useful now:
 
