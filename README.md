@@ -163,6 +163,7 @@ Wingman/
 | Doc | What it covers |
 |---|---|
 | [docs/demo-script.md](docs/demo-script.md) | 3-minute rehearsal + fallbacks |
+| [docs/claude-pptx-prompt.md](docs/claude-pptx-prompt.md) | Ready-to-paste prompt for an animated Claude pitch deck |
 | [docs/modularity.md](docs/modularity.md) | Domain profiles and policy modules |
 | [docs/reporter.md](docs/reporter.md) | Voice flow, confidence handling, menu fallback |
 | [docs/certs-and-phones.md](docs/certs-and-phones.md) | CA, TLS and phone setup |
