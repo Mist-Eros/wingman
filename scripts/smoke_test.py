@@ -14,7 +14,7 @@ It verifies, in order:
   3. /api/taxonomy serves the same 14 codes as backend/taxonomy.json
   4. WSS handshake + `hello`
   5. manual report (menu flow) -> dispatched, ai_source=manual, exact wire keys
-  6. forced low-confidence report -> pending_override -> auto-dispatch after 5 s
+  6. low-confidence/vague report -> dispatched immediately (no override window)
   7. crew join -> in_progress, 1 vote -> still open, 2nd vote -> resolved
   8. dispatcher deny -> denied
   9. invalid override code -> HTTP 400
@@ -226,6 +226,50 @@ async def run(args: argparse.Namespace) -> int:
     check("14 incident types", len(actual_codes) == 14, f"got {len(actual_codes)}")
     check("served codes match taxonomy.json", actual_codes == expected_codes)
 
+    # 3b ── source-backed occurrence catalog ─────────────────────────────────
+    print("[3b] occurrence catalog")
+    status, catalog = http_call(base, token, "/api/occurrences", insecure=insecure)
+    items = catalog.get("occurrences", [])
+    check("/api/occurrences returns 200", status == 200, f"status={status}")
+    check("catalog has at least 50 entries", len(items) >= 50, f"got {len(items)}")
+    ids = [item.get("id") for item in items]
+    check("occurrence ids are unique", len(ids) == len(set(ids)))
+    check(
+        "every occurrence maps to a served taxonomy code",
+        {item.get("app_code") for item in items} <= set(actual_codes),
+    )
+    check(
+        "every occurrence has a mandatory_eu boolean and example",
+        all(
+            isinstance(item.get("mandatory_eu"), bool) and item.get("example_ro")
+            for item in items
+        ),
+    )
+    check(
+        "catalog cites EU 2015/1018",
+        any(source.get("id") == "eu2015_1018" for source in catalog.get("sources", [])),
+    )
+    status, filtered = http_call(
+        base, token, "/api/occurrences?code=SF-FIRE", insecure=insecure
+    )
+    check(
+        "catalog can be filtered by app code",
+        status == 200
+        and filtered.get("count", 0) > 0
+        and all(
+            item.get("app_code") == "SF-FIRE"
+            for item in filtered.get("occurrences", [])
+        ),
+    )
+    first_id = ids[0]
+    status, single = http_call(
+        base, token, f"/api/occurrences/{first_id}", insecure=insecure
+    )
+    check(
+        "single occurrence lookup works",
+        status == 200 and single.get("occurrence", {}).get("id") == first_id,
+    )
+
     # 4 ── WSS ────────────────────────────────────────────────────────────────
     print("[4] WSS")
     ws_base = base.replace("https://", "wss://").replace("http://", "ws://")
@@ -250,11 +294,11 @@ async def run(args: argparse.Namespace) -> int:
             token,
             {
                 "source": "menu",
-                "transcript": "Defecțiune bandă transportoare bagaje",
+                "transcript": "Foc sau fum în terminal",
                 "reporter_id": "smoke-reporter",
                 "reporter_name": "Smoke Test",
                 "location": {"terminal": "T2", "zone": "Banda 3"},
-                "hint_code": "MT-BELT",
+                "hint_code": "SF-FIRE",
                 "use_ai": False,
             },
             insecure,
@@ -282,47 +326,67 @@ async def run(args: argparse.Namespace) -> int:
         check("ticket.created broadcast on WSS", created_event is not None)
         manual_id = manual.get("id", "")
 
+        print("[5b] duplicate report dedupe")
+        status, duplicate_payload = report(
+            base,
+            token,
+            {
+                "source": "menu",
+                "transcript": "Foc sau fum în terminal",
+                "reporter_id": "smoke-reporter",
+                "reporter_name": "Smoke Test",
+                "location": {"terminal": "T2", "zone": "Banda 3"},
+                "hint_code": "SF-FIRE",
+                "use_ai": False,
+            },
+            insecure,
+        )
+        duplicate_ticket = duplicate_payload.get("ticket", {})
+        check(
+            "duplicate report is accepted but not recreated",
+            status in (200, 201)
+            and duplicate_payload.get("duplicate") is True
+            and duplicate_ticket.get("id") == manual_id,
+            f"status={status} id={duplicate_ticket.get('id')}",
+        )
+        status, all_tickets = http_call(base, token, "/api/tickets", insecure=insecure)
+        same = [
+            t
+            for t in all_tickets.get("tickets", [])
+            if t.get("incident_code") == "SF-FIRE" and t.get("status") == "dispatched"
+        ]
+        check(
+            "only one open SF-FIRE ticket exists",
+            status == 200 and len(same) == 1,
+            f"found {len(same)}",
+        )
+
         # 6 ── override window ───────────────────────────────────────────────
-        print("[6] low-confidence override window")
+        print("[6] low-confidence report dispatches immediately")
         status, payload = report(
             base,
             token,
             {
                 "source": "voice",
-                "transcript": "Ceva pare în neregulă pe hol, nu îmi dau seama exact ce.",
+                "transcript": "Ceva pare in neregula pe hol, nu imi dau seama exact ce.",
                 "reporter_id": "smoke-reporter",
                 "reporter_name": "Smoke Test",
-                "force_override": True,
             },
             insecure,
         )
-        check("forced-override report -> 201", status == 201, f"status={status}")
+        check("vague report -> 201", status == 201, f"status={status}")
         override = payload.get("ticket", {})
-        if args.skip_override_wait:
-            print("  SKIP  auto-dispatch wait (--skip-override-wait)")
-        else:
-            check(
-                "status is pending_override",
-                override.get("status") == "pending_override",
-                str(override.get("status")),
-            )
-            check("override_deadline present", bool(override.get("override_deadline")))
-            check(
-                "confidence below threshold",
-                float(override.get("confidence", 1)) < 0.65,
-                str(override.get("confidence")),
-            )
-            await asyncio.sleep(5.6)
-            status, payload = http_call(
-                base, token, f"/api/tickets/{override.get('id')}", insecure=insecure
-            )
-            auto = payload.get("ticket", {})
-            check(
-                "auto-dispatched after 5 s",
-                auto.get("status") == "dispatched",
-                str(auto.get("status")),
-            )
-            check("auto-dispatch has no dispatcher", auto.get("decided_by") is None)
+        check(
+            "dispatches immediately (no pending state)",
+            override.get("status") == "dispatched",
+            str(override.get("status")),
+        )
+        check(
+            "no override deadline on the ticket",
+            override.get("override_deadline") is None,
+            str(override.get("override_deadline")),
+        )
+        check("dispatched_at is set", bool(override.get("dispatched_at")))
 
         # 7 ── join + vote quorum ────────────────────────────────────────────
         print("[7] crew join + vote")
@@ -390,6 +454,51 @@ async def run(args: argparse.Namespace) -> int:
         resolved_event = await wait_for_type(events, "ticket.resolved", timeout=5)
         check("ticket.resolved broadcast on WSS", resolved_event is not None)
 
+        print("[7b] urgency-based quorum")
+        status, low_payload = report(
+            base,
+            token,
+            {
+                "source": "menu",
+                "transcript": "Coada de la poarta 5 este neobișnuit de lungă.",
+                "reporter_id": "smoke-low",
+                "reporter_name": "Smoke Low",
+                "location": {"terminal": "T1", "zone": "Zona de îmbarcare"},
+                "hint_code": "OP-OTHER",
+                "use_ai": False,
+            },
+            insecure,
+        )
+        low_ticket = low_payload.get("ticket", {})
+        check(
+            "low ticket quorum is 1",
+            low_ticket.get("quorum") == 1,
+            str(low_ticket.get("quorum")),
+        )
+        low_id = low_ticket.get("id", "")
+        http_call(
+            base,
+            token,
+            f"/api/tickets/{low_id}/join",
+            method="POST",
+            payload={"crew_id": "smoke-low-crew", "crew_name": "Low Crew"},
+            insecure=insecure,
+        )
+        status, resolved_payload = http_call(
+            base,
+            token,
+            f"/api/tickets/{low_id}/vote",
+            method="POST",
+            payload={"crew_id": "smoke-low-crew", "approve": True},
+            insecure=insecure,
+        )
+        check(
+            "one vote resolves a low ticket",
+            status == 200
+            and resolved_payload.get("ticket", {}).get("status") == "resolved",
+            str(resolved_payload.get("ticket", {}).get("status")),
+        )
+
         # 8 ── deny ──────────────────────────────────────────────────────────
         print("[8] dispatcher deny")
         _, payload = report(
@@ -422,6 +531,33 @@ async def run(args: argparse.Namespace) -> int:
         check(
             "decided_by recorded",
             payload.get("ticket", {}).get("decided_by") == "smoke-dispatcher",
+        )
+
+        # 8b ── admin history clear-all ─────────────────────────────────────
+        print("[8b] clear admin history")
+        status, payload = http_call(
+            base,
+            token,
+            "/api/tickets/clear-history",
+            method="POST",
+            insecure=insecure,
+        )
+        check("clear-history -> 200", status == 200, f"status={status}")
+        check(
+            "at least one terminal ticket cleared",
+            int(payload.get("cleared", 0)) >= 1,
+            str(payload.get("cleared")),
+        )
+        status, payload = http_call(base, token, "/api/tickets", insecure=insecure)
+        terminal_left = [
+            t
+            for t in payload.get("tickets", [])
+            if t.get("status") in ("resolved", "denied")
+        ]
+        check(
+            "history no longer contains terminal tickets",
+            status == 200 and terminal_left == [],
+            str(terminal_left),
         )
 
         # 9 ── invalid override code ─────────────────────────────────────────

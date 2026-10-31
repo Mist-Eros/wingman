@@ -44,25 +44,6 @@ class TicketTimeline extends StatelessWidget {
       ),
     ];
 
-    if (ticket.confidence < 0.65 ||
-        ticket.isPendingOverride ||
-        ticket.overrideDeadline != null ||
-        ticket.decidedBy != null) {
-      steps.add(
-        _TimelineStep(
-          label: 'Override dispecer',
-          done: !ticket.isPendingOverride,
-          time: ticket.overrideDeadline,
-          detail: ticket.isPendingOverride
-              ? 'În fereastra de 5s'
-              : (ticket.decidedBy == null
-                  ? 'Expirat → auto'
-                  : 'Decis de ${ticket.decidedBy}'),
-          active: ticket.isPendingOverride,
-        ),
-      );
-    }
-
     steps.add(
       _TimelineStep(
         label: 'Dispecerizat',
@@ -70,9 +51,7 @@ class TicketTimeline extends StatelessWidget {
             ticket.status == TicketStatus.inProgress ||
             ticket.status == TicketStatus.resolved,
         time: ticket.dispatchedAt,
-        detail: ticket.decidedBy == null &&
-                ticket.status != TicketStatus.pendingOverride &&
-                ticket.status != TicketStatus.denied
+        detail: ticket.decidedBy == null && ticket.status != TicketStatus.denied
             ? 'Auto-dispecerizat'
             : ticket.departmentsLabel,
       ),

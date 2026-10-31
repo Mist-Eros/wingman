@@ -4,7 +4,7 @@
 // Demo/Debug surface for the Lead + judges' Q&A:
 //   • preview every time-of-day sky look without changing the clock;
 //   • see live backend health (AI, STT, WSS, tickets);
-//   • trigger demo actions (reset store, force a low-confidence override ticket);
+//   • trigger demo actions (reset store, simulate a report);
 //   • see the hardcoded demo accounts and their department scopes.
 //
 // Reached from the login screen (wrench icon). Dev-only, no product logic here.
@@ -78,7 +78,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     }
   }
 
-  Future<void> _simulateOverride() async {
+  Future<void> _simulateReport() async {
     setState(() => _busy = true);
     try {
       final ticket = await _api.report(
@@ -88,7 +88,6 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
               'Ceva nu este în regulă pe hol, nu îmi dau seama exact ce.',
           reporterId: 'dev-tools',
           reporterName: 'Dev Tools',
-          forceOverride: true,
         ),
       );
       await CoreScope.boardOf(context).refresh();
@@ -98,7 +97,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
         _lastAction =
             'Tichet ${ticket.incidentCode} creat (${ticket.status.wire}, '
             'confidence ${ticket.confidence.toStringAsFixed(2)}). '
-            'Deschide control room-ul / dispecerul pentru fereastra de 5s.';
+            'Verifică dispecerul / control room-ul.';
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -265,10 +264,11 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                           '(${_health!['stt']?['model'] ?? '?'})',
                 ),
                 _kv(
-                  'Fereastră override',
-                  '${_health?['override_window_seconds'] ?? 5} s',
+                  'Quorum echipaj',
+                  _health?['resolve_quorum_by_urgency'] is Map
+                      ? '1 (minor) · 2 (periculos)'
+                      : '${_health?['resolve_quorum'] ?? 2}',
                 ),
-                _kv('Quorum echipaj', '${_health?['resolve_quorum'] ?? 2}'),
               ],
             ),
           ),
@@ -283,9 +283,9 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                   children: <Widget>[
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _busy ? null : _simulateOverride,
-                        icon: const Icon(Icons.warning_amber_rounded),
-                        label: const Text('Simulează tichet 5s'),
+                        onPressed: _busy ? null : _simulateReport,
+                        icon: const Icon(Icons.add_alert_rounded),
+                        label: const Text('Simulează raport'),
                       ),
                     ),
                     const SizedBox(width: 8),

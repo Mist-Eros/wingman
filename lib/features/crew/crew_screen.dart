@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // OWNER: Lica Rares Adelin — GitHub @Raress299 (lib/features/crew/).
 //
 // FROZEN CONTRACT (main.dart depends on it):
@@ -13,6 +13,7 @@ import '../../core/core_scope.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import '../../core/widgets/report_action_bar.dart';
 import '../reporter/reporter_screen.dart';
 import 'crew_ticket_card.dart';
 import 'wss_banner.dart';
@@ -114,6 +115,7 @@ class _CrewScreenState extends State<CrewScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: false,
+      bottomNavigationBar: ReportActionBar(onPressed: _openReporter),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -140,12 +142,6 @@ class _CrewScreenState extends State<CrewScreen> {
           ],
         ),
         actions: <Widget>[
-          _AppBarIconButton(
-            tooltip: 'Raportează incident',
-            icon: Icons.campaign_rounded,
-            onPressed: _openReporter,
-          ),
-          const SizedBox(width: 4),
           _AppBarIconButton(
             tooltip: 'Reîmprospătează',
             icon: Icons.refresh_rounded,
@@ -380,5 +376,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-

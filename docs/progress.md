@@ -84,4 +84,67 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 3. Optional: project the Waterfox control room on the big screen (F11).
 4. iOS stays **cloud Mac later** (Apple Developer account needed for device installs).
 
+---
 
+## 2026-10-31 — demo polish (round 2)
+
+| Change | Where | Evidence |
+|---|---|---|
+| **5-second override window removed end-to-end**: reports dispatch immediately, no `pending_override`, no deadline, no countdown UI, no bell badge, no DevTools simulation. Dispatcher can still deny/reclassify. | `backend/app/store.py`, `backend/app/main.py`, `lib/features/dispatcher/**`, `lib/features/dev/dev_tools_screen.dart`, `scripts/dashboard/index.html` | backend smoke **88/88**; app tests **160**; live report lands directly as `dispatched` |
+| **Admin queue hides closed/denied tickets** (clutter removed); counts/queue are active-only. | `lib/features/dispatcher/dispatcher_filters.dart`, `scripts/dashboard/index.html` | denied MT-BELT disappeared from queue and counters; 6 open tickets shown, denied one absent |
+| **Low-priority cards are white** instead of blue. | `lib/features/dispatcher/urgency_style.dart` | verified on the S24: OP-OTHER low card is white |
+| **"Confidence" now means likelihood of happening at Craiova airport** (type + named zone + urgency heuristic), shown in the reporter card, dispatcher cards/detail, Waterfox control room and optional Flutter web dashboard. | `lib/core/incidents/likelihood.dart`, models' `craiovaLikelihood`, `lib/features/dispatcher/**`, `scripts/dashboard/index.html` | OP-OTHER 63%, SF-FIRE 98%, SC-BAG 94% in the control room |
+| **Compact dispatcher top bar fixed** — pending bell removed, no overlap with the back/route controls. | `lib/features/dispatcher/dispatcher_screen.dart` | clean phone screenshot: WSS pill · Demo/Live · overflow · logout |
+| **Dashboard launcher repaired** (lost newline + out-of-order profile/CA setup); supports `-ApiBase`. | `scripts/serve_dashboard.ps1` | Waterfox control room opens and connects live |
+| **Live-demo over USB** while the venue Wi-Fi isolates clients: `adb reverse tcp:8443 tcp:8443` + APK built for `https://127.0.0.1:8443` (cert already covers 127.0.0.1). | `scripts/serve_dashboard.ps1`, APK build | desktop report at 10:56 → phone queue count updated to 7 via WSS |
+
+---
+
+## 2026-10-31 — occurrence catalog (official reporting framework)
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Source-backed incident database** with **59 possible airport incidents** grouped in **8 operational domains** (movement/runway, terminal, services, ground handling, aircraft, security, dangerous goods, human factors). Each entry has RO/EN name, description, EU reference, ASRS event type, mandatory-reporting flag, aliases and a concrete example. | `backend/app/data/occurrences.json` | JSON validates at backend startup; **55/59** marked mandatory in the EU framework |
+| **Catalog API** for the app/UI/AI: full catalog, filters by operational code or domain, single-entry lookup. | `backend/app/main.py` (`/api/occurrences`), `backend/app/occurrences.py` | smoke checks: 59 entries, unique IDs, valid codes, sources, filtering, lookup |
+| **Fallback classifier uses the catalog**: when Ollama is unavailable and base keywords are weak, catalog aliases refine the code (e.g. drone → SC-ACCESS, unruly passenger → SC-BEHAV, dangerous goods → SC-ITEM). | `backend/app/ai.py` | direct fallback checks; normal AI path unchanged |
+| **Generated documentation** with source links, mapping to Wingman's 14 codes and per-domain tables. | `docs/occurrence-catalog.md`, `scripts/render_occurrence_catalog.py` | regenerated from JSON; docs index updated |
+| Gates after catalog: app **160 tests**, backend smoke **96/96**, wire parity OK. | repo | analyze clean + smoke pass |
+
+---
+
+## 2026-10-31 — bottom report bar + refreshed screenshots + equal team cards
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Large bottom report bar** on crew and dispatcher: full-width 60 px button, SafeArea, max-width 760 on desktop; app-bar report icons removed. | `lib/core/widgets/report_action_bar.dart`, `lib/features/crew/crew_screen.dart`, `lib/features/dispatcher/dispatcher_screen.dart` | verified on S24: bar visible on queue, crew and reporter return; content no longer covered |
+| **Fresh screenshot set** — login, reporter (voice/menu/typed/verification), dispatcher (queue/low/demo), crew (queue/joined), notification shade, Waterfox control room + modal, DevTools. Old design folders removed. | `D:\Hackathon\Screenshots\Wingman\`, `Screenshots/README.md` | 15 new real captures |
+| **Equal team cards** — same 1600×1450 template, 3 screenshots, 3 stats, 4 bullets each; 2×2 grid. | `D:\Hackathon\Screenshots\Team\` | `furtuna-lead.png`, `cutulescu-reporter.png`, `fita-dispatcher.png`, `lica-crew.png`, `team-grid.png` |
+
+---
+
+## 2026-10-31 — logo + admin history
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Real app logo** used once (login header) and as Android launcher icon; transparent banner, no duplicated wordmark; single branding asset. | `assets/branding/`, `pubspec.yaml`, `lib/features/auth/login_screen.dart`, `android/.../mipmap-*/ic_launcher.png` | S24 login + launcher; APK rebuilt |
+| **Admin Istoric tab** with every resolved/denied ticket and **Golește istoricul** (confirm dialog, backend endpoint, board refresh). | `lib/features/dispatcher/dispatcher_screen.dart`, `lib/core/api/api_client.dart`, `lib/core/state/ticket_board.dart`, `backend/app/main.py`, `backend/app/store.py` | 2 history tickets shown, cleared → 0; smoke 99/99 |
+| Screenshots updated with logo, tabs, history and cleared state; equal cards regenerated. | `D:\Hackathon\Screenshots\` | `Wingman/03_Dispatcher/04_history.png`, `05_history_cleared.png`, new `team-grid.png` |
+
+---
+
+## 2026-10-31 — logo cleanup + duplicate-ticket guard
+
+| Change | Where | Evidence |
+|---|---|---|
+| Logo removed from app UI; it lives **only as the launcher/app icon**. Login restored to the previous Wingman header; branding assets no longer bundled. | `lib/features/auth/login_screen.dart`, `pubspec.yaml`, `android/.../mipmap-*` | S24 login no longer shows the logo; launcher icon unchanged |
+| **Duplicate tickets blocked server-side**: same open incident type + same location within 15 min, or identical normalized transcript within 30 min, returns the existing ticket with `duplicate: true` — no new ticket, no duplicate WSS event. | `backend/app/store.py` (`find_duplicate`), `backend/app/main.py` | smoke 101/101: second MT-BELT report keeps the same id and only one open MT-BELT |
+| Screenshots/cards refreshed after logo removal; history screenshots included. | `D:\Hackathon\Screenshots\` | new login capture, updated `team-grid.png` |
+
+---
+
+## 2026-10-31 — urgency-based crew quorum
+
+| Change | Where | Evidence |
+|---|---|---|
+| Crew resolution quorum now depends on danger: **low/medium = 1 vote**, **high/critical = 2 votes** (was always 2). | `backend/app/store.py` (`QUORUM_BY_URGENCY`), `lib/features/dispatcher/demo_tickets.dart` | smoke: low OP-OTHER resolves with 1 vote; critical SF-FIRE still needs 2; 103/103 |
+| DevTools shows the mapping; docs updated. | `lib/features/dev/dev_tools_screen.dart`, README/CONTRACTS | health exposes `resolve_quorum_by_urgency` |

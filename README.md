@@ -3,11 +3,11 @@
 Staff report an incident by **voice or a button menu**; a **local Ollama model** classifies it
 into a closed 14-type taxonomy; the FastAPI backend assigns **urgency + departments**, broadcasts
 over **WSS** to a dispatcher dashboard and crew phones, and routes **Android notifications only to
-the departments the incident needs**. Low confidence lands in a dispatcher **5-second
-confirm/deny/reclassify window**; crews **join** and **vote** to resolve. Everything runs on the
-laptop — no cloud, TLS with a private pinned CA, in-memory store.
+the departments the incident needs**. Tickets go straight to the dispatcher, who can **deny or
+reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
+no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **90/90** ·
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **103/103** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -20,7 +20,7 @@ cd backend; .\run.ps1
 
 # 2) seed the stage data + prove the API
 cd ..; python backend\seed_demo.py
-python scripts\smoke_test.py --ca backend\certs\ca.crt     # 90/90
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 103/103
 
 # 3) phone (Android; APK is built by the script)
 .\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
@@ -73,12 +73,13 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   │   ├── auth/                login + account chooser
 │   │   ├── dev/                 DevTools (sky preview, health, demo actions)
 │   │   ├── reporter/            voice/typed report flow + local conversation brain
-│   │   ├── dispatcher/          live dashboard, override window, filters
+│   │   ├── dispatcher/          live dashboard, open queue + filters
 │   │   └── crew/                scoped queue, join, resolve vote
 │   ├── web_dashboard_main.dart  optional Flutter-web control room (Chromium only)
 │   └── features/crew/crew_preview_main.dart  local preview of the crew UI (no backend)
 ├── backend/
 │   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
+│   │   └── data/occurrences.json  source-backed incident database (59 entries)
 │   ├── seed_demo.py             seeds the 5 rehearsal tickets
 │   └── run.ps1 / run_insecure.ps1
 ├── assets/certs/ca.crt          public CA bundle pinned by the app
@@ -100,7 +101,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
   FastAPI :8443  ── Ollama qwen2.5:1.5b ──▶ classification + urgency + departments
         │          ── Whisper (faster-whisper) for STT
         ▼
-  in-memory store: status machine · 5 s override timer · join · vote quorum
+  in-memory store: status machine · immediate dispatch · join · vote quorum
         │
         ▼ REST + WSS
   Waterfox control room (PC)  ── report form · live queue · confirm/deny/reclassify
@@ -108,10 +109,13 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 
 * **AI policy — dispatch first.** The only questions are for a missing **type** or **location**.
   There is no “is anyone in danger?” or “describe it” question: high-stakes reports go to the
-  dispatcher immediately and can be corrected in the 5-second window.
+  dispatcher immediately and can be denied or reclassified from the queue.
+* **Incident catalog**: 59 source-backed occurrences (EU 2015/1018 + ASRS + ground-handling guidance) mapped onto the 14 operational codes — served by `GET /api/occurrences`, documented in [docs/occurrence-catalog.md](docs/occurrence-catalog.md).
 * **Locations** are free text and matched against a Craiova airport catalog (Terminal 2,
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
+* **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
+* **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary
   departments (e.g. a fuel leak alerts Earl Engineer + John Janitor). Android notifications are
   local (no cloud push): keep the phone connected and awake during the demo.
@@ -128,9 +132,11 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/analyze` | Conversational turn: fields + missing + question |
 | POST | `/api/transcribe` | Audio → text (local faster-whisper) |
 | GET | `/api/tickets[?status=]`, `/api/tickets/{id}` | List / read |
-| POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions (5 s window) |
-| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 2) |
+| POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
+| POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 1–2 by urgency) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
+| POST | `/api/tickets/clear-history` | Admin: permanently clears resolved/denied tickets |
+| GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |
 | GET | `/api/health`, `/api/taxonomy`, `/healthz`, `/ca.crt` | Diagnostics / public checks |
 | WS | `/ws?token=` | `hello`, `ticket.created/updated/resolved`, `ping` |
 
@@ -142,8 +148,8 @@ Field-level contract: [CONTRACTS.md](CONTRACTS.md). Wire parity is enforced by
 ## 6. DevTools & looks
 
 Login → **wrench icon** (top-right): preview all six time-of-day looks (Zori / Dimineață /
-Amiază / După-amiază / Apus / Noapte), live backend health (Ollama/STT/WSS/tickets), trigger a
-forced 5-second override ticket, reset the store, inspect account scopes.
+Amiază / După-amiază / Apus / Noapte), live backend health (Ollama/STT/WSS/tickets), simulate a
+report, reset the store, inspect account scopes.
 
 Deterministic build for photos: `--dart-define=SKY_PERIOD=night` (also `dawn`, `morning`,
 `midday`, `afternoon`, `sunset`).

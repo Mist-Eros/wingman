@@ -263,8 +263,10 @@ class UnderstoodCard extends StatelessWidget {
               _Row(Icons.my_location, tr('Poziție', 'Position'), fix!.label),
             _Row(Icons.priority_high, tr('Urgență', 'Urgency'),
                 fields.urgency.labelRo),
-            _Row(Icons.insights, tr('Încredere', 'Confidence'),
-                fields.confidenceLabel),
+            _Row(
+                Icons.insights,
+                tr('Probabilitate Craiova', 'Craiova likelihood'),
+                fields.likelihoodLabel),
             if (fields.rationale != null) ...<Widget>[
               const SizedBox(height: 4),
               Text(fields.rationale!, style: text.bodySmall),

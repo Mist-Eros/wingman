@@ -41,9 +41,10 @@ class UrgencyStyle {
             label: 'Medie',
           ),
         Urgency.low => const UrgencyStyle(
-            accent: Color(0xFF1570EF),
-            fill: Color(0xFFEFF8FF),
-            fillStrong: Color(0xFFD1E9FF),
+            // Low-priority cards are white, not blue.
+            accent: Colors.white,
+            fill: Colors.white,
+            fillStrong: Colors.white,
             onFill: Color(0xFF194185),
             label: 'Scăzută',
           ),

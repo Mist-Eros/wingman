@@ -22,6 +22,14 @@ from .taxonomy import URGENCY_LEVELS, Taxonomy
 
 logger = logging.getLogger("airport.store")
 
+QUORUM_BY_URGENCY: dict[str, int] = {
+    "low": 1,
+    "medium": 1,
+    "high": 2,
+    "critical": 2,
+}
+
+
 ALLOWED_STATUSES: tuple[str, ...] = (
     "pending_override",
     "dispatched",
@@ -131,16 +139,17 @@ class TicketStore:
             if classification.urgency in URGENCY_LEVELS
             else incident_type.urgency
         )
-        needs_override = confidence < self._settings.confidence_threshold
         now = utc_now()
 
+        # No pending/override state: every report is dispatched immediately.
+        # The dispatcher can still deny or reclassify it from the live queue.
         ticket: dict[str, Any] = {
             "id": str(uuid.uuid4()),
             "incident_code": incident_type.code,
             "label_ro": incident_type.label_ro,
             "category": incident_type.category,
             "urgency": urgency,
-            "status": "pending_override" if needs_override else "dispatched",
+            "status": "dispatched",
             "source": source,
             "reporter_id": reporter_id,
             "reporter_name": reporter_name,
@@ -160,13 +169,9 @@ class TicketStore:
             "joined_crew_ids": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
-            "quorum": self._settings.resolve_quorum,
-            "override_deadline": (
-                _deadline_iso(self._settings.override_window_seconds)
-                if needs_override
-                else None
-            ),
-            "dispatched_at": None if needs_override else now,
+            "quorum": QUORUM_BY_URGENCY.get(urgency, self._settings.resolve_quorum),
+            "override_deadline": None,
+            "dispatched_at": now,
             "resolved_at": None,
             "resolution_note": None,
             "decided_by": None,
@@ -181,15 +186,73 @@ class TicketStore:
             snapshot = copy.deepcopy(ticket)
 
         await self._hub.broadcast("ticket.created", {"ticket": snapshot})
-        if needs_override:
-            self._schedule_auto_dispatch(ticket["id"])
-            logger.info(
-                "Ticket %s needs dispatcher override (confidence %.2f < %.2f)",
-                ticket["id"],
-                confidence,
-                self._settings.confidence_threshold,
-            )
         return snapshot
+
+    async def find_duplicate(
+        self,
+        *,
+        incident_code: str,
+        transcript: str,
+        location: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """An open ticket with the same incident/location (or exact words).
+
+        The same incident is often reported by several people. We keep ONE
+        ticket instead of creating duplicates: same type + same location within
+        15 minutes, or the same normalized transcript within 30 minutes.
+        """
+
+        def normalize(value: str) -> str:
+            cleaned = "".join(
+                ch.lower() if (ch.isalnum() or ch.isspace()) else " " for ch in value
+            )
+            return " ".join(cleaned.split())
+
+        text_key = normalize(transcript)
+        location_key = normalize(
+            " ".join(
+                str(location.get(key) or "") for key in ("terminal", "zone", "note")
+            )
+        )
+        now = datetime.now(timezone.utc)
+
+        async with self._lock:
+            for ticket_id in reversed(self._order):
+                ticket = self._tickets[ticket_id]
+                if ticket["status"] not in (
+                    "dispatched",
+                    "in_progress",
+                    "pending_override",
+                ):
+                    continue
+                try:
+                    created = datetime.fromisoformat(
+                        str(ticket["created_at"]).replace("Z", "+00:00")
+                    )
+                except ValueError:
+                    continue
+                age = (now - created).total_seconds()
+
+                same_text = (
+                    len(text_key) >= 12
+                    and age <= 30 * 60
+                    and text_key == normalize(str(ticket["transcript"]))
+                )
+                same_incident = (
+                    ticket["incident_code"] == incident_code
+                    and bool(location_key)
+                    and age <= 15 * 60
+                    and location_key
+                    == normalize(
+                        " ".join(
+                            str(ticket["location"].get(key) or "")
+                            for key in ("terminal", "zone", "note")
+                        )
+                    )
+                )
+                if same_text or same_incident:
+                    return copy.deepcopy(ticket)
+        return None
 
     # ── dispatcher actions ────────────────────────────────────────────────────
     async def confirm(
@@ -389,6 +452,28 @@ class TicketStore:
             self._order.clear()
         await self._hub.broadcast("store.reset", {"removed": removed})
         return removed
+
+    async def clear_history(self) -> int:
+        """Remove every terminal ticket (resolved/denied) and broadcast it."""
+        async with self._lock:
+            removed_ids = [
+                ticket_id
+                for ticket_id in self._order
+                if self._tickets[ticket_id]["status"] in ("resolved", "denied")
+            ]
+            for ticket_id in removed_ids:
+                self._tickets.pop(ticket_id, None)
+            if removed_ids:
+                removed = set(removed_ids)
+                self._order = [
+                    ticket_id for ticket_id in self._order if ticket_id not in removed
+                ]
+        if removed_ids:
+            await self._hub.broadcast(
+                "history.cleared",
+                {"ticket_ids": removed_ids, "count": len(removed_ids)},
+            )
+        return len(removed_ids)
 
     # ── 5-second override window ──────────────────────────────────────────────
     def _schedule_auto_dispatch(self, ticket_id: str) -> None:

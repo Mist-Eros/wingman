@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // lib/core/models/analyze_result.dart
 //
 // OWNER: Lead (lib/core/). FROZEN CONTRACT for the conversational reporter flow
@@ -21,6 +21,7 @@
 // =============================================================================
 
 import '../incidents/taxonomy.dart';
+import '../incidents/likelihood.dart';
 import 'ticket.dart';
 
 /// Request body for one `/api/analyze` turn.
@@ -94,6 +95,15 @@ class AnalyzeFields {
       incidentCode == null ? null : IncidentTaxonomy.byCode(incidentCode!);
 
   String get confidenceLabel => '${(confidence * 100).round()}%';
+
+  /// Likelihood that this incident can actually happen at Craiova airport.
+  double get craiovaLikelihood => airportLikelihoodOf(
+        incidentCode: incidentCode,
+        location: location,
+        urgency: urgency,
+      );
+
+  String get likelihoodLabel => airportLikelihoodPercent(craiovaLikelihood);
 
   factory AnalyzeFields.fromJson(Object? value) {
     if (value is! Map) return const AnalyzeFields();
@@ -204,5 +214,3 @@ AiSource _aiSource(Object? value) {
   }
   return AiSource.fallback;
 }
-
-

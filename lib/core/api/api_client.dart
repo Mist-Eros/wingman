@@ -306,6 +306,13 @@ class ApiClient {
     return TranscriptionResult.fromJson(json);
   }
 
+  /// Admin history action: permanently removes resolved/denied tickets.
+  Future<int> clearHistory() async {
+    final json = await _send('POST', '/api/tickets/clear-history');
+    final value = json['cleared'];
+    return value is num ? value.toInt() : 0;
+  }
+
   /// Clears the in-memory store (demo rehearsals). Server may 404 if disabled.
   Future<void> devReset() async {
     await _send('POST', '/api/dev/reset');

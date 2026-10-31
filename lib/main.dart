@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // lib/main.dart
 //
 // OWNER: Lead. Single app, role-based routing (per the locked product split):
@@ -285,7 +285,3 @@ class _AirportAppState extends State<AirportApp> {
         initialSession: _session,
       );
 }
-
-
-
-

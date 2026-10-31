@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // OWNER: Fita Redu Mihai (lib/features/dispatcher/).
 //
 // Frozen contract for main.dart:
@@ -15,6 +15,7 @@ import '../../core/incidents/taxonomy.dart';
 import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
+import '../../core/widgets/report_action_bar.dart';
 import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
 import 'demo_tickets.dart';
@@ -49,6 +50,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   bool _forceDemo = false;
   late List<Ticket> _demoTickets;
   DispatcherDensity _density = DispatcherDensity.comfortable;
+  _AdminTab _adminTab = _AdminTab.queue;
 
   final List<DispatcherHistoryEntry> _history = <DispatcherHistoryEntry>[];
   String _lastEventLabel = 'Niciun eveniment încă';
@@ -108,18 +110,17 @@ class _DispatcherScreenState extends State<DispatcherScreen>
   bool _usingDemo(TicketBoard board) => _forceDemo || board.isEmpty;
 
   List<Ticket> _sourceTickets(TicketBoard board) =>
-      _usingDemo(board) ? _demoTickets : board.tickets;
+      (_usingDemo(board) ? _demoTickets : board.tickets)
+          .where((t) => !t.status.isTerminal)
+          .toList(growable: false);
 
-  List<Ticket> _pending(TicketBoard board) {
-    final list = _usingDemo(board)
-        ? _demoTickets.where((t) => t.isPendingOverride)
-        : board.pendingOverrides;
-    return sortDispatcherTickets(list);
-  }
+  // The 5-second dispatcher override window was removed: nothing waits for a
+  // human decision, so the pending list is always empty.
+  List<Ticket> _pending(TicketBoard board) => const <Ticket>[];
 
   List<Ticket> _feed(TicketBoard board) {
     if (_usingDemo(board)) {
-      return _filters.applyToList(_demoTickets, excludePending: true);
+      return _filters.applyToList(_sourceTickets(board), excludePending: true);
     }
     return _filters.apply(board, excludePending: true);
   }
@@ -196,8 +197,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
           at: DateTime.now().toUtc(),
           kind: DispatcherHistoryKind.created,
           ticketId: ticket.id,
-          summary: 'Pending 5s: ${shortTicketLabel(ticket)}',
-          detail: 'Încredere ${ticket.confidenceLabel}',
+          summary: 'Tichet nou: ${shortTicketLabel(ticket)}',
+          detail: 'Probabilitate Craiova ${ticket.likelihoodLabel}',
         ),
       );
     } else {
@@ -487,6 +488,59 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     return KeyEventResult.ignored;
   }
 
+  Future<void> _clearHistory(TicketBoard board, bool demo) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Golești istoricul?'),
+        content: const Text(
+          'Tichetele rezolvate și respinse vor fi șterse definitiv. '
+          'Tichetele active rămân neatinse.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Anulează'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Golește istoricul'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    if (demo) {
+      final before = _demoTickets.where((t) => t.status.isTerminal).length;
+      setState(() {
+        _demoTickets = _demoTickets
+            .where((t) => !t.status.isTerminal)
+            .toList(growable: false);
+      });
+      _showHistorySnack('Istoric demo golit ($before tichete).');
+      return;
+    }
+
+    final before = board.tickets.where((t) => t.status.isTerminal).length;
+    final ok = await board.clearHistory();
+    if (!mounted) return;
+    _showHistorySnack(
+      ok
+          ? 'Istoric golit ($before tichete).'
+          : (board.lastActionError ?? 'Golirea istoricului a eșuat.'),
+    );
+  }
+
+  void _showHistorySnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final board = CoreScope.boardOf(context);
@@ -499,6 +553,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
       onKeyEvent: (node, event) => _onKey(session, board, event),
       child: Scaffold(
         backgroundColor: kDispatcherCanvas,
+        bottomNavigationBar: ReportActionBar(onPressed: _openReporter),
         appBar: AppBar(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
@@ -587,11 +642,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             if (!compact) ...<Widget>[
               IconButton(
-                tooltip: 'Raportează incident',
-                icon: const Icon(Icons.campaign_outlined),
-                onPressed: _openReporter,
-              ),
-              IconButton(
                 tooltip: 'Încarcă scenă demo',
                 icon: const Icon(Icons.movie_filter_outlined),
                 onPressed: _reloadDemo,
@@ -622,8 +672,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                     board.refresh();
                   } else if (value == 'demo') {
                     _reloadDemo();
-                  } else if (value == 'report') {
-                    _openReporter();
                   } else {
                     setState(() {
                       final values = DispatcherDensity.values;
@@ -632,10 +680,6 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   }
                 },
                 itemBuilder: (context) => const <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'report',
-                    child: Text('Raportează incident'),
-                  ),
                   PopupMenuItem<String>(
                     value: 'refresh',
                     child: Text('Reîmprospătează live'),
@@ -658,6 +702,39 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             const SizedBox(width: 8),
           ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(46),
+            child: ListenableBuilder(
+              listenable: board,
+              builder: (context, _) {
+                final historyCount =
+                    (_usingDemo(board) ? _demoTickets : board.tickets)
+                        .where((ticket) => ticket.status.isTerminal)
+                        .length;
+                return Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: <Widget>[
+                      _AdminTabButton(
+                        label: 'Coadă',
+                        selected: _adminTab == _AdminTab.queue,
+                        onTap: () =>
+                            setState(() => _adminTab = _AdminTab.queue),
+                      ),
+                      _AdminTabButton(
+                        label: 'Istoric',
+                        count: historyCount,
+                        selected: _adminTab == _AdminTab.history,
+                        onTap: () =>
+                            setState(() => _adminTab = _AdminTab.history),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ),
         body: SafeArea(
           top: false,
@@ -670,6 +747,18 @@ class _DispatcherScreenState extends State<DispatcherScreen>
               final feed = _feed(board);
               final selected = _findTicket(board, _selectedTicketId);
               final liveCount = board.tickets.length;
+
+              if (_adminTab == _AdminTab.history) {
+                final historyTickets = (demo ? _demoTickets : board.tickets)
+                    .where((ticket) => ticket.status.isTerminal)
+                    .toList()
+                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                return _HistoryPane(
+                  tickets: historyTickets,
+                  demo: demo,
+                  onClear: () => _clearHistory(board, demo),
+                );
+              }
 
               return LayoutBuilder(
                 builder: (context, constraints) {
@@ -1134,7 +1223,10 @@ class _FilterSidebar extends StatelessWidget {
           const SizedBox(height: 12),
           Text('Listă', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
-          for (final option in DispatcherListFilter.values)
+          for (final option in const [
+            DispatcherListFilter.all,
+            DispatcherListFilter.active,
+          ])
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: ChoiceChip(
@@ -1326,7 +1418,9 @@ class _DetailPane extends StatelessWidget {
                 _DetailRow(label: 'Cod', value: ticket.incidentCode),
                 _DetailRow(label: 'Status', value: ticket.status.labelRo),
                 _DetailRow(label: 'Urgență', value: ticket.urgency.labelRo),
-                _DetailRow(label: 'Încredere', value: ticket.confidenceLabel),
+                _DetailRow(
+                    label: 'Probabilitate Craiova',
+                    value: ticket.likelihoodLabel),
                 _DetailRow(label: 'Sursă AI', value: ticket.aiSource.labelRo),
                 _DetailRow(
                   label: 'Decis de',
@@ -1593,4 +1687,253 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+enum _AdminTab { queue, history }
 
+class _AdminTabButton extends StatelessWidget {
+  const _AdminTabButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.count,
+  });
+
+  final String label;
+  final int? count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: selected ? theme.colorScheme.primary : Colors.transparent,
+              width: 3,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: selected
+                    ? theme.colorScheme.primary
+                    : const Color(0xFF64748B),
+              ),
+            ),
+            if (count != null && count! > 0) ...<Widget>[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2F8),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryPane extends StatelessWidget {
+  const _HistoryPane({
+    required this.tickets,
+    required this.demo,
+    required this.onClear,
+  });
+
+  final List<Ticket> tickets;
+  final bool demo;
+  final Future<void> Function() onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      'Istoric',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      '${tickets.length} tichete rezolvate sau respinse'
+                      '${demo ? ' (demo)' : ''}',
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: tickets.isEmpty ? null : onClear,
+                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                label: const Text('Golește istoricul'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: tickets.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.history_rounded,
+                          size: 42, color: Color(0xFF94A3B8)),
+                      SizedBox(height: 8),
+                      Text(
+                        'Istoricul este gol.',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  itemCount: tickets.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) =>
+                      _HistoryCard(ticket: tickets[index]),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  const _HistoryCard({required this.ticket});
+
+  final Ticket ticket;
+
+  String get _time {
+    final local = ticket.updatedAt.toLocal();
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(local.day)}.${two(local.month)} ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = ticket.status == TicketStatus.resolved;
+    final color = resolved ? const Color(0xFF027A48) : const Color(0xFFB42318);
+    final fill = resolved ? const Color(0xFFECFDF3) : const Color(0xFFFEF3F2);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  ticket.status.labelRo,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                ticket.incidentCode,
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _time,
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            ticket.labelRo,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            '${ticket.location.display} · ${ticket.reporterName}',
+            style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            ticket.resolutionNote?.trim().isNotEmpty == true
+                ? ticket.resolutionNote!
+                : 'Fără notă',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
+          if (ticket.decidedBy != null) ...<Widget>[
+            const SizedBox(height: 5),
+            Text(
+              'Decis de ${ticket.decidedBy}',
+              style: const TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

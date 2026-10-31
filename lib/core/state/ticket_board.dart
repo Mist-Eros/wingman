@@ -153,6 +153,28 @@ class TicketBoard extends ChangeNotifier {
             dispatcherId: dispatcherId,
           ));
 
+  /// Admin history tab: remove all resolved/denied tickets server-side.
+  Future<bool> clearHistory() async {
+    try {
+      await _api.clearHistory();
+      await refresh();
+      _lastActionError = null;
+      _notify();
+      return true;
+    } on ApiException catch (error) {
+      _lastActionError = error.isNetworkIssue
+          ? 'Nu am putut goli istoricul — serverul nu răspunde.'
+          : error.message;
+      _notify();
+      return false;
+    } on Object catch (error) {
+      debugPrint('[board] clearHistory failed: $error');
+      _lastActionError = 'Golirea istoricului a eșuat. Reîncearcă.';
+      _notify();
+      return false;
+    }
+  }
+
   Future<bool> join(
     String ticketId, {
     required String crewId,

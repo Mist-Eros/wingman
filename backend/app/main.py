@@ -34,6 +34,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 
 from . import schemas
+from . import occurrences as occurrence_catalog
 from .ai import (
     KEYWORD_RULES,
     OllamaClient,
@@ -116,13 +117,24 @@ async def lifespan(app: FastAPI):
             "(update KEYWORD_RULES in app/ai.py)",
             ", ".join(unknown_codes),
         )
+
+    catalog_problems = occurrence_catalog.validate_catalog(
+        {item.code for item in taxonomy.types}
+    )
+    if catalog_problems:
+        raise RuntimeError(
+            "Invalid occurrence catalog: " + "; ".join(catalog_problems[:10])
+        )
     logger.info(
-        "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f "
-        "OVERRIDE_WINDOW=%.1fs RESOLVE_QUORUM=%s",
+        "Occurrence catalog v%s · %s source-backed incidents",
+        occurrence_catalog.catalog()["version"],
+        len(occurrence_catalog.all_occurrences()),
+    )
+    logger.info(
+        "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f RESOLVE_QUORUM=%s",
         settings.ollama_url,
         settings.ollama_model,
         settings.confidence_threshold,
-        settings.override_window_seconds,
         settings.resolve_quorum,
     )
 
@@ -237,9 +249,14 @@ async def health() -> dict:
         "incident_types": len(taxonomy.types),
         "tickets": store.count,
         "ws_clients": hub.count,
-        "override_window_seconds": settings.override_window_seconds,
         "confidence_threshold": settings.confidence_threshold,
         "resolve_quorum": settings.resolve_quorum,
+        "resolve_quorum_by_urgency": {
+            "low": 1,
+            "medium": 1,
+            "high": 2,
+            "critical": 2,
+        },
         "ollama": {
             "url": settings.ollama_url,
             "model": settings.ollama_model,
@@ -263,6 +280,31 @@ async def health() -> dict:
 @api.get("/taxonomy")
 async def taxonomy_endpoint() -> dict:
     return taxonomy.as_dict()
+
+
+@api.get("/occurrences")
+async def occurrences_endpoint(
+    code: str | None = None,
+    category: str | None = None,
+) -> dict:
+    """Source-backed catalog of possible airport incidents (EU 2015/1018 + ASRS)."""
+    data = occurrence_catalog.catalog()
+    items = occurrence_catalog.find_occurrences(code=code, category=category)
+    return {
+        "version": data["version"],
+        "sources": data["sources"],
+        "categories": data["categories"],
+        "count": len(items),
+        "occurrences": items,
+    }
+
+
+@api.get("/occurrences/{occurrence_id}")
+async def occurrence_endpoint(occurrence_id: str) -> dict:
+    item = occurrence_catalog.get_occurrence(occurrence_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Unknown occurrence id")
+    return {"occurrence": item}
 
 
 @api.post("/analyze")
@@ -369,15 +411,23 @@ async def create_report(report: schemas.ReportIn) -> dict:
             report.hint_code,
             report.use_ai,
         )
-        if report.force_override:
-            # Demo switch: guarantee the dispatcher 5-second window is shown.
-            classification = replace(
-                classification,
-                confidence=min(classification.confidence, 0.40),
-                rationale=(
-                    classification.rationale + " [demo: low confidence override]"
-                ).strip(),
+        existing = await store.find_duplicate(
+            incident_code=classification.incident_code,
+            transcript=report.transcript,
+            location=location,
+        )
+        if existing is not None:
+            logger.info(
+                "Duplicate report ignored → existing ticket %s (%s)",
+                existing["id"],
+                existing["incident_code"],
             )
+            return {
+                "ticket": existing,
+                "duplicate": True,
+                "taxonomy_version": taxonomy.version,
+            }
+
         ticket = await store.create(
             source=report.source,
             transcript=report.transcript.strip(),
@@ -406,6 +456,13 @@ async def list_tickets(status: str | None = Query(default=None)) -> dict:
     except ValueError as exc:
         raise _to_http(exc) from exc
     return {"tickets": tickets, "count": len(tickets)}
+
+
+@api.post("/tickets/clear-history")
+async def clear_ticket_history() -> dict:
+    """Admin-only action: permanently remove resolved/denied tickets."""
+    cleared = await store.clear_history()
+    return {"cleared": cleared}
 
 
 @api.get("/tickets/{ticket_id}")
@@ -526,7 +583,6 @@ async def websocket_endpoint(
                     "server": "wingman-api",
                     "taxonomy_version": taxonomy.version,
                     "incident_types": len(taxonomy.types),
-                    "override_window_seconds": settings.override_window_seconds,
                 },
             }
         )

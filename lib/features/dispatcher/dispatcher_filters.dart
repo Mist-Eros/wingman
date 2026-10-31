@@ -14,7 +14,7 @@ enum DispatcherListFilter {
 /// Local UI filter state. Does not mutate [TicketBoard] order except by subset.
 class DispatcherFilters {
   const DispatcherFilters({
-    this.list = DispatcherListFilter.all,
+    this.list = DispatcherListFilter.active,
     this.department,
     this.urgency,
     this.unresolvedOnly = false,
@@ -85,9 +85,9 @@ class DispatcherFilters {
     Iterable<Ticket> source, {
     required bool excludePending,
   }) {
-    if (excludePending && list != DispatcherListFilter.pending) {
-      source = source.where((t) => !t.isPendingOverride);
-    }
+    // The admin view only shows work that is still open. Resolved/denied
+    // tickets are clutter and never appear in the queue.
+    source = source.where((t) => !t.status.isTerminal);
 
     if (unresolvedOnly) {
       source = source.where((t) => !t.status.isTerminal);

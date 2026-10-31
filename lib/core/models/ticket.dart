@@ -22,6 +22,7 @@
 // =============================================================================
 
 import '../incidents/taxonomy.dart';
+import '../incidents/likelihood.dart';
 
 /// How the report entered the system.
 enum ReportSource {
@@ -307,8 +308,17 @@ class Ticket {
     return (remainingMs / 1000).ceil();
   }
 
-  /// Confidence rendered as "87%".
+  /// Confidence rendered as "87%" (model certainty, kept for diagnostics).
   String get confidenceLabel => '${(confidence * 100).round()}%';
+
+  /// Likelihood that this incident can actually happen at Craiova airport.
+  double get craiovaLikelihood => airportLikelihoodOf(
+        incidentCode: incidentCode,
+        location: location.display,
+        urgency: urgency,
+      );
+
+  String get likelihoodLabel => airportLikelihoodPercent(craiovaLikelihood);
 
   bool isJoinedBy(String crewId) => joinedCrewIds.contains(crewId);
 
