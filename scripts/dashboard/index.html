@@ -92,6 +92,18 @@
                text-transform: uppercase; margin-top: 8px; }
   .detail .v { font-size: 13px; }
   .detail .photo { width:100%; border-radius:10px; margin-top:8px; border:1px solid var(--line); }
+  .media-tabs { display:flex; gap:6px; margin:10px 0 8px; }
+  .media-tab { background:#fff; border:1px solid var(--line); color:#0F172A; border-radius:999px;
+               padding:5px 11px; font-size:11px; font-weight:800; cursor:pointer; }
+  .media-tab.on { background:#0F4C81; border-color:#0F4C81; color:#fff; }
+  .media-body { margin-bottom:10px; }
+  .media-body img { width:100%; max-height:240px; object-fit:cover; border-radius:10px;
+                    border:1px solid var(--line); display:block; }
+  .media-map { width:100%; height:240px; border:1px solid var(--line); border-radius:10px;
+               display:block; background:#EAF0F7; }
+  .media-empty { padding:14px; border:1px dashed var(--line); border-radius:10px;
+                 color:#64748B; font-size:12px; }
+
   .detail .spacer { flex: 1; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
            background: var(--card); border: 1px solid var(--line); border-radius: 10px;
@@ -503,6 +515,19 @@ function renderDetail() {
     actions = '<div class="v" style="color:' + sc + '">' +
       (t.status === 'resolved' ? '✓ Tichet rezolvat' : '✕ Tichet respins') + '</div>';
   }
+
+  const lat = Number.isFinite(Number(t.location?.lat)) ? Number(t.location.lat) : null;
+  const lng = Number.isFinite(Number(t.location?.lng)) ? Number(t.location.lng) : null;
+  const hasPhoto = !!t.photo_base64;
+  const hasMap = lat !== null && lng !== null;
+  const mediaTabs = (hasPhoto || hasMap)
+    ? '<div class="media-tabs">' +
+      (hasPhoto ? '<button class="media-tab" data-media-view="photo" onclick="renderTicketMedia(\'photo\')">📷 Foto</button>' : '') +
+      (hasMap ? '<button class="media-tab" data-media-view="map" onclick="renderTicketMedia(\'map\')">🗺️ Hartă</button>' : '') +
+      '</div><div id="detailMedia" class="media-body"></div>'
+    : '';
+  const initialMedia = hasPhoto ? 'photo' : (hasMap ? 'map' : null);
+
   d.innerHTML =
     '<div class="code" style="color:' + uc + '">' + esc(t.incident_code) + '</div>' +
     '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
@@ -510,14 +535,37 @@ function renderDetail() {
     badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
     badge(STATUS_LABEL[t.status] || t.status, sc) +
     badge('Probabilitate Craiova ' + likelihoodPct(t), '#0F4C81') + '</div>' +
+    mediaTabs +
     kv('Locație', loc) + kv('Departamente', (t.primary_departments || []).join(' · ')) +
     kv('Raportat de', t.reporter_name) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
     kv('Voturi', (t.resolve_votes || 0) + ' / ' + (t.quorum || 1)) +
     kv('Transcriere', t.transcript) +
-    (t.photo_base64 ? '<img class="photo" src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">' : '') +
     (t.decided_by ? kv('Decis de', t.decided_by) : '') +
     (t.resolution_note ? kv('Notă', t.resolution_note) : '') +
     '<div class="spacer"></div>' + actions;
+  if (initialMedia) renderTicketMedia(initialMedia);
+}
+
+function renderTicketMedia(view) {
+  const t = [...tickets.values()].find(x => x.id === selected);
+  const el = $('detailMedia');
+  if (!t || !el) return;
+  const lat = Number.isFinite(Number(t.location?.lat)) ? Number(t.location.lat) : null;
+  const lng = Number.isFinite(Number(t.location?.lng)) ? Number(t.location.lng) : null;
+  document.querySelectorAll('[data-media-view]').forEach((b) => {
+    b.classList.toggle('on', b.dataset.mediaView === view);
+  });
+  if (view === 'photo' && t.photo_base64) {
+    el.innerHTML = '<img src="data:image/jpeg;base64,' + t.photo_base64 + '" alt="poză incident">';
+  } else if (view === 'map' && lat !== null && lng !== null) {
+    const bbox = (lng - 0.004).toFixed(5) + ',' + (lat - 0.003).toFixed(5) + ',' +
+                 (lng + 0.004).toFixed(5) + ',' + (lat + 0.003).toFixed(5);
+    const src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox +
+                '&layer=mapnik&marker=' + lat + ',' + lng;
+    el.innerHTML = '<iframe class="media-map" src="' + src + '" title="Harta incidentului" loading="lazy"></iframe>';
+  } else {
+    el.innerHTML = '<div class="media-empty">Nu există media pentru acest tichet.</div>';
+  }
 }
 
 async function clearHistory() {

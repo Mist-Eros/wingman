@@ -10,7 +10,8 @@
     "The menu is 8x8x8 = 512 problems, 3 taps: category -> subcategory -> problem.",
     "Quorum: 1 vote for low/medium, 2 votes for high/critical.",
     "Accessibility profiles: blind, mute, deaf, colorblind, motor, cognitive.",
-    "Quorum is one responder per primary department involved (not a fixed 2)."
+    "Quorum is one responder per primary department involved (not a fixed 2).",
+    "Ticket photo + GPS location are persisted and shown via a Foto/Hartă toggle in dispatcher, crew, history and dashboard."
   ],
   "images": [
     {
@@ -142,6 +143,16 @@
       "file": "20_account_points.png",
       "caption": "Employee account: points and attended incidents",
       "slide": "Rewards / account"
+    },
+    {
+      "file": "21_ticket_media_photo.png",
+      "caption": "Ticket detail media toggle — photo attached to the alert (persistent)",
+      "slide": "Ticket media"
+    },
+    {
+      "file": "22_ticket_media_map.png",
+      "caption": "Ticket detail media toggle — location on a real map (persistent)",
+      "slide": "Ticket media"
     }
   ]
 }

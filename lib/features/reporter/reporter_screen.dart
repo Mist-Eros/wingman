@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../core/core_scope.dart';
+import '../../core/widgets/ticket_media_panel.dart';
 import '../../core/incidents/taxonomy.dart';
 import 'reporter_controller.dart';
 import 'menu/incident_menu_data.dart';
@@ -476,7 +477,9 @@ class _ReporterScreenState extends State<ReporterScreen> {
                     children: <Widget>[
                       Text(ticket.labelRo,
                           style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
+                      TicketMediaPanel(ticket: ticket, height: 170),
+                      const SizedBox(height: 10),
                       Text(
                           '${tr('Stare', 'Status')}: ${ticket.status.labelRo}'),
                       Text(

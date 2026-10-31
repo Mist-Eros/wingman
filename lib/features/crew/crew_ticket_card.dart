@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import '../../core/widgets/ticket_media_panel.dart';
 
 /// One dispatched / in-progress ticket with Preia + Rezolvat actions.
 class CrewTicketCard extends StatefulWidget {
@@ -233,18 +234,28 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
                             child: _expanded
                                 ? Padding(
                                     padding: const EdgeInsets.only(top: 14),
-                                    child: _DispatchPanel(
-                                      joined: _joined,
-                                      voted: _voted,
-                                      joining: _joining,
-                                      voting: _voting,
-                                      joinedCount: joinedCount,
-                                      joinedIds: _ticket.joinedCrewIds,
-                                      resolveVotes: _ticket.resolveVotes,
-                                      quorum: _ticket.quorum,
-                                      onJoin: _onJoin,
-                                      onVote: _onVote,
-                                      accent: _accent,
+                                    child: Column(
+                                      children: <Widget>[
+                                        TicketMediaPanel(
+                                          ticket: _ticket,
+                                          height: 160,
+                                          compact: true,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        _DispatchPanel(
+                                          joined: _joined,
+                                          voted: _voted,
+                                          joining: _joining,
+                                          voting: _voting,
+                                          joinedCount: joinedCount,
+                                          joinedIds: _ticket.joinedCrewIds,
+                                          resolveVotes: _ticket.resolveVotes,
+                                          quorum: _ticket.quorum,
+                                          onJoin: _onJoin,
+                                          onVote: _onVote,
+                                          accent: _accent,
+                                        ),
+                                      ],
                                     ),
                                   )
                                 : (!_joined

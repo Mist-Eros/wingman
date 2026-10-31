@@ -203,3 +203,13 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 |---|---|---|
 | Replaced the schematic GPS map with a real **OpenStreetMap slippy map** (`flutter_map` + `latlong2`): live marker, accuracy circle, follow/recenter, attribution, coordinates/accuracy. | `lib/features/reporter/live_gps_map_screen.dart` | S24 screenshot shows Craiova airport tiles + GPS marker (49 m accuracy) |
 | Map provider/centre/zoom are profile-driven (`map` block in `config/domains/*.json`); OSM needs no API key, and the `tileUrl` seam allows a self-hosted tile server. | `lib/core/domain/domain_config.dart`, `config/domains/` | map loaded on device; analyze/tests clean |
+
+---
+
+## 2026-10-31 — persistent ticket media + Foto/Hartă toggle
+
+| Change | Where | Evidence |
+|---|---|---|
+| Photo and GPS location are retained on the ticket and shown through a reusable **Foto/Hartă** toggle (photo tab + real OSM map with marker, accuracy/location text). | `lib/core/widgets/ticket_media_panel.dart` | dashboard screenshots: `21_ticket_media_photo.png`, `22_ticket_media_map.png` |
+| Toggle available in **dispatcher detail, mobile dispatcher cards, crew expanded card, sent confirmation, history card and dashboard detail**. | dispatcher/crew/reporter screens, dashboard JS | dashboard photo/map tabs verified; Flutter widget tests |
+| Location notification now advertises attached photo; report keeps photo/location through history/reset rules. | `core/notifications/ticket_notifier.dart`, ticket model | 174 Flutter tests; smoke 103/103 |

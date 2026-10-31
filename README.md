@@ -141,7 +141,7 @@ catalog, demo accounts, localisation).
 * **Report action** is a large full-width bar at the bottom of the crew and dispatcher screens — one tap, always reachable on a phone.
 * **3-tap incident menu**: 8 categories × 8 subcategories × 8 problems = 512 mapped onto the 14 operational codes, in a full-screen 4 rows × 2 columns grid per level.
 * **Accessibility**: profiles for blind, mute, deaf, colorblind, motor and cognitive staff (text size, contrast, visual alerts, spoken guidance, typed-first, large targets). See `docs/accessibility.md`.
-* **Live GPS map on real OpenStreetMap tiles** (configurable tile server) with coordinates/accuracy, and an **optional 5-second photo** prompt (never blocks a report).
+* **Live GPS map on real OpenStreetMap tiles** (configurable tile server) with coordinates/accuracy, and an **optional 5-second photo** prompt (never blocks a report); photo + GPS stay on the ticket and are shown with a **Foto/Hartă toggle**.
 * **Account tab** with points and attended incidents; **Reset demo complet** clears tickets/history/points.
 * **No duplicate tickets**: a second report of the same incident type at the same location (15 min) or with identical normalized words (30 min) returns the existing open ticket instead of creating a new one.
 * **Alerts** go only to accounts whose department scope intersects the ticket's primary

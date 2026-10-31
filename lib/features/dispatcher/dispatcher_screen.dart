@@ -7,8 +7,6 @@
 //   • deps via CoreScope.sessionOf / boardOf
 // =============================================================================
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +16,7 @@ import '../../core/models/session.dart';
 import '../../core/models/ticket.dart';
 import '../../core/state/ticket_board.dart';
 import '../../core/widgets/report_action_bar.dart';
+import '../../core/widgets/ticket_media_panel.dart';
 import '../rewards/account_screen.dart';
 import '../reporter/reporter_screen.dart';
 import 'animated_ticket_item.dart';
@@ -1378,20 +1377,6 @@ class _DetailPane extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          if (ticket.photoBase64 != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.memory(
-                  base64Decode(ticket.photoBase64!),
-                  height: 190,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stack) => const SizedBox(),
-                ),
-              ),
-            ),
           Row(
             children: <Widget>[
               Expanded(
@@ -1410,6 +1395,8 @@ class _DetailPane extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+          TicketMediaPanel(ticket: ticket, height: 190),
+          const SizedBox(height: 12),
           TicketFeedCard(ticket: ticket),
           const SizedBox(height: 16),
           TicketTimeline(ticket: ticket),
@@ -1939,6 +1926,12 @@ class _HistoryCard extends StatelessWidget {
             '${ticket.location.display} · ${ticket.reporterName}',
             style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
           ),
+          if (ticket.photoBase64 != null ||
+              (ticket.location.lat != null &&
+                  ticket.location.lng != null)) ...<Widget>[
+            const SizedBox(height: 10),
+            TicketMediaPanel(ticket: ticket, height: 140, compact: true),
+          ],
           const SizedBox(height: 3),
           Text(
             ticket.resolutionNote?.trim().isNotEmpty == true

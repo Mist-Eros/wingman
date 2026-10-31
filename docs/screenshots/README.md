@@ -34,8 +34,9 @@ istoric cu clear-all.
 | 11 | Accessibility & safety | `17_accessibility.png`, `19_photo_prompt.png` |
 | 12 | Live GPS map on real OpenStreetMap tiles | `18_live_gps.png` |
 | 13 | Rewards / account | `20_account_points.png` |
-| 14 | Operability — local AI, TLS pinned, DevTools | `16_devtools.png` |
-| 15 | Team — who built what | `team/team-grid.png` (sau cele 4 carduri) |
+| 14 | Ticket media — persistent photo + map toggle | `21_ticket_media_photo.png`, `22_ticket_media_map.png` |
+| 15 | Operability — local AI, TLS pinned, DevTools | `16_devtools.png` |
+| 16 | Team — who built what | `team/team-grid.png` (sau cele 4 carduri) |
 
 ## Conținut
 
@@ -58,6 +59,8 @@ istoric cu clear-all.
 | `14_dashboard_history.png` | Waterfox: Istoric |
 | `15_dashboard_report_modal.png` | Waterfox: formular raportare |
 | `16_devtools.png` | DevTools: AI/STT/WSS/quorum |\n| `17_accessibility.png` | Accessibility profiles (blind/mute/deaf/colorblind/motor/cognitive) |\n| `18_live_gps.png` | Live GPS map on OpenStreetMap tiles, marker + accuracy + coordinates |\n| `19_photo_prompt.png` | Optional 5-second photo prompt |\n| `20_account_points.png` | Employee account: points + attended incidents |
+| `21_ticket_media_photo.png` | Dispatcher detail with attached photo (toggle Foto) |
+| `22_ticket_media_map.png` | Same ticket, toggled to Hartă |
 | `team/*.png` | carduri egale + grid 2×2 |
 
 ## Note pentru slide design

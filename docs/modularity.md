@@ -29,6 +29,7 @@ Core policies/services
 
 Feature modules
   features/rewards/          account UI only (renders the ledger)
+  core/widgets/ticket_media_panel.dart  Foto/Hartă toggle, reusable on any ticket surface
   features/reporter/         reporting screens, menu, GPS, photo
   features/dispatcher/       admin queue/history
   features/crew/             crew queue

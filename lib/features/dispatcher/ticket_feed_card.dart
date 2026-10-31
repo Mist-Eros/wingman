@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/incidents/likelihood.dart';
 import '../../core/incidents/taxonomy.dart';
 import '../../core/models/ticket.dart';
+import '../../core/widgets/ticket_media_panel.dart';
 import 'dispatcher_density.dart';
 import 'urgency_style.dart';
 
@@ -306,6 +307,16 @@ class TicketFeedCard extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ),
+                        ],
+                        if (ticket.photoBase64 != null ||
+                            (ticket.location.lat != null &&
+                                ticket.location.lng != null)) ...<Widget>[
+                          const SizedBox(height: 10),
+                          TicketMediaPanel(
+                            ticket: ticket,
+                            height: 150,
+                            compact: true,
                           ),
                         ],
                         if (_showActions) ...[
