@@ -7,7 +7,7 @@ the departments the incident needs**. Tickets go straight to the dispatcher, who
 reclassify** any of them; crews **join** and **vote** to resolve. Everything runs on the laptop —
 no cloud, TLS with a private pinned CA, in-memory store.
 
-**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **88/88** ·
+**Status:** demo-ready. `flutter analyze` clean · **160 app tests** · backend smoke **96/96** ·
 `scripts\verify_all.ps1 -Live` → ALL GATES PASSED.
 
 ---
@@ -20,7 +20,7 @@ cd backend; .\run.ps1
 
 # 2) seed the stage data + prove the API
 cd ..; python backend\seed_demo.py
-python scripts\smoke_test.py --ca backend\certs\ca.crt     # 88/88
+python scripts\smoke_test.py --ca backend\certs\ca.crt     # 96/96
 
 # 3) phone (Android; APK is built by the script)
 .\scripts\build_demo_apks.ps1 -ApiHost <LAPTOP_IP>
@@ -79,6 +79,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 │   └── features/crew/crew_preview_main.dart  local preview of the crew UI (no backend)
 ├── backend/
 │   ├── app/                     FastAPI: routes, Ollama, Whisper, store, taxonomy
+│   │   └── data/occurrences.json  source-backed incident database (59 entries)
 │   ├── seed_demo.py             seeds the 5 rehearsal tickets
 │   └── run.ps1 / run_insecure.ps1
 ├── assets/certs/ca.crt          public CA bundle pinned by the app
@@ -109,6 +110,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 * **AI policy — dispatch first.** The only questions are for a missing **type** or **location**.
   There is no “is anyone in danger?” or “describe it” question: high-stakes reports go to the
   dispatcher immediately and can be denied or reclassified from the queue.
+* **Incident catalog**: 59 source-backed occurrences (EU 2015/1018 + ASRS + ground-handling guidance) mapped onto the 14 operational codes — served by `GET /api/occurrences`, documented in [docs/occurrence-catalog.md](docs/occurrence-catalog.md).
 * **Locations** are free text and matched against a Craiova airport catalog (Terminal 2,
   Platforma CRA, runway 09/27, entrances/exits, check-in, security, customs, boarding, gates,
   belts, parking, control tower, cargo…) — see [docs/airport-zones.md](docs/airport-zones.md).
@@ -131,6 +133,7 @@ Wingman/                         Flutter project (Android + iOS) + Python backen
 | POST | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher actions |
 | POST | `/api/tickets/{id}/join` · `/vote` | Crew join / resolve vote (quorum 2) |
 | POST | `/api/dev/reset` | Clear the in-memory store |
+| GET | `/api/occurrences` | Source-backed incident catalog; `?code=` / `?category=` filters |
 | GET | `/api/health`, `/api/taxonomy`, `/healthz`, `/ca.crt` | Diagnostics / public checks |
 | WS | `/ws?token=` | `hello`, `ticket.created/updated/resolved`, `ping` |
 

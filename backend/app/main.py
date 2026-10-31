@@ -34,6 +34,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 
 from . import schemas
+from . import occurrences as occurrence_catalog
 from .ai import (
     KEYWORD_RULES,
     OllamaClient,
@@ -116,6 +117,19 @@ async def lifespan(app: FastAPI):
             "(update KEYWORD_RULES in app/ai.py)",
             ", ".join(unknown_codes),
         )
+
+    catalog_problems = occurrence_catalog.validate_catalog(
+        {item.code for item in taxonomy.types}
+    )
+    if catalog_problems:
+        raise RuntimeError(
+            "Invalid occurrence catalog: " + "; ".join(catalog_problems[:10])
+        )
+    logger.info(
+        "Occurrence catalog v%s · %s source-backed incidents",
+        occurrence_catalog.catalog()["version"],
+        len(occurrence_catalog.all_occurrences()),
+    )
     logger.info(
         "OLLAMA_URL=%s OLLAMA_MODEL=%s CONFIDENCE_THRESHOLD=%.2f RESOLVE_QUORUM=%s",
         settings.ollama_url,
@@ -260,6 +274,31 @@ async def health() -> dict:
 @api.get("/taxonomy")
 async def taxonomy_endpoint() -> dict:
     return taxonomy.as_dict()
+
+
+@api.get("/occurrences")
+async def occurrences_endpoint(
+    code: str | None = None,
+    category: str | None = None,
+) -> dict:
+    """Source-backed catalog of possible airport incidents (EU 2015/1018 + ASRS)."""
+    data = occurrence_catalog.catalog()
+    items = occurrence_catalog.find_occurrences(code=code, category=category)
+    return {
+        "version": data["version"],
+        "sources": data["sources"],
+        "categories": data["categories"],
+        "count": len(items),
+        "occurrences": items,
+    }
+
+
+@api.get("/occurrences/{occurrence_id}")
+async def occurrence_endpoint(occurrence_id: str) -> dict:
+    item = occurrence_catalog.get_occurrence(occurrence_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Unknown occurrence id")
+    return {"occurrence": item}
 
 
 @api.post("/analyze")

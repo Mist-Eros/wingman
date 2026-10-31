@@ -226,6 +226,50 @@ async def run(args: argparse.Namespace) -> int:
     check("14 incident types", len(actual_codes) == 14, f"got {len(actual_codes)}")
     check("served codes match taxonomy.json", actual_codes == expected_codes)
 
+    # 3b ── source-backed occurrence catalog ─────────────────────────────────
+    print("[3b] occurrence catalog")
+    status, catalog = http_call(base, token, "/api/occurrences", insecure=insecure)
+    items = catalog.get("occurrences", [])
+    check("/api/occurrences returns 200", status == 200, f"status={status}")
+    check("catalog has at least 50 entries", len(items) >= 50, f"got {len(items)}")
+    ids = [item.get("id") for item in items]
+    check("occurrence ids are unique", len(ids) == len(set(ids)))
+    check(
+        "every occurrence maps to a served taxonomy code",
+        {item.get("app_code") for item in items} <= set(actual_codes),
+    )
+    check(
+        "every occurrence has a mandatory_eu boolean and example",
+        all(
+            isinstance(item.get("mandatory_eu"), bool) and item.get("example_ro")
+            for item in items
+        ),
+    )
+    check(
+        "catalog cites EU 2015/1018",
+        any(source.get("id") == "eu2015_1018" for source in catalog.get("sources", [])),
+    )
+    status, filtered = http_call(
+        base, token, "/api/occurrences?code=SF-FIRE", insecure=insecure
+    )
+    check(
+        "catalog can be filtered by app code",
+        status == 200
+        and filtered.get("count", 0) > 0
+        and all(
+            item.get("app_code") == "SF-FIRE"
+            for item in filtered.get("occurrences", [])
+        ),
+    )
+    first_id = ids[0]
+    status, single = http_call(
+        base, token, f"/api/occurrences/{first_id}", insecure=insecure
+    )
+    check(
+        "single occurrence lookup works",
+        status == 200 and single.get("occurrence", {}).get("id") == first_id,
+    )
+
     # 4 ── WSS ────────────────────────────────────────────────────────────────
     print("[4] WSS")
     ws_base = base.replace("https://", "wss://").replace("http://", "ws://")

@@ -34,6 +34,7 @@ from typing import Any
 import httpx
 
 from .config import settings
+from .occurrences import all_occurrences
 from .taxonomy import URGENCY_LEVELS, Taxonomy, get_taxonomy
 
 logger = logging.getLogger("airport.ai")
@@ -312,6 +313,28 @@ KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 
+def _catalog_keyword_rules() -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Aliases from the official occurrence catalog, grouped by operational code.
+
+    Only used by the deterministic fallback when the base keyword rules find
+    nothing, so it broadens coverage without changing the normal classifier.
+    """
+    allowed_short = {"laser", "drona", "bomba", "cutit", "fod", "gpu"}
+    grouped: dict[str, set[str]] = {}
+    for item in all_occurrences():
+        for alias in [*item.get("aliases_ro", []), *item.get("aliases_en", [])]:
+            word = str(alias).strip().lower()
+            if len(word) < 6 and word not in allowed_short:
+                continue
+            grouped.setdefault(item["app_code"], set()).add(word)
+    return tuple(
+        (code, tuple(sorted(words))) for code, words in sorted(grouped.items())
+    )
+
+
+CATALOG_KEYWORD_RULES = _catalog_keyword_rules()
+
+
 @dataclass(frozen=True)
 class Classification:
     incident_code: str
@@ -425,6 +448,19 @@ def fallback_classify(
         if score > best_score:
             best_code, best_score = code, score
 
+    catalog_match = False
+    # Fallback layer 2: the source-backed occurrence catalog (EU/ASRS/GH).
+    # It can refine a weak base match (e.g. "drona" should beat a generic
+    # "pista" hit), but never overrides a stronger base match.
+    for code, keywords in CATALOG_KEYWORD_RULES:
+        score = 0
+        for keyword in keywords:
+            if keyword in text:
+                score += 2 if len(keyword) > 6 else 1
+        if score > 0 and score >= best_score:
+            best_code, best_score = code, score
+            catalog_match = True
+
     if best_code is None:
         return Classification(
             incident_code="OP-OTHER",
@@ -436,11 +472,16 @@ def fallback_classify(
 
     incident_type = taxonomy.require(best_code)
     confidence = min(0.58, 0.30 + 0.04 * best_score)
+    rationale = (
+        "Potrivire cu catalogul de incidente"
+        if catalog_match
+        else f"Potrivire cuvinte-cheie ({best_score})"
+    )
     return Classification(
         incident_code=incident_type.code,
         urgency=incident_type.urgency,
         confidence=round(confidence, 3),
-        rationale=f"Potrivire cuvinte-cheie ({best_score})",
+        rationale=rationale,
         ai_source="fallback",
     )
 

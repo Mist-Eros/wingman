@@ -97,3 +97,15 @@ Updated: 2026-10-30 (H0 session). Tick items as they land.
 | **Compact dispatcher top bar fixed** — pending bell removed, no overlap with the back/route controls. | `lib/features/dispatcher/dispatcher_screen.dart` | clean phone screenshot: WSS pill · Demo/Live · overflow · logout |
 | **Dashboard launcher repaired** (lost newline + out-of-order profile/CA setup); supports `-ApiBase`. | `scripts/serve_dashboard.ps1` | Waterfox control room opens and connects live |
 | **Live-demo over USB** while the venue Wi-Fi isolates clients: `adb reverse tcp:8443 tcp:8443` + APK built for `https://127.0.0.1:8443` (cert already covers 127.0.0.1). | `scripts/serve_dashboard.ps1`, APK build | desktop report at 10:56 → phone queue count updated to 7 via WSS |
+
+---
+
+## 2026-10-31 — occurrence catalog (official reporting framework)
+
+| Change | Where | Evidence |
+|---|---|---|
+| **Source-backed incident database** with **59 possible airport incidents** grouped in **8 operational domains** (movement/runway, terminal, services, ground handling, aircraft, security, dangerous goods, human factors). Each entry has RO/EN name, description, EU reference, ASRS event type, mandatory-reporting flag, aliases and a concrete example. | `backend/app/data/occurrences.json` | JSON validates at backend startup; **55/59** marked mandatory in the EU framework |
+| **Catalog API** for the app/UI/AI: full catalog, filters by operational code or domain, single-entry lookup. | `backend/app/main.py` (`/api/occurrences`), `backend/app/occurrences.py` | smoke checks: 59 entries, unique IDs, valid codes, sources, filtering, lookup |
+| **Fallback classifier uses the catalog**: when Ollama is unavailable and base keywords are weak, catalog aliases refine the code (e.g. drone → SC-ACCESS, unruly passenger → SC-BEHAV, dangerous goods → SC-ITEM). | `backend/app/ai.py` | direct fallback checks; normal AI path unchanged |
+| **Generated documentation** with source links, mapping to Wingman's 14 codes and per-domain tables. | `docs/occurrence-catalog.md`, `scripts/render_occurrence_catalog.py` | regenerated from JSON; docs index updated |
+| Gates after catalog: app **160 tests**, backend smoke **96/96**, wire parity OK. | repo | analyze clean + smoke pass |
