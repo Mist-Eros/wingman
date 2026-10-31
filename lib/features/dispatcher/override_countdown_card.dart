@@ -221,7 +221,7 @@ class _OverrideCountdownCardState extends State<OverrideCountdownCard> {
               if (widget.demoMode) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Mod demo — acțiunile actualizează doar lista locală',
+                  'Mod local — acțiunile actualizează doar lista locală',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: style.onFill.withValues(alpha: 0.7),
                   ),

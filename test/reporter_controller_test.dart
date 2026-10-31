@@ -224,8 +224,7 @@ void main() {
       final h = Harness();
       await h.speak('ceva nu e în regulă la poarta 3');
       expect(h.question, contains('Ce tip de problemă'));
-      expect(h.question, contains('scurgere'));
-      expect(h.question, contains('securitate'));
+      expect(h.question, isNot(contains('exemplu')));
 
       await h.speak('scurgere');
       // the type is now known: the next question is about the problem

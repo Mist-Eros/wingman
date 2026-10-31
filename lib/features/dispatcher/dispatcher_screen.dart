@@ -165,7 +165,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
         at: DateTime.now().toUtc(),
         kind: DispatcherHistoryKind.observed,
         ticketId: 'demo',
-        summary: 'Scenă demo reîncărcată (${_demoTickets.length} tichete)',
+        summary: 'Date locale reîncărcate (${_demoTickets.length} tichete)',
       ),
     );
     _triggerPendingAlert(force: true);
@@ -245,12 +245,12 @@ class _DispatcherScreenState extends State<DispatcherScreen>
         title: const Text('Tichete live detectate'),
         content: Text(
           'Serverul are ${board.tickets.length} tichet(e). '
-          'Oprești modul Demo și treci pe date live?',
+          'Oprești modul local și treci pe date live?',
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Rămân pe Demo'),
+            child: const Text('Rămân pe local'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -522,7 +522,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             .where((t) => !t.status.isTerminal)
             .toList(growable: false);
       });
-      _showHistorySnack('Istoric demo golit ($before tichete).');
+      _showHistorySnack('Istoric local golit ($before tichete).');
       return;
     }
 
@@ -623,7 +623,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
               segments: <ButtonSegment<bool>>[
                 ButtonSegment<bool>(
                   value: true,
-                  label: Text(compact ? 'Demo' : 'Date locale'),
+                  label: Text(compact ? 'Local' : 'Date locale'),
                   icon: Icon(Icons.science, size: 16),
                 ),
                 ButtonSegment<bool>(
@@ -646,7 +646,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
             ),
             if (!compact) ...<Widget>[
               IconButton(
-                tooltip: 'Încarcă scenă demo',
+                tooltip: 'Încarcă date locale',
                 icon: const Icon(Icons.movie_filter_outlined),
                 onPressed: _reloadDemo,
               ),
@@ -690,7 +690,7 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                   ),
                   PopupMenuItem<String>(
                     value: 'demo',
-                    child: Text('Încarcă scenă demo'),
+                    child: Text('Încarcă date locale'),
                   ),
                   PopupMenuItem<String>(
                     value: 'density',
@@ -936,11 +936,11 @@ class _FeedPane extends StatelessWidget {
         if (!compact && demoMode)
           _Banner(
             color: const Color(0xFFE0F2FE),
-            text: 'Nu ești pe WSS live — Date locale (demo). '
+            text: 'Nu ești pe WSS live — Date locale.'
                 'Live pe server: $liveCount tichet(e). '
                 'Comenzi pending: 1 Confirmă · 2 Respinge · 3 Reclasifică.',
             icon: Icons.science_outlined,
-            actionLabel: 'Încarcă scenă demo',
+            actionLabel: 'Încarcă date locale',
             onAction: onLoadDemoScene,
           ),
         if (!compact)
@@ -1130,7 +1130,7 @@ class _FeedPane extends StatelessWidget {
                 const _EmptyState(
                   title: 'Niciun tichet încă',
                   subtitle:
-                      'Apasă „Încarcă scenă demo” sau așteaptă rapoarte live.',
+                      'Apasă „Încarcă date locale” sau așteaptă rapoarte live.',
                 )
               else if (feed.isEmpty && pending.isEmpty)
                 const _EmptyState(
@@ -1220,7 +1220,7 @@ class _FilterSidebar extends StatelessWidget {
           FilledButton.tonalIcon(
             onPressed: onLoadDemoScene,
             icon: const Icon(Icons.movie_filter_outlined),
-            label: const Text('Încarcă scenă demo'),
+            label: const Text('Încarcă date locale'),
           ),
           const SizedBox(height: 14),
           FilterChip(
@@ -1812,7 +1812,7 @@ class _HistoryPane extends StatelessWidget {
                     ),
                     Text(
                       '${tickets.length} tichete rezolvate sau respinse'
-                      '${demo ? ' (demo)' : ''}',
+                      '${demo ? ' (local)' : ''}',
                       style: const TextStyle(
                         color: Color(0xFF64748B),
                         fontSize: 12,

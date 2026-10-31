@@ -97,7 +97,7 @@ class AccountScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 'Tichetele la care ai participat (Preia / Rezolvat). '
-                'Punctele se resetează la resetarea demo-ului.',
+                'Punctele se resetează la resetarea datelor.',
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 10),

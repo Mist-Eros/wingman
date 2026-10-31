@@ -272,10 +272,8 @@ class ConversationBrain {
 
   PlannedQuestion _typeQuestion() => const PlannedQuestion(
         slot: 'type',
-        ro: 'Ce tip de problemă este? De exemplu: scurgere, securitate, '
-            'defecțiune sau operațiuni.',
-        en: 'What kind of problem is it? For example: a leak, security, a '
-            'breakdown or operations.',
+        ro: 'Ce tip de problemă este?',
+        en: 'What kind of problem is it?',
       );
 
   PlannedQuestion _locationQuestion() => const PlannedQuestion(

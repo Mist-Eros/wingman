@@ -54,7 +54,7 @@ class DomainConfig {
     id: 'airport',
     branding: DomainBranding(
       appName: 'Wingman',
-      tagline: 'Airport incident response · demo',
+      tagline: 'Airport incident response',
       seedColorValue: 0xFF1D4E89,
       icon: 'flight_takeoff',
     ),
@@ -104,7 +104,7 @@ class DomainConfig {
         appName: _string(branding['appName'], 'Wingman'),
         tagline: _string(
           branding['tagline'],
-          'Airport incident response · demo',
+          'Airport incident response',
         ),
         seedColorValue: _hexColor(branding['seedColor']),
         icon: _string(branding['icon'], 'flight_takeoff'),

@@ -3,7 +3,7 @@
   "id": "airport",
   "branding": {
     "appName": "Wingman",
-    "tagline": "Airport incident response · demo",
+    "tagline": "Airport incident response",
     "seedColor": "#1D4E89",
     "icon": "flight_takeoff"
   },

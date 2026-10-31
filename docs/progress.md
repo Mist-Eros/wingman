@@ -315,3 +315,12 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 | Crew can retract an accidental **Preia**: endpoint removes the crew member and their vote, reverts `in_progress` → `dispatched` when nobody remains, and broadcasts `ticket.updated`. | `POST /api/tickets/{id}/leave`, `store.leave`, `api_client.leave`, `TicketBoard.leave` | API test: join → in_progress; leave → dispatched, empty crew, 0 votes |
 | Expanded crew card shows a confirm dialog: **„Uh oh, am apăsat din greșeală — retrage-mă”**. | `crew_ticket_card.dart` | Flutter analyze/tests |
 | Leaving before resolution earns 0 points; no resolved ticket can be left. | rewards + store guard | backend tests |
+
+---
+
+## 2026-10-31 — location gate + clean copy
+
+| Change | Where | Evidence |
+|---|---|---|
+| Signed-in app locks when GPS is off, permission is denied, or the phone is **more than 2 km** from the airport (`DomainConfig.map` coordinates). Shows actionable settings buttons and live distance; rechecks every 20 s and on app resume. | `lib/core/location/location_gate.dart`, `main.dart` | pure 2 km tests; Android lock screen |
+| Removed visible “demo/example” copy from login, assistant questions, dispatcher local mode, account and both dashboards. | UI strings | analyze/tests |

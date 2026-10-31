@@ -96,8 +96,7 @@ class Session {
     return Session(
       role: role,
       userId: '${role.wire}-$suffix',
-      displayName:
-          (name == null || name.isEmpty) ? '${role.labelRo} demo' : name,
+      displayName: (name == null || name.isEmpty) ? role.labelRo : name,
     );
   }
 

@@ -63,7 +63,7 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: WingmanSpacing.lg),
                   ],
                   const Text(
-                    'Alege un cont demo',
+                    'Alege un cont',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
@@ -180,7 +180,7 @@ class _Header extends StatelessWidget {
                 ),
               ),
             IconButton(
-              tooltip: 'DevTools · aspect, server, acțiuni demo',
+              tooltip: 'DevTools · aspect, server, acțiuni',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const DevToolsScreen(),
@@ -400,7 +400,7 @@ class _AccountCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'parolă demo: ${account.passwordHint}',
+                      'parolă: ${account.passwordHint}',
                       style: const TextStyle(
                         color: WingmanColors.muted,
                         fontSize: 11,
@@ -480,7 +480,7 @@ class _LoginSheetState extends State<_LoginSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Cont hardcodat pentru demo; parola e verificată prin hash SHA-256.',
+              'Acces protejat prin parolă.',
               style: const TextStyle(fontSize: 12, color: WingmanColors.muted),
             ),
             const SizedBox(height: WingmanSpacing.lg),
@@ -533,7 +533,7 @@ class _Footer extends StatelessWidget {
         SizedBox(width: 6),
         Flexible(
           child: Text(
-            'Demo offline · TLS pinned · clasificare AI locală',
+            'Offline · TLS pinned · clasificare AI locală',
             style: TextStyle(color: Colors.white54, fontSize: 11),
             textAlign: TextAlign.center,
           ),

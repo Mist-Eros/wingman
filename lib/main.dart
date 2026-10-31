@@ -34,6 +34,7 @@ import 'core/auth/token_store.dart';
 import 'core/core_scope.dart';
 import 'core/domain/domain_config.dart';
 import 'core/incidents/taxonomy.dart';
+import 'core/location/location_gate.dart';
 import 'core/models/session.dart';
 import 'core/notifications/ticket_notifier.dart';
 import 'core/state/ticket_board.dart';
@@ -304,11 +305,17 @@ class _AirportAppState extends State<AirportApp> {
                     : MaterialTapTargetSize.shrinkWrap,
               );
               final media = MediaQuery.of(context);
-              return MediaQuery(
+              final themed = MediaQuery(
                 data: media.copyWith(
                   textScaler: TextScaler.linear(access.textScale),
                 ),
                 child: Theme(data: theme, child: child ?? const SizedBox()),
+              );
+              return LocationGate(
+                airportLat: widget.domain.map.initialLat,
+                airportLng: widget.domain.map.initialLng,
+                onSignOut: _session == null ? null : _signOut,
+                child: themed,
               );
             },
           );

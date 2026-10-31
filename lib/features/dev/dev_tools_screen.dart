@@ -63,7 +63,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset demo complet?'),
+        title: const Text('Resetezi datele locale?'),
         content: const Text(
           'Șterge toate tichetele, istoricul și punctele tuturor conturilor. '
           'Acțiunea este definitivă.',
@@ -227,7 +227,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
             'Acum: ${SkyPeriod.current().labelRo} '
             '(${TimeOfDay.now().hour.toString().padLeft(2, '0')}:'
             '${TimeOfDay.now().minute.toString().padLeft(2, '0')}). '
-            'Aplicația alege automat; aici poți forța pentru poze/demo. '
+            'Aplicația alege automat; aici poți forța pentru poze/date locale. '
             'Build determinist: --dart-define=SKY_PERIOD=night',
             style:
                 theme.textTheme.bodySmall?.copyWith(color: WingmanColors.muted),
@@ -297,7 +297,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
 
           // ── demo actions ──────────────────────────────────────────────────
           _SectionCard(
-            title: 'Acțiuni demo',
+            title: 'Acțiuni locale',
             child: Column(
               children: <Widget>[
                 Row(
@@ -315,7 +315,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _busy ? null : _resetDemo,
                           icon: const Icon(Icons.restart_alt_rounded),
-                          label: const Text('Reset demo complet'),
+                          label: const Text('Reset date locale'),
                         ),
                       ),
                   ],
@@ -356,7 +356,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
 
           // ── accounts ──────────────────────────────────────────────────────
           _SectionCard(
-            title: 'Conturi demo & scop',
+            title: 'Conturi & scop',
             child: Column(
               children: <Widget>[
                 for (final account in demoAccounts)

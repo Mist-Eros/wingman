@@ -434,7 +434,7 @@ class _ControlRoomState extends State<ControlRoom> {
         ),
         const SizedBox(height: 10),
         const Text(
-          'Demo local · WSS live · fără cloud',
+          'Local · WSS live · fără cloud',
           style: TextStyle(color: Ops.muted, fontSize: 10),
         ),
       ],

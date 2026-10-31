@@ -337,7 +337,7 @@ void main() {
       final b = Session.demo(UserRole.crew);
       expect(a.userId, isNot(b.userId));
       expect(a.displayName, 'Dana');
-      expect(b.displayName, 'Echipaj demo');
+      expect(b.displayName, 'Echipaj');
       final roundTrip = Session.decode(a.encode());
       expect(roundTrip.role, UserRole.dispatcher);
       expect(roundTrip.userId, a.userId);
