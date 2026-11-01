@@ -396,3 +396,8 @@ Added `LocalDemoBoard` and `--dart-define=LOCAL_MOCK=true`. The phone demo can
 run the five cases fully in memory (no REST/WSS, no USB reverse): instant
 join/vote/confirm, same ticket model and same screens, while the backend
 SQLite/dashboard builds remain untouched for the live demo.
+
+Runtime switch: login header button **Treci pe Live / Local** and DevTools
+`Mod date` swap the board in place. The local board is not persisted across an
+app restart when the APK was built with `LOCAL_MOCK=true`; Live mode reconnects
+to REST/WSS.

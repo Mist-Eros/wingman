@@ -160,6 +160,32 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
           WingmanSpacing.xxl,
         ),
         children: <Widget>[
+          // ── local/live mode ───────────────────────────────────────────────
+          _SectionCard(
+            title: 'Mod date · Local / Live',
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: board.isLocalDemo,
+              onChanged: CoreScope.of(context).onLocalModeChanged == null
+                  ? null
+                  : (value) => CoreScope.of(context).onLocalModeChanged!(value),
+              title: Text(
+                board.isLocalDemo
+                    ? 'Demo local · instant'
+                    : 'Live · REST + WSS',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                board.isLocalDemo
+                    ? 'Fără server, fără adb reverse. Datele se resetează la '
+                        'schimbarea modului sau la repornirea aplicației.'
+                    : 'Vorbește cu backendul/SQLite și control room-ul. '
+                        'Necesită cablu/adb reverse stabil.',
+              ),
+            ),
+          ),
+          const SizedBox(height: WingmanSpacing.lg),
+
           // ── sky preview ───────────────────────────────────────────────────
           ClipRRect(
             borderRadius: WingmanRadius.card,

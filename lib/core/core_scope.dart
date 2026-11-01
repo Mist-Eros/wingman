@@ -37,6 +37,7 @@ class CoreScope extends InheritedWidget {
     this.domainConfig,
     this.rewardService,
     this.demoResetService,
+    this.onLocalModeChanged,
     required super.child,
   });
 
@@ -51,6 +52,9 @@ class CoreScope extends InheritedWidget {
   final DomainConfig? domainConfig;
   final RewardService? rewardService;
   final DemoResetService? demoResetService;
+
+  /// Swaps between the live REST/WSS board and the in-memory demo board.
+  final ValueChanged<bool>? onLocalModeChanged;
 
   final VoidCallback onSignOut;
 
@@ -112,5 +116,6 @@ class CoreScope extends InheritedWidget {
       domainConfig != oldWidget.domainConfig ||
       rewardService != oldWidget.rewardService ||
       demoResetService != oldWidget.demoResetService ||
+      onLocalModeChanged != oldWidget.onLocalModeChanged ||
       onSignOut != oldWidget.onSignOut;
 }

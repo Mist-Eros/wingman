@@ -119,6 +119,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final domain = CoreScope.domainOrFallbackOf(context);
+    final modeChanged = CoreScope.maybeOf(context)?.onLocalModeChanged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -241,6 +242,19 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        if (modeChanged != null)
+          TextButton.icon(
+            onPressed: () => modeChanged(!localDemo),
+            icon: const Icon(
+              Icons.swap_horiz_rounded,
+              color: Colors.white70,
+              size: 18,
+            ),
+            label: Text(
+              localDemo ? 'Treci pe Live (server)' : 'Treci pe Local (instant)',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ),
       ],
     );
   }

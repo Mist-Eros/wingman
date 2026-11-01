@@ -201,6 +201,7 @@ class _AirportAppState extends State<AirportApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final TicketNotifier _notifier = TicketNotifier();
   late final TicketAlertPolicy _alertPolicy;
+  late TicketBoard _board;
   Session? _session;
   bool _notifierReady = false;
   bool _initialSnapshotHandled = false;
@@ -209,6 +210,7 @@ class _AirportAppState extends State<AirportApp> {
   void initState() {
     super.initState();
     _session = widget.initialSession;
+    _board = widget.board;
     _alertPolicy = TicketAlertPolicy(
       rules: TicketAlertRules(
         roles: widget.domain.notifications.roles,
@@ -216,9 +218,28 @@ class _AirportAppState extends State<AirportApp> {
     );
     // One WSS connection for the whole app lifetime; the board fans events out
     // to every screen through ListenableBuilder.
-    unawaited(widget.board.start());
-    widget.board.addListener(_onBoardChanged);
+    unawaited(_board.start());
+    _board.addListener(_onBoardChanged);
     unawaited(_initNotifications());
+  }
+
+  /// Switches the shared board without restarting the app. Live keeps the
+  /// REST/WSS build; local uses the in-memory seed and is instant.
+  void _setLocalMode(bool local) {
+    if (_board.isLocalDemo == local) return;
+    final previous = _board;
+    previous.removeListener(_onBoardChanged);
+    final next = local
+        ? LocalDemoBoard(api: widget.api, seedTickets: buildDemoTickets())
+        : TicketBoard(api: widget.api);
+    setState(() {
+      _board = next;
+      _initialSnapshotHandled = false;
+    });
+    next.addListener(_onBoardChanged);
+    _alertPolicy.clear();
+    unawaited(next.start());
+    WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
   }
 
   Future<void> _initNotifications() async {
@@ -239,13 +260,13 @@ class _AirportAppState extends State<AirportApp> {
     if (session == null) return;
     if (!_initialSnapshotHandled) {
       // Don't buzz the phone for history that already existed on launch.
-      _alertPolicy.seed(widget.board.tickets);
+      _alertPolicy.seed(_board.tickets);
       _initialSnapshotHandled = true;
       return;
     }
     if (!_notifierReady) return;
     final alerts =
-        _alertPolicy.alertsFor(tickets: widget.board.tickets, session: session);
+        _alertPolicy.alertsFor(tickets: _board.tickets, session: session);
     for (final ticket in alerts) {
       unawaited(_notifier.showTicket(ticket));
     }
@@ -253,8 +274,8 @@ class _AirportAppState extends State<AirportApp> {
 
   @override
   void dispose() {
-    widget.board.removeListener(_onBoardChanged);
-    widget.board.dispose();
+    _board.removeListener(_onBoardChanged);
+    _board.dispose();
     unawaited(widget.api.close());
     super.dispose();
   }
@@ -262,7 +283,7 @@ class _AirportAppState extends State<AirportApp> {
   void _signIn(Session session) {
     setState(() => _session = session);
     _alertPolicy.clear();
-    _alertPolicy.seed(widget.board.tickets);
+    _alertPolicy.seed(_board.tickets);
     _initialSnapshotHandled = true;
     unawaited(widget.sessionStore.write(session));
     if (_alertPolicy.rules.wants(session)) {
@@ -285,10 +306,11 @@ class _AirportAppState extends State<AirportApp> {
   Widget build(BuildContext context) {
     return CoreScope(
       api: widget.api,
-      board: widget.board,
+      board: _board,
       tokenStore: widget.tokenStore,
       session: _session,
       onSignOut: _signOut,
+      onLocalModeChanged: _setLocalMode,
       domainConfig: widget.domain,
       rewardService: RewardService.fromDomain(widget.domain),
       child: MaterialApp(
