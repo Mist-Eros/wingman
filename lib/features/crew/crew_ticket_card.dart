@@ -41,31 +41,22 @@ class _CrewTicketCardState extends State<CrewTicketCard> {
   bool get _voted => _ticket.hasVotedBy(widget.crewId);
   bool get _busy => _joining || _voting || _leaving;
 
+  /// Card accent must follow URGENCY, never the category: a medium spill
+  /// belongs to Maintenance but still has a yellow card.
   Color get _accent {
-    switch (_ticket.category) {
-      case IncidentCategory.safetyFire:
-        return const Color(0xFFC62828);
-      case IncidentCategory.security:
-        return const Color(0xFF1565C0);
-      case IncidentCategory.maintenance:
-        return const Color(0xFFEF6C00);
-      case IncidentCategory.operations:
-        return const Color(0xFF00897B);
+    switch (_ticket.urgency) {
+      case Urgency.critical:
+        return const Color(0xFFD92D20);
+      case Urgency.high:
+        return const Color(0xFFDC6803);
+      case Urgency.medium:
+        return const Color(0xFFCA8A04);
+      case Urgency.low:
+        return const Color(0xFF2E7D32);
     }
   }
 
-  Color get _urgencyColor {
-    switch (_ticket.urgency) {
-      case Urgency.critical:
-        return const Color(0xFFB71C1C);
-      case Urgency.high:
-        return const Color(0xFFE65100);
-      case Urgency.medium:
-        return const Color(0xFFF9A825);
-      case Urgency.low:
-        return const Color(0xFF558B2F);
-    }
-  }
+  Color get _urgencyColor => _accent;
 
   Future<void> _onJoin() async {
     if (_joined || _busy) return;
