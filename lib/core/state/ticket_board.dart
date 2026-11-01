@@ -264,31 +264,44 @@ class TicketBoard extends ChangeNotifier {
   }
 
   Future<bool> _run(Future<Ticket> Function() action) async {
-    try {
-      final ticket = await action();
-      _lastActionError = null;
-      _upsert(ticket);
-      _notify();
-      return true;
-    } on ApiException catch (error) {
-      if (error.statusCode == 404) {
-        // Ticket was removed (usually by a demo/dev reset). Reload instead of
-        // leaving a dead card on screen; show a friendly message, not HTTP 404.
-        _lastActionError = 'Tichetul nu mai există — lista a fost reîncărcată.';
-        await refresh();
+    for (var attempt = 0;; attempt++) {
+      try {
+        final ticket = await action();
+        _lastActionError = null;
+        _upsert(ticket);
+        _notify();
+        return true;
+      } on ApiException catch (error) {
+        // A USB-reverse/WSS drop can last under a second. Retry once before
+        // showing an error; join/vote are safe to repeat for the same crew.
+        if (error.isNetworkIssue && attempt == 0) {
+          await Future<void>.delayed(const Duration(milliseconds: 700));
+          continue;
+        }
+        if (error.statusCode == 404) {
+          // Ticket was removed (usually by a demo/dev reset). Reload instead of
+          // leaving a dead card on screen; show a friendly message, not HTTP 404.
+          _lastActionError =
+              'Tichetul nu mai există — lista a fost reîncărcată.';
+          await refresh();
+          _notify();
+          return false;
+        }
+        _lastActionError = error.isNetworkIssue
+            ? 'Conexiunea a căzut o clipă. Lista s-a reîncărcat — încearcă din nou.'
+            : error.message;
+        if (error.isNetworkIssue) {
+          unawaited(refresh());
+        }
+        _notify();
+        return false;
+      } on Object catch (error) {
+        debugPrint('[board] action failed: $error');
+        _lastActionError =
+            'Acțiunea a eșuat. Reîncarcă lista și încearcă din nou.';
         _notify();
         return false;
       }
-      _lastActionError = error.isNetworkIssue
-          ? 'Nu am putut trimite acțiunea — serverul nu răspunde. Reîncearcă.'
-          : error.message;
-      _notify();
-      return false;
-    } on Object catch (error) {
-      debugPrint('[board] action failed: $error');
-      _lastActionError = 'Acțiunea a eșuat. Reîncearcă.';
-      _notify();
-      return false;
     }
   }
 
