@@ -86,6 +86,13 @@ FEW_SHOT_PROMPT = """EXEMPLE (intrare → ieșire)
 "Un pasager a fost înjunghiat lângă poarta 6" → {"incident_code": "OP-MED", "urgency": "critical", "confidence": 0.95, "rationale": "persoană înjunghiată, urgență medicală"}
 "O persoană este blocată în lift" → {"incident_code": "OP-RESCUE", "urgency": "critical", "confidence": 0.95, "rationale": "persoană blocată, descarcerare"}
 
+"miroase a ars în zona de bagaje" → {"incident_code": "SF-FIRE", "urgency": "critical", "confidence": 0.93, "rationale": "miros de ars, posibil incendiu"}
+"pasager rău, nu răspunde" → {"incident_code": "OP-MED", "urgency": "critical", "confidence": 0.93, "rationale": "pasager inconștient, urgență medicală"}
+"s-a oprit netul la check-in" → {"incident_code": "OP-IT", "urgency": "high", "confidence": 0.9, "rationale": "rețea/IT căzut"}
+"cineva a sărit gardul pe platformă" → {"incident_code": "SC-ACCESS", "urgency": "critical", "confidence": 0.92, "rationale": "acces neautorizat pe platformă"}
+"liftul e blocat cu cineva în el" → {"incident_code": "OP-RESCUE", "urgency": "critical", "confidence": 0.92, "rationale": "persoană blocată în lift"}
+"ceva pe pistă, nu știu ce" → {"incident_code": "SF-FOD", "urgency": "critical", "confidence": 0.9, "rationale": "obiect posibil pe pistă"}
+"scaun rupt la poarta 4" → {"incident_code": "OP-OTHER", "urgency": "low", "confidence": 0.75, "rationale": "mobilier deteriorat, fără pericol"}
 Top 3 demo includes a smoke/fire report — when the word fum/foc/incendiu appears, the answer is SF-FIRE."""
 
 TAXONOMY_HEADER = """TAXONOMIE ÎNCHISĂ (cod | categorie | urgency implicită | etichetă | departamente)
@@ -93,6 +100,18 @@ TAXONOMY_HEADER = """TAXONOMIE ÎNCHISĂ (cod | categorie | urgency implicită |
 
 TAXONOMY_FOOTER = """----------------------------------------
 Sfârșitul listei. Orice cod care nu apare mai sus este INVALID."""
+
+
+PRIORITY_PROMPT = """PRIORITATE SEMANTICĂ (ghicește intenția, nu doar cuvântul)
+- „miroase a ars", „cabluri arse", „ars" → SF-FIRE (nu SF-FOD)
+- „nu răspunde", „pasager rău", „amețit", „vomită" → OP-MED (nu SC-BEHAV)
+- „blocat cu cineva în lift", „nu poate ieși" → OP-RESCUE (nu MT-ESC)
+- „net", „internet", „rețea", „wifi", „server", „aplicație" → OP-IT (nu MT-JBRIDGE)
+- „gard", „împrejmuire", „a sărit gardul" → SC-ACCESS (nu OP-OTHER)
+- „ceva/obiect/resturi pe pistă", „corp străin" → SF-FOD (nu OP-OTHER)
+- „scaun rupt", „mobilier rupt" → OP-OTHER (nu SF-SPILL)
+- Dacă textul exprimă pericol pentru o persoană, alege codul medical/rescue înaintea celui tehnic.
+"""
 
 
 def build_system_prompt(taxonomy: Taxonomy) -> str:
@@ -103,6 +122,7 @@ def build_system_prompt(taxonomy: Taxonomy) -> str:
             f"{TAXONOMY_HEADER}\n{taxonomy.prompt_catalog()}\n{TAXONOMY_FOOTER}",
             FEW_SHOT_PROMPT,
             JSON_SCHEMA_PROMPT,
+            PRIORITY_PROMPT,
         ]
     )
 
@@ -799,6 +819,117 @@ async def analyze_report(
         )
 
 
+# Context guards for the phrases the 1.5B model got wrong in rehearsal.
+# These run before the broader word list: they encode "what the person meant",
+# not just a single noun. Ordered: first match wins.
+_CONTEXT_GUARDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "OP-MED",
+        (
+            "nu răspunde",
+            "nu raspunde",
+            "pasager rău",
+            "pasager rau",
+            "amețit",
+            "ametit",
+            "vomită",
+            "vomita",
+            "palid",
+            "slăbit",
+            "slabit",
+        ),
+    ),
+    (
+        "OP-RESCUE",
+        (
+            "cu cineva în el",
+            "cu cineva in el",
+            "cineva în lift",
+            "cineva in lift",
+            "persoană în lift",
+            "persoana in lift",
+            "blocat cu cineva",
+            "blocata cu cineva",
+            "nu poate ieși",
+            "nu poate iesi",
+        ),
+    ),
+    (
+        "SF-FIRE",
+        (
+            "miros de ars",
+            "miroase a ars",
+            "miros de fum",
+            "cabluri arse",
+            "cabluri arse",
+            "ars",
+        ),
+    ),
+    (
+        "SF-SPILL",
+        (
+            "scurgere",
+            "ulei",
+            "pată",
+            "pata",
+            "lichid",
+            "alunecos",
+            "alunece",
+        ),
+    ),
+    (
+        "SF-FOD",
+        (
+            "ceva pe pistă",
+            "ceva pe pista",
+            "obiect pe pistă",
+            "obiect pe pista",
+            "corp străin",
+            "corp strain",
+            "resturi pe pistă",
+            "resturi pe pista",
+            "fod",
+        ),
+    ),
+    (
+        "OP-IT",
+        (
+            "netul",
+            "net ",
+            "internet",
+            "rețea",
+            "retea",
+            "wifi",
+            "wi-fi",
+            "server",
+            "aplicația",
+            "aplicatia",
+            "sistemul de check-in",
+            "sistem check-in",
+        ),
+    ),
+    (
+        "SC-ACCESS",
+        (
+            "gard",
+            "împrejmuire",
+            "imprejmuire",
+            "a sărit gardul",
+            "a sarit gardul",
+        ),
+    ),
+    (
+        "OP-OTHER",
+        (
+            "scaun rupt",
+            "mobilier rupt",
+            "ușă ruptă",
+            "usa rupta",
+        ),
+    ),
+)
+
+
 # Unambiguous Romanian triggers. A 1.5B model occasionally confuses smoke with
 # FOD or suspicion with OP-OTHER; these guards make the demo-critical cases
 # deterministic while the prompt does the rest. Ordered: first match wins.
@@ -1001,6 +1132,39 @@ def apply_classification_guards(
             urgency=urgency,
             confidence=max(min(classification.confidence, 0.95), 0.85),
             rationale=(classification.rationale + " [bagaj nesupravegheat]").strip()[
+                :200
+            ],
+        )
+
+    for code, words in _CONTEXT_GUARDS:
+        matched = next((word for word in words if word in text), None)
+        if matched is None:
+            continue
+        if classification.incident_code == code:
+            # The model already found the intended category. Stop here: the
+            # broader one-word guards (e.g. "lift" -> MT-ESC) must not undo a
+            # context match like "lift blocat cu cineva".
+            return classification
+        target = taxonomy.by_code(code)
+        if target is None:
+            continue
+        urgency = classification.urgency
+        if URGENCY_LEVELS.index(target.urgency) > URGENCY_LEVELS.index(urgency):
+            urgency = target.urgency
+        logger.info(
+            "context guard: %s -> %s (matched %r, was %s/%.2f)",
+            classification.incident_code,
+            code,
+            matched,
+            classification.incident_code,
+            classification.confidence,
+        )
+        return replace(
+            classification,
+            incident_code=code,
+            urgency=urgency,
+            confidence=max(min(classification.confidence, 0.95), 0.82),
+            rationale=(classification.rationale + f" [context: {matched}]").strip()[
                 :200
             ],
         )

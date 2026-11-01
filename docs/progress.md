@@ -401,3 +401,16 @@ Runtime switch: login header button **Treci pe Live / Local** and DevTools
 `Mod date` swap the board in place. The local board is not persisted across an
 app restart when the APK was built with `LOCAL_MOCK=true`; Live mode reconnects
 to REST/WSS.
+
+## 2026-11-01 — faster voice + better intent
+
+- faster-whisper is warmed up in a background task at backend startup (first
+  voice request no longer pays the model-load cost).
+- Transcription uses `condition_on_previous_text=False`, `temperature=0`, and
+  the optional LLM correction is capped at **3 s** instead of 12 s.
+- Added context guards + priority few-shot examples for ambiguous Romanian:
+  `miroase a ars`→SF-FIRE, `nu răspunde`→OP-MED, `blocat cu cineva`→OP-RESCUE,
+  `net/rețea`→OP-IT, `gard`→SC-ACCESS, `ceva pe pistă`→SF-FOD,
+  `scaun rupt`→OP-OTHER.
+- Benchmarked 3.9 s sample audio: Whisper **~1.2–1.4 s**, total endpoint
+  **~1.4–1.8 s** after warm-up. 12/12 ambiguous phrases route correctly.

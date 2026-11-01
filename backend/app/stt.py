@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import threading
 import logging
 import tempfile
 import unicodedata
@@ -32,6 +33,7 @@ from .config import settings
 logger = logging.getLogger("wingman.stt")
 
 _MODEL_LOCK = asyncio.Lock()
+_load_lock = threading.Lock()
 _model: Any = None
 _load_error: str | None = None
 
@@ -102,32 +104,35 @@ def _load_model() -> Any:
     global _model, _load_error
     if _model is not None:
         return _model
-    try:
-        from faster_whisper import WhisperModel
-    except ImportError as exc:  # pragma: no cover - depends on install
-        _load_error = (
-            "faster-whisper is not installed (pip install -r requirements.txt)"
-        )
-        raise RuntimeError(_load_error) from exc
+    with _load_lock:
+        if _model is not None:
+            return _model
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError as exc:  # pragma: no cover - depends on install
+            _load_error = (
+                "faster-whisper is not installed (pip install -r requirements.txt)"
+            )
+            raise RuntimeError(_load_error) from exc
 
-    started = time.perf_counter()
-    logger.info(
-        "loading faster-whisper: model=%s device=%s compute=%s",
-        settings.whisper_model,
-        settings.whisper_device,
-        settings.whisper_compute_type,
-    )
-    try:
-        _model = WhisperModel(
+        started = time.perf_counter()
+        logger.info(
+            "loading faster-whisper: model=%s device=%s compute=%s",
             settings.whisper_model,
-            device=settings.whisper_device,
-            compute_type=settings.whisper_compute_type,
+            settings.whisper_device,
+            settings.whisper_compute_type,
         )
-    except Exception as exc:  # model missing / bad config
-        _load_error = f"faster-whisper model failed to load: {exc}"
-        raise RuntimeError(_load_error) from exc
-    logger.info("faster-whisper ready in %.1fs", time.perf_counter() - started)
-    return _model
+        try:
+            _model = WhisperModel(
+                settings.whisper_model,
+                device=settings.whisper_device,
+                compute_type=settings.whisper_compute_type,
+            )
+        except Exception as exc:  # model missing / bad config
+            _load_error = f"faster-whisper model failed to load: {exc}"
+            raise RuntimeError(_load_error) from exc
+        logger.info("faster-whisper ready in %.1fs", time.perf_counter() - started)
+        return _model
 
 
 def _patch_pyav_open() -> None:
@@ -155,6 +160,20 @@ def _patch_pyav_open() -> None:
     logger.debug("patched av.open for faster-whisper compatibility")
 
 
+def warmup_stt() -> bool:
+    """Load the Whisper model in the background so the first report is fast."""
+    if not stt_available():
+        return False
+    try:
+        _patch_pyav_open()
+        _load_model()
+        logger.info("Whisper model warmed up")
+        return True
+    except Exception as exc:  # noqa: BLE001 - startup must keep working
+        logger.warning("Whisper warm-up failed: %s", exc)
+        return False
+
+
 def _transcribe_sync(
     audio_bytes: bytes,
     language: str | None,
@@ -176,6 +195,8 @@ def _transcribe_sync(
             vad_filter=True,
             beam_size=1,
             word_timestamps=True,
+            condition_on_previous_text=False,
+            temperature=0.0,
         )
         parts: list[str] = []
         words: list[dict[str, Any]] = []

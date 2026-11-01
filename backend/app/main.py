@@ -48,6 +48,7 @@ from .stats import PERIODS as STATS_PERIODS, build_stats
 from .stt import (
     merge_corrected_transcript,
     stt_available,
+    warmup_stt,
     stt_error,
     transcribe_audio,
 )
@@ -147,13 +148,18 @@ async def lifespan(app: FastAPI):
     )
 
     warmup_task = asyncio.create_task(ollama.warmup(), name="ollama-warmup")
+    stt_warmup_task = asyncio.create_task(
+        asyncio.to_thread(warmup_stt), name="stt-warmup"
+    )
     heartbeat_task = asyncio.create_task(_heartbeat_loop(), name="ws-heartbeat")
     try:
         yield
     finally:
-        for task in (warmup_task, heartbeat_task):
+        for task in (warmup_task, stt_warmup_task, heartbeat_task):
             task.cancel()
-        await asyncio.gather(warmup_task, heartbeat_task, return_exceptions=True)
+        await asyncio.gather(
+            warmup_task, stt_warmup_task, heartbeat_task, return_exceptions=True
+        )
         await ollama.close()
 
 

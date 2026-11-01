@@ -82,7 +82,7 @@ def load_settings() -> Settings:
         override_window_seconds=_env_float("OVERRIDE_WINDOW_SECONDS", 5.0),
         resolve_quorum=max(1, _env_int("RESOLVE_QUORUM", 2)),
         transcript_correction=_env_bool("TRANSCRIPT_CORRECTION", True),
-        transcript_correction_timeout=_env_float("TRANSCRIPT_CORRECTION_TIMEOUT", 12.0),
+        transcript_correction_timeout=_env_float("TRANSCRIPT_CORRECTION_TIMEOUT", 3.0),
         whisper_model=_env_str("WHISPER_MODEL", "small"),
         whisper_device=_env_str("WHISPER_DEVICE", "cpu"),
         whisper_compute_type=_env_str("WHISPER_COMPUTE_TYPE", "int8"),

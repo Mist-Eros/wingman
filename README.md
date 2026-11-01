@@ -31,6 +31,8 @@ An airport employee reports an incident by **voice** or through a deterministic 
 | | |
 |---|---|
 | **Local-first AI** | Whisper and Ollama run on the laptop. Reports stay on the local network. |
+| **Fast voice** | Whisper is loaded at backend startup; the optional LLM transcript correction is capped at 3 s, so a cold start does not look like a stuck transcription. |
+| **Intent-aware classification** | Context guards and few-shot examples resolve ambiguous Romanian phrases (fire smell, trapped person, network failure, perimeter breach, medical collapse). |
 | **Human-safe classification** | Closed taxonomy, schema validation, deterministic keyword guards and a fallback classifier. The AI cannot invent an incident code. |
 | **Honest Whisper** | Low-confidence speech gets **one** repeat, never a loop. Still unclear? The app switches to the deterministic 8×8×8 menu. |
 | **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. **One responder per primary department** is enforced server-side; standby teams are never woken. |
@@ -161,8 +163,8 @@ Wingman/
 
 ## Quality
 
-- **193 Flutter tests**
-- **23 backend tests**
+- **198 Flutter tests**
+- **24 backend tests**
 - **111/111** live smoke checks (TLS + WSS)
 - `flutter analyze` clean
 - `.\scripts\verify_all.ps1 -Live` → all gates
