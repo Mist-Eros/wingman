@@ -127,6 +127,7 @@
                  color:#64748B; font-size:12px; }
 
   .detail .spacer { flex: 1; }
+.detail .row { position: sticky; top: 0; z-index: 2; background: #fff; padding: 6px 0; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
            background: var(--card); border: 1px solid var(--line); border-radius: 10px;
            padding: 10px 16px; font-size: 13px; display: none; }
@@ -600,10 +601,16 @@ function render() {
         '<span class="when">' + likelihoodPct(t) + ' · ' + ago(t.created_at) + '</span></div>' +
         '<h3>' + esc(t.label_ro || t.incident_code) + '</h3>' +
         '<div class="meta">' + esc(loc || 'Locație nespecificată') + ' · ' +
-        'Necesar: ' + esc(deptLabels(t) || '—') + '</div></div></div>';
+        'Necesar: ' + esc(deptLabels(t) || '—') + '</div>' +
+        '<div class="meta" style="margin-top:6px;color:#0F4C81;font-weight:700">Deschide detalii →</div>' +
+        '</div></div>';
     }).join('');
   }
-  renderDetail();
+  if (!selected && activeTab === 'queue') {
+    const first = [...tickets.values()].find(t => !isTerminal(t));
+    if (first) selected = first.id;
+  }
+renderDetail();
 }
 
 function selectTicket(id) { selected = id; render(); }
@@ -623,7 +630,10 @@ function renderDetail() {
   const kv = (k, v) => '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v || '—') + '</div>';
   const history = isTerminal(t);
   let actions = '';
-  if (!history) {
+  if (t.status === 'pending_resolution') {
+    actions = '<div class="row"><button class="btn grow" style="background:#027A48;color:#fff" onclick="act(\'resolution-confirm\',\'' + t.id + '\')">✓ Aprobă rezolvarea</button></div>' +
+              '<div class="row" style="margin-top:6px"><button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
+  } else if (!history) {
     actions = '<div class="row"><button class="btn grow" onclick="openModal(\'' + t.id + '\')">⇄ Reclasifică</button>' +
               '<button class="btn danger grow" onclick="act(\'deny\',\'' + t.id + '\')">✕ Respinge</button></div>';
   } else {
@@ -650,6 +660,7 @@ function renderDetail() {
     badge(URGENCY_LABEL[t.urgency] || t.urgency, uc) +
     badge(STATUS_LABEL[t.status] || t.status, sc) +
     badge('Probabilitate Craiova ' + likelihoodPct(t), '#0F4C81') + '</div>' +
+    actions +
     mediaTabs +
     kv('Locație', loc) + kv('Echipe necesare', deptLabels(t)) +
     kv('Raportat de', (t.reporter_name || '—') + ' · 👥 ' + peopleCount(t)) + kv('Sursă', t.source) + kv('AI', t.ai_source) +
@@ -657,7 +668,7 @@ function renderDetail() {
     kv('Transcriere', t.transcript) +
     (t.decided_by ? kv('Decis de', t.decided_by) : '') +
     (t.resolution_note ? kv('Notă', t.resolution_note) : '') +
-    '<div class="spacer"></div>' + actions;
+    '<div class="spacer"></div>';
   if (initialMedia) renderTicketMedia(initialMedia);
 }
 
@@ -781,10 +792,12 @@ async function clearHistory() {
 
 async function act(kind, id) {
   try {
-    const path = kind === 'confirm' ? '/api/tickets/' + id + '/confirm'
+    const path = kind === 'resolution-confirm' ? '/api/tickets/' + id + '/resolution-confirm'
+               : kind === 'confirm' ? '/api/tickets/' + id + '/confirm'
                : kind === 'deny' ? '/api/tickets/' + id + '/deny'
                : '/api/tickets/' + id + '/override';
-    const body = kind === 'confirm' ? { dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin' }
+    const body = (kind === 'resolution-confirm' || kind === 'confirm')
+               ? { dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin' }
                : kind === 'deny' ? { dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin', reason: 'fals pozitiv' }
                : { incident_code: kind, dispatcher_id: 'waterfox', dispatcher_name: 'Andy Admin' };
     const data = await request(path, { method: 'POST', body: JSON.stringify(body) });
