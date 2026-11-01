@@ -1,5 +1,7 @@
 # Wingman — pre-pitch de 3 minute
 
+> **Pentru variante alternative de pitch (investor, operator, juriu tehnic, fără demo, 60 secunde), vezi [pitch-playbook.md](pitch-playbook.md).**
+
 > **Obiectiv:** în 180 de secunde să înțeleagă (1) ce problemă rezolvăm, (2) că fluxul chiar merge, (3) de ce este sigur și (4) ce urmează.
 >
 > **Regulă:** nu facem tur de funcții. Arătăm doar **3 momente**: un raport vocal, un tichet în dashboard și o aprobare de admin.
