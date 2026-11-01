@@ -166,6 +166,10 @@ Wingman/
 - **198 Flutter tests**
 - **24 backend tests**
 - **111/111** live smoke checks (TLS + WSS)
+
+### Pregătire demo/interviu
+- [500 de întrebări și răspunsuri](docs/Wingman-500-Intrebari-si-Raspunsuri.md) — tehnice și non-tehnice
+- [Varianta Word](docs/Wingman-500-Intrebari-si-Raspunsuri.docx)
 - `flutter analyze` clean
 - `.\scripts\verify_all.ps1 -Live` → all gates
 
