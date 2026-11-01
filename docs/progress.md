@@ -377,3 +377,15 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 - Leaving removes both the crew id and its department, so another member from that team can take over.
 - The Flutter crew screen sends the account's matching primary department; `joined_departments` is persisted and exposed on the wire.
 - With one demo account per department, notifications and response are now 1:1 per team.
+
+---
+
+## 2026-11-01 — dispatch sign-off, edit-after-send, editable transcript, two reward buckets
+
+| Change | Where |
+|---|---|
+| High/critical incidents stop at `pending_resolution` after crew quorum; admin/dashboard must `POST /api/tickets/{id}/resolution-confirm` before final `resolved`. Low/medium still resolve directly. | `store.py`, `main.py`, `ticket.dart`, dispatcher UI, dashboard |
+| Reporter can edit transcript / add photo after sending (active tickets): `PATCH /api/tickets/{id}` + sent-screen buttons. | `store.py`, API client, reporter UI |
+| Every transcript word is editable; yellow still means low confidence; chips are smaller/tighter. | reporter controller/widgets |
+| Rewards/account now show only **Raportare** and **Rezolvare**. | account UI |
+| Reporter flow is consistently RO or EN on the language toggle: server questions map to local translations, photo prompt and menu labels localize, status labels localize. | reporter flow/menu |

@@ -181,7 +181,12 @@ def build_stats(
         "denied": status_counts.get("denied", 0),
         "active": sum(
             status_counts.get(status, 0)
-            for status in ("dispatched", "in_progress", "pending_override")
+            for status in (
+                "dispatched",
+                "in_progress",
+                "pending_override",
+                "pending_resolution",
+            )
         ),
         "by_code": sorted(
             by_code.values(), key=lambda item: (-item["count"], item["code"])

@@ -298,6 +298,7 @@ abstract final class WingmanTheme {
         TicketStatus.pendingOverride => WingmanColors.pending,
         TicketStatus.dispatched => WingmanColors.dispatched,
         TicketStatus.inProgress => WingmanColors.inProgress,
+        TicketStatus.pendingResolution => WingmanColors.pending,
         TicketStatus.resolved => WingmanColors.resolved,
         TicketStatus.denied => WingmanColors.denied,
       };
@@ -306,6 +307,7 @@ abstract final class WingmanTheme {
         TicketStatus.pendingOverride => WingmanColors.pendingFill,
         TicketStatus.dispatched => WingmanColors.dispatchedFill,
         TicketStatus.inProgress => WingmanColors.inProgressFill,
+        TicketStatus.pendingResolution => WingmanColors.pendingFill,
         TicketStatus.resolved => WingmanColors.resolvedFill,
         TicketStatus.denied => WingmanColors.deniedFill,
       };

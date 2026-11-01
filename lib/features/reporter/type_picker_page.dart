@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 
 import 'menu/incident_menu_data.dart';
+import 'menu/menu_language.dart';
 import 'reporter_language.dart';
 
 class IncidentMenuPage extends StatefulWidget {
@@ -27,14 +28,18 @@ class _IncidentMenuPageState extends State<IncidentMenuPage> {
   int get _level => _subcategory != null ? 2 : (_category != null ? 1 : 0);
 
   String get _title {
-    if (_subcategory != null) return _subcategory!.label;
-    if (_category != null) return _category!.label;
+    if (_subcategory != null) {
+      return localizedMenuSubcategory(_subcategory!.label, widget.language);
+    }
+    if (_category != null) {
+      return localizedMenuCategory(_category!.label, widget.language);
+    }
     return _tr('Ce s-a întâmplat?', 'What happened?');
   }
 
   String? get _path {
     if (_subcategory != null) {
-      return '${_category!.label} · ${_subcategory!.label}';
+      return localizedMenuPath(_category!, _subcategory!, widget.language);
     }
     return null;
   }
@@ -100,7 +105,10 @@ class _IncidentMenuPageState extends State<IncidentMenuPage> {
                       for (final category in menuCategories)
                         _MenuTile(
                           icon: category.icon,
-                          label: category.label,
+                          label: localizedMenuCategory(
+                            category.label,
+                            widget.language,
+                          ),
                           onTap: () => setState(() => _category = category),
                         ),
                     ]
@@ -109,7 +117,10 @@ class _IncidentMenuPageState extends State<IncidentMenuPage> {
                           for (final subcategory in _category!.subcategories)
                             _MenuTile(
                               icon: _category!.icon,
-                              label: subcategory.label,
+                              label: localizedMenuSubcategory(
+                                subcategory.label,
+                                widget.language,
+                              ),
                               onTap: () => setState(
                                 () => _subcategory = subcategory,
                               ),
@@ -119,7 +130,11 @@ class _IncidentMenuPageState extends State<IncidentMenuPage> {
                           for (final problem in _subcategory!.problems)
                             _MenuTile(
                               icon: _category!.icon,
-                              label: problem.label,
+                              label: localizedMenuProblem(
+                                _subcategory!,
+                                problem,
+                                widget.language,
+                              ),
                               footer: problem.typeCode,
                               dense: true,
                               onTap: () => _selectProblem(problem),

@@ -5,21 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/wingman_theme.dart';
+import 'reporter_language.dart';
 
 /// Five-second, fully optional photo prompt shown just before sending a report.
 ///
 /// Returns the captured bytes, or null when the countdown expires / the user
 /// skips. Never blocks a critical report for more than five seconds.
-Future<Uint8List?> showIncidentPhotoPrompt(BuildContext context) {
+Future<Uint8List?> showIncidentPhotoPrompt(
+  BuildContext context, {
+  ReporterLanguage language = ReporterLanguage.ro,
+}) {
   return showDialog<Uint8List?>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const _PhotoPromptDialog(),
+    builder: (_) => _PhotoPromptDialog(language: language),
   );
 }
 
 class _PhotoPromptDialog extends StatefulWidget {
-  const _PhotoPromptDialog();
+  const _PhotoPromptDialog({this.language = ReporterLanguage.ro});
+
+  final ReporterLanguage language;
 
   @override
   State<_PhotoPromptDialog> createState() => _PhotoPromptDialogState();
@@ -32,6 +38,8 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
   bool _picking = false;
   bool _attempted = false;
   String? _error;
+
+  Tr get _tr => Tr(widget.language);
 
   @override
   void initState() {
@@ -71,8 +79,12 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
         setState(() {
           _picking = false;
           _attempted = true;
-          _error = 'Poza nu a fost confirmată. În camera Samsung apasă OK '
-              'după shutter, apoi revino aici.';
+          _error = _tr(
+            'Poza nu a fost confirmată. În camera Samsung apasă OK '
+                'după shutter, apoi revino aici.',
+            'Photo not confirmed. In the Samsung camera press OK after '
+                'the shutter, then come back here.',
+          );
         });
         // Do not auto-send after an attempted capture: let the reporter retry
         // or explicitly choose "Trimite fără poză".
@@ -109,7 +121,7 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Adaugă o poză?',
+              _tr('Adaugă o poză?', 'Add a photo?'),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -137,14 +149,25 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
         children: <Widget>[
           Text(
             _attempted
-                ? 'Apasă OK în camera Samsung după ce faci poza, apoi '
-                    'revino aici. Poți încerca din nou sau trimite fără poză.'
-                : 'Opțional. Dacă situația e periculoasă, sari peste — raportul '
-                    'pleacă oricum după 5 secunde.',
+                ? _tr(
+                    'Apasă OK în camera Samsung după ce faci poza, apoi '
+                        'revino aici. Poți încerca din nou sau trimite fără poză.',
+                    'Press OK in the Samsung camera after taking the photo, then '
+                        'come back. Retry or send without a photo.',
+                  )
+                : _tr(
+                    'Opțional. Dacă situația e periculoasă, sari peste — raportul '
+                        'pleacă oricum după 5 secunde.',
+                    'Optional. If this is dangerous, skip it — the report is sent '
+                        'anyway after 5 seconds.',
+                  ),
           ),
           const SizedBox(height: 6),
           Text(
-            'După shutter, apasă OK în camera Samsung.',
+            _tr(
+              'După shutter, apasă OK în camera Samsung.',
+              'After the shutter, press OK in the Samsung camera.',
+            ),
             style: TextStyle(
               color: theme.colorScheme.primary,
               fontSize: 11,
@@ -172,8 +195,10 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
                   const SizedBox(height: 10),
                   Text(
                     _picking
-                        ? 'Se deschide camera…'
-                        : (_attempted ? 'Reîncearcă poza' : 'Fă poza acum'),
+                        ? _tr('Se deschide camera…', 'Opening the camera…')
+                        : _attempted
+                            ? _tr('Reîncearcă poza', 'Retry photo')
+                            : _tr('Fă poza acum', 'Take the photo'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 19,
@@ -181,8 +206,8 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    'Buton mare · 5 secunde',
+                  Text(
+                    _tr('Buton mare · 5 secunde', 'Large button · 5 seconds'),
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
@@ -200,7 +225,7 @@ class _PhotoPromptDialogState extends State<_PhotoPromptDialog> {
           const SizedBox(height: 14),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Trimite fără poză'),
+            child: Text(_tr('Trimite fără poză', 'Send without a photo')),
           ),
         ],
       ),

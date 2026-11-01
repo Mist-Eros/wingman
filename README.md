@@ -34,6 +34,9 @@ An airport employee reports an incident by **voice** or through a deterministic 
 | **Human-safe classification** | Closed taxonomy, schema validation, deterministic keyword guards and a fallback classifier. The AI cannot invent an incident code. |
 | **Honest Whisper** | Low-confidence speech gets **one** repeat, never a loop. Still unclear? The app switches to the deterministic 8×8×8 menu. |
 | **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. **One responder per primary department** is enforced server-side; standby teams are never woken. |
+| **Admin sign-off** | Orange/red incidents cannot be closed by the crew alone: after quorum they wait for a dispatcher/admin **resolution confirmation**. |
+| **Editable after send** | The reporter can fix the transcript or add a photo after submission while the ticket is active. |
+| **Every word editable** | White/high-confidence transcript words are editable too; yellow still indicates uncertainty. |
 | **One ticket, many reporters** | Duplicate reports merge into one ticket, increment the report count and keep the distinct reporters visible with a 👥 counter. |
 | **Real persistence** | Tickets, photos, votes and history live in SQLite and survive backend restarts. |
 | **Live everywhere** | One WSS connection keeps phones and the control room in sync, with a versioned `TicketBoard` cache. Every ticket carries a live **since-posted timer**. |
@@ -149,7 +152,9 @@ Wingman/
 | `POST` | `/api/reports` | Create a ticket from voice or menu |
 | `GET` | `/api/tickets` | Live queue / history |
 | `POST` | `/api/tickets/{id}/confirm` · `/deny` · `/override` | Dispatcher decisions |
-| `POST` | `/api/tickets/{id}/join` · `/vote` · `/leave` | Crew actions |
+| `POST` | `/api/tickets/{id}/join` · `/vote` · `/leave` | Crew actions (one responder per department) |
+| `PATCH` | `/api/tickets/{id}` | Reporter edits transcript / adds a photo after send |
+| `POST` | `/api/tickets/{id}/resolution-confirm` | Admin final check for high/critical incidents |
 | `GET` | `/api/stats` | Admin statistics (`day`, `week`, `month`, `year`) |
 | `GET` | `/healthz` | Backend + SQLite health |
 | `WS` | `/ws?token=` | Live `ticket.*` events |
@@ -158,7 +163,7 @@ Wingman/
 
 - **193 Flutter tests**
 - **23 backend tests**
-- **109/109** live smoke checks (TLS + WSS)
+- **111/111** live smoke checks (TLS + WSS)
 - `flutter analyze` clean
 - `.\scripts\verify_all.ps1 -Live` → all gates
 

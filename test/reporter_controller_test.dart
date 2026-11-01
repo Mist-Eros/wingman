@@ -584,11 +584,12 @@ void main() {
       expect(c.lowConfidenceCount, 1);
       expect(c.isLowConfidence(0), isFalse);
       expect(c.isLowConfidence(2), isTrue);
-      expect(c.isWordEditable(0), isFalse);
+      expect(c.isWordEditable(0), isTrue);
       expect(c.isWordEditable(2), isTrue);
       c.editWord(0, 'nu-se-poate');
-      expect(c.words.first, 'este',
-          reason: 'high-confidence word is read-only');
+      expect(c.words.first, 'nu-se-poate',
+          reason: 'all words are editable');
+      await h.settle();
       c.editWord(2, 'Poarta');
       expect(c.words[2], 'Poarta');
       expect(c.isLowConfidence(2), isFalse,

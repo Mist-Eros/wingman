@@ -58,21 +58,14 @@ class AccountScreen extends StatelessWidget {
                   Expanded(
                     child: _Stat(
                       value: '${ledger.reportedCount}',
-                      label: 'raportate',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _Stat(
-                      value: '${ledger.attendedCount}',
-                      label: 'intervenții',
+                      label: 'Raportare',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _Stat(
                       value: '${ledger.resolvedCount}',
-                      label: 'rezolvate',
+                      label: 'Rezolvare',
                     ),
                   ),
                 ],
@@ -96,7 +89,7 @@ class AccountScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Tichetele la care ai participat (Preia / Rezolvat). '
+                'Raportările și rezolvările tale. '
                 'Punctele se resetează la resetarea datelor.',
                 style: theme.textTheme.bodySmall,
               ),

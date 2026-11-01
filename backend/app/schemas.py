@@ -101,6 +101,18 @@ class OverrideIn(DispatcherActionIn):
     reason: str | None = Field(default=None, max_length=500)
 
 
+class TicketEditIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reporter_id: str = Field(min_length=1, max_length=120)
+    transcript: str | None = Field(default=None, min_length=1, max_length=4000)
+    photo_base64: str | None = Field(default=None)
+
+
+class ResolutionConfirmIn(DispatcherActionIn):
+    pass
+
+
 class JoinIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

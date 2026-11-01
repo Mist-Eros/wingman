@@ -20,6 +20,7 @@ import '../../core/widgets/ticket_media_panel.dart';
 import '../../core/incidents/taxonomy.dart';
 import 'reporter_controller.dart';
 import 'menu/incident_menu_data.dart';
+import 'menu/menu_language.dart';
 import 'live_gps_map_screen.dart';
 import 'photo_prompt.dart';
 import 'reporter_dialogs.dart';
@@ -68,6 +69,12 @@ class _ReporterScreenState extends State<ReporterScreen> {
       reporterName: session.displayName,
       location: GeolocatorLocationService(),
       onLowConfidenceMenu: () => _menuAfterLowConfidence(_controller!),
+      editTicketFn: (ticketId, {transcript, photoBase64}) => api.editTicket(
+        ticketId,
+        reporterId: session.userId,
+        transcript: transcript,
+        photoBase64: photoBase64,
+      ),
     );
   }
 
@@ -91,12 +98,16 @@ class _ReporterScreenState extends State<ReporterScreen> {
     );
     if (selection == null || !mounted) return;
     final photo = CoreScope.domainOrFallbackOf(context).features.photo
-        ? await showIncidentPhotoPrompt(context)
+        ? await showIncidentPhotoPrompt(context, language: c.language)
         : null;
     if (!mounted) return;
     await c.submitMenu(
       selection.type,
-      transcript: selection.problem.label,
+      transcript: localizedMenuProblem(
+        selection.subcategory,
+        selection.problem,
+        c.language,
+      ),
       locationText: selection.problem.location,
       photoBase64: photo == null ? null : base64Encode(photo),
     );
@@ -108,9 +119,11 @@ class _ReporterScreenState extends State<ReporterScreen> {
   Future<void> _menuAfterLowConfidence(ReporterController c) async {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Whisper nu a înțeles a doua oară — alege tipul din meniu.',
+          c.language == ReporterLanguage.en
+              ? 'Whisper did not understand the second time — choose the type from the menu.'
+              : 'Whisper nu a înțeles a doua oară — alege tipul din meniu.',
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -345,7 +358,7 @@ class _ReporterScreenState extends State<ReporterScreen> {
       await c.submit();
       return;
     }
-    final bytes = await showIncidentPhotoPrompt(context);
+    final bytes = await showIncidentPhotoPrompt(context, language: c.language);
     if (!mounted) return;
     await c.submit(
       photoBase64: bytes == null ? null : base64Encode(bytes),
@@ -427,8 +440,8 @@ class _ReporterScreenState extends State<ReporterScreen> {
         Text(
           c.lowConfidenceCount > 0
               ? tr(
-                  'Cuvintele subliniate au încredere mică — atinge-le ca să le corectezi.',
-                  'Underlined words have low confidence — tap them to correct them.',
+                  'Poți corecta orice cuvânt; cele galbene au încredere mică.',
+                  'You can edit any word; yellow ones have low confidence.',
                 )
               : c.transcriptConfidenceLow
                   ? tr(
@@ -513,6 +526,73 @@ class _ReporterScreenState extends State<ReporterScreen> {
     );
   }
 
+  Future<void> _editSentText(ReporterController c, Tr tr) async {
+    final current = c.sentTicket;
+    if (current == null) return;
+    final editing = TextEditingController(text: current.transcript);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(tr('Editează raportul', 'Edit the report')),
+        content: TextField(
+          controller: editing,
+          autofocus: true,
+          maxLines: 4,
+          decoration: InputDecoration(
+            labelText: tr('Textul raportului', 'Report text'),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(tr('Anulează', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(editing.text.trim()),
+            child: Text(tr('Salvează', 'Save')),
+          ),
+        ],
+      ),
+    );
+    editing.dispose();
+    if (text == null || text.isEmpty || !mounted) return;
+    final ok = await c.editSent(transcript: text);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? tr('Raport actualizat.', 'Report updated.')
+              : tr('Raportul nu a putut fi actualizat.',
+                  'The report could not be updated.'),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _addSentPhoto(ReporterController c, Tr tr) async {
+    final current = c.sentTicket;
+    if (current == null) return;
+    final bytes = await showIncidentPhotoPrompt(context, language: c.language);
+    if (bytes == null || !mounted) return;
+    final ok = await c.editSent(photoBase64: base64Encode(bytes));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? tr('Poză adăugată raportului.', 'Photo added to the report.')
+              : tr('Poza nu a putut fi adăugată.',
+                  'The photo could not be added.'),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _sent(ReporterController c, Tr tr) {
     final ticket = c.sentTicket;
     final scheme = Theme.of(context).colorScheme;
@@ -541,8 +621,8 @@ class _ReporterScreenState extends State<ReporterScreen> {
                       const SizedBox(height: 10),
                       TicketMediaPanel(ticket: ticket, height: 170),
                       const SizedBox(height: 10),
-                      Text(
-                          '${tr('Stare', 'Status')}: ${ticket.status.labelRo}'),
+                      Text('${tr('Stare', 'Status')}: '
+                          '${tr(ticket.status.labelRo, ticket.status.labelEn)}'),
                       Text(
                           '${tr('Locație', 'Location')}: ${ticket.location.display}'),
                       RequiredTeamsBar(ticket: ticket, compact: true),
@@ -560,6 +640,35 @@ class _ReporterScreenState extends State<ReporterScreen> {
                     ],
                   ),
                 ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            if (ticket != null && !ticket.status.isTerminal) ...<Widget>[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: <Widget>[
+                  OutlinedButton.icon(
+                    onPressed: () => _editSentText(c, tr),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(tr('Editează textul', 'Edit text')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _addSentPhoto(c, tr),
+                    icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                    label: Text(tr('Adaugă poză', 'Add photo')),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                tr(
+                  'Poți modifica raportul și după trimitere; poza poate fi adăugată oricând cât timp tichetul e activ.',
+                  'You can edit after sending; a photo can be added while the ticket is active.',
+                ),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
             const SizedBox(height: 20),

@@ -358,9 +358,14 @@ const deptLabels = (t) => (t.primary_departments || []).map(d => DEPT_LABEL[d] |
 const peopleCount = (t) => (t.reporter_ids || []).length || 1;
 const STATUS_COLOR = {
   dispatched: '#0F4C81', in_progress: '#B45309',
+  pending_resolution: '#B45309',
   resolved: '#027A48', denied: '#64748B'
 };
-const STATUS_LABEL = { dispatched: 'Dispecerizat', in_progress: 'În lucru', resolved: 'Rezolvat', denied: 'Respins' };
+const STATUS_LABEL = {
+  dispatched: 'Dispecerizat', in_progress: 'În lucru',
+  pending_resolution: 'Așteaptă confirmarea',
+  resolved: 'Rezolvat', denied: 'Respins'
+};
 let tickets = new Map();
 let selected = null;
 let activeTab = 'queue';
@@ -432,7 +437,7 @@ function connectWs() {
   };
 }
 
-function isActive(t) { return ['dispatched', 'in_progress'].includes(t.status); }
+function isActive(t) { return ['dispatched', 'in_progress', 'pending_resolution'].includes(t.status); }
 function isTerminal(t) { return ['resolved', 'denied'].includes(t.status); }
 function setTab(tab) {
   activeTab = tab;

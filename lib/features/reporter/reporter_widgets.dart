@@ -209,8 +209,8 @@ class TranscriptChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 6,
-      runSpacing: 4,
+      spacing: 4,
+      runSpacing: 3,
       children: <Widget>[
         for (var i = 0; i < words.length; i++)
           _WordChip(
@@ -220,9 +220,7 @@ class TranscriptChips extends StatelessWidget {
                 : (i < confidences.length &&
                     confidences[i] != null &&
                     confidences[i]! < 0.70),
-            editable: i < editable.length
-                ? editable[i]
-                : (i >= confidences.length || confidences[i] == null),
+            editable: true,
             onTap: () => onTap(i),
           ),
       ],
@@ -258,7 +256,7 @@ class _WordChip extends StatelessWidget {
                 ? theme.colorScheme.surfaceContainerHighest
                 : theme.colorScheme.surface),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(
             color: low
                 ? const Color(0xFFD97706)
@@ -266,14 +264,14 @@ class _WordChip extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           onTap: editable ? onTap : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Text(
               word,
               style: TextStyle(
-                fontSize: 17,
+                fontSize: 15.5,
                 fontWeight: low ? FontWeight.w700 : FontWeight.w500,
                 decoration: low ? TextDecoration.underline : null,
                 decorationStyle: TextDecorationStyle.dashed,

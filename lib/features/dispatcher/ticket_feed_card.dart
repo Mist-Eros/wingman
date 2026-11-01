@@ -142,6 +142,7 @@ class TicketFeedCard extends StatelessWidget {
     this.density = DispatcherDensity.comfortable,
     this.onDeny,
     this.onReclassify,
+    this.onConfirmResolution,
     this.busy = false,
   });
 
@@ -151,6 +152,7 @@ class TicketFeedCard extends StatelessWidget {
   final DispatcherDensity density;
   final VoidCallback? onDeny;
   final VoidCallback? onReclassify;
+  final VoidCallback? onConfirmResolution;
   final bool busy;
 
   bool get _showActions =>

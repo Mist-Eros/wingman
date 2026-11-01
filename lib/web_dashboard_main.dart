@@ -57,6 +57,7 @@ abstract final class Ops {
         TicketStatus.pendingOverride => orange,
         TicketStatus.dispatched => accent,
         TicketStatus.inProgress => yellow,
+        TicketStatus.pendingResolution => orange,
         TicketStatus.resolved => green,
         TicketStatus.denied => muted,
       };

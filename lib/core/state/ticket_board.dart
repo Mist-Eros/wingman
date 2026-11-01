@@ -127,6 +127,17 @@ class TicketBoard extends ChangeNotifier {
             dispatcherName: dispatcherName,
           ));
 
+  Future<bool> confirmResolution(
+    String ticketId, {
+    String? dispatcherId,
+    String? dispatcherName,
+  }) =>
+      _run(() => _api.confirmResolution(
+            ticketId,
+            dispatcherId: dispatcherId,
+            dispatcherName: dispatcherName,
+          ));
+
   Future<bool> deny(
     String ticketId, {
     String? reason,

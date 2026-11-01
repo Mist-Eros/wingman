@@ -226,6 +226,32 @@ class ApiClient {
         'dispatcher_name': dispatcherName,
       });
 
+  Future<Ticket> editTicket(
+    String ticketId, {
+    required String reporterId,
+    String? transcript,
+    String? photoBase64,
+  }) =>
+      _mutate('PATCH', '/api/tickets/$ticketId', <String, dynamic>{
+        'reporter_id': reporterId,
+        'transcript': transcript,
+        'photo_base64': photoBase64,
+      });
+
+  Future<Ticket> confirmResolution(
+    String ticketId, {
+    String? dispatcherId,
+    String? dispatcherName,
+  }) =>
+      _mutate(
+        'POST',
+        '/api/tickets/$ticketId/resolution-confirm',
+        <String, dynamic>{
+          'dispatcher_id': dispatcherId,
+          'dispatcher_name': dispatcherName,
+        },
+      );
+
   Future<Ticket> deny(
     String ticketId, {
     String? reason,

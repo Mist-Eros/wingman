@@ -553,6 +553,21 @@ async def get_ticket(ticket_id: str) -> dict:
     return {"ticket": ticket}
 
 
+@api.patch("/tickets/{ticket_id}")
+async def edit_ticket(ticket_id: str, body: schemas.TicketEditIn) -> dict:
+    """Reporter can add a photo / fix the transcript after submitting."""
+    try:
+        ticket = await store.edit_content(
+            ticket_id,
+            body.reporter_id,
+            body.transcript,
+            body.photo_base64,
+        )
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
 @api.post("/tickets/{ticket_id}/confirm")
 async def confirm_ticket(
     ticket_id: str,
@@ -578,6 +593,24 @@ async def deny_ticket(
         ticket = await store.deny(
             ticket_id,
             action.reason,
+            action.dispatcher_id,
+            action.dispatcher_name,
+        )
+    except (NotFound, Conflict) as exc:
+        raise _to_http(exc) from exc
+    return {"ticket": ticket}
+
+
+@api.post("/tickets/{ticket_id}/resolution-confirm")
+async def confirm_resolution(
+    ticket_id: str,
+    body: schemas.ResolutionConfirmIn | None = None,
+) -> dict:
+    """Final admin check for high/critical tickets after crew quorum."""
+    action = body or schemas.ResolutionConfirmIn()
+    try:
+        ticket = await store.confirm_resolution(
+            ticket_id,
             action.dispatcher_id,
             action.dispatcher_name,
         )

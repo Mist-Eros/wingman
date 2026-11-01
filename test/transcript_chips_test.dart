@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wingman/features/reporter/reporter_widgets.dart';
 
 void main() {
-  testWidgets('low-confidence words are underlined and editable only',
+  testWidgets('low-confidence words are underlined, every word editable',
       (tester) async {
     final tapped = <int>[];
     await tester.pumpWidget(
@@ -49,7 +49,7 @@ void main() {
 
     await tester.tap(find.text('gate'));
     await tester.tap(find.text('smoke'));
-    expect(tapped, <int>[4], reason: 'only the uncertain word is editable');
+    expect(tapped, <int>[4, 2], reason: 'every word is editable');
   });
 
   testWidgets('legacy words without confidence remain editable',

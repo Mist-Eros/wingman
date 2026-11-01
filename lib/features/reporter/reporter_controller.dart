@@ -53,6 +53,11 @@ enum ReporterError {
 
 typedef AnalyzeFn = Future<AnalyzeResult> Function(AnalyzeRequest request);
 typedef ReportFn = Future<Ticket> Function(ReportDraft draft);
+typedef EditTicketFn = Future<Ticket> Function(
+  String ticketId, {
+  String? transcript,
+  String? photoBase64,
+});
 
 /// One recognised word; [confidence] is null for typed/menu input or when the
 /// STT server cannot provide word-level probabilities.
@@ -79,6 +84,7 @@ class ReporterController extends ChangeNotifier {
     required AnalyzeFn analyze,
     required ReportFn report,
     required this.reporterId,
+    this.editTicketFn,
     required this.reporterName,
     LocationService? location,
     ReporterLanguage language = ReporterLanguage.ro,
@@ -106,6 +112,7 @@ class ReporterController extends ChangeNotifier {
   final TtsService _tts;
   final AnalyzeFn _analyzeFn;
   final ReportFn _reportFn;
+  final EditTicketFn? editTicketFn;
   final LocationService? _location;
   final String reporterId;
   final String reporterName;
@@ -219,15 +226,8 @@ class ReporterController extends ChangeNotifier {
   /// Words with no metadata (typed, old server) remain editable for backwards
   /// compatibility; low-confidence/whole-sentence-uncertain words are editable;
   /// high-confidence words are read-only.
-  List<bool> get wordEditability {
-    final confidences = wordConfidences;
-    final flags = lowConfidenceFlags;
-    final allLow = transcriptConfidenceLow;
-    return <bool>[
-      for (var i = 0; i < confidences.length; i++)
-        confidences[i] == null || flags[i] || allLow,
-    ];
-  }
+  List<bool> get wordEditability =>
+      List<bool>.filled(wordConfidences.length, true);
 
   bool isWordEditable(int index) {
     final editable = wordEditability;
@@ -634,6 +634,36 @@ class ReporterController extends ChangeNotifier {
   }
 
   // ── sending ───────────────────────────────────────────────────────────────
+
+  /// Edit the ticket after it has been submitted (active tickets only).
+  Future<bool> editSent({
+    String? transcript,
+    String? photoBase64,
+  }) async {
+    final current = _sent;
+    final edit = editTicketFn;
+    if (current == null || edit == null) return false;
+    try {
+      final updated = await edit(
+        current.id,
+        transcript: transcript,
+        photoBase64: photoBase64,
+      );
+      _sent = updated;
+      _notify();
+      return true;
+    } on ApiException catch (error) {
+      _error = ReporterError.server;
+      _errorDetail = error.message;
+      _notify();
+      return false;
+    } on Object catch (error) {
+      _error = ReporterError.server;
+      _errorDetail = error.toString();
+      _notify();
+      return false;
+    }
+  }
 
   Future<void> submit({String? photoBase64}) async {
     if (_phase != ReporterPhase.confirming) return;

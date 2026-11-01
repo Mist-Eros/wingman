@@ -71,24 +71,39 @@ enum AiSource {
 enum TicketStatus {
   /// Low AI confidence: the dispatcher has a 5-second window to confirm,
   /// deny or re-classify before the ticket auto-dispatches.
-  pendingOverride('pending_override', 'Așteaptă dispecerul', 0),
+  pendingOverride(
+    'pending_override',
+    'Așteaptă dispecerul',
+    'Awaiting dispatcher',
+    0,
+  ),
 
   /// Broadcast to the responsible departments.
-  dispatched('dispatched', 'Dispecerizat', 1),
+  dispatched('dispatched', 'Dispecerizat', 'Dispatched', 1),
 
   /// At least one crew member joined and is working on it.
-  inProgress('in_progress', 'În lucru', 2),
+  inProgress('in_progress', 'În lucru', 'In progress', 2),
 
-  /// Crew vote quorum reached.
-  resolved('resolved', 'Rezolvat', 3),
+  /// Crew vote quorum reached; a high/critical incident still needs the
+  /// dispatcher/admin to confirm the resolution.
+  pendingResolution(
+    'pending_resolution',
+    'Așteaptă confirmarea',
+    'Awaiting confirmation',
+    3,
+  ),
+
+  /// Crew vote quorum reached (or the dispatcher confirmed it).
+  resolved('resolved', 'Rezolvat', 'Resolved', 4),
 
   /// Dispatcher rejected the classification.
-  denied('denied', 'Respins', 4);
+  denied('denied', 'Respins', 'Denied', 5);
 
-  const TicketStatus(this.wire, this.labelRo, this.sortOrder);
+  const TicketStatus(this.wire, this.labelRo, this.labelEn, this.sortOrder);
 
   final String wire;
   final String labelRo;
+  final String labelEn;
 
   /// Dispatcher dashboard ordering (pending override first).
   final int sortOrder;
@@ -96,7 +111,8 @@ enum TicketStatus {
   bool get isActive =>
       this == TicketStatus.pendingOverride ||
       this == TicketStatus.dispatched ||
-      this == TicketStatus.inProgress;
+      this == TicketStatus.inProgress ||
+      this == TicketStatus.pendingResolution;
 
   bool get isTerminal =>
       this == TicketStatus.resolved || this == TicketStatus.denied;
@@ -317,6 +333,10 @@ class Ticket {
   // ── Derived helpers used by all three feature teams ──────────────────────
 
   bool get isPendingOverride => status == TicketStatus.pendingOverride;
+
+  /// Orange/red tickets need a final dispatcher check before resolution.
+  bool get requiresResolutionConfirmation =>
+      status == TicketStatus.pendingResolution;
 
   bool get hasOverrideDeadline => overrideDeadline != null;
 

@@ -487,12 +487,34 @@ async def run(args: argparse.Namespace) -> int:
         )
         ticket = payload.get("ticket", {})
         check(
-            "quorum reached -> resolved",
-            ticket.get("status") == "resolved",
+            "critical quorum -> pending admin confirmation",
+            ticket.get("status") == "pending_resolution",
             str(ticket.get("status")),
         )
-        check("resolved_at set", bool(ticket.get("resolved_at")))
-        check("summary note present", bool(ticket.get("resolution_note")))
+        check(
+            "critical ticket is not final-resolved yet",
+            not bool(ticket.get("resolved_at")),
+            str(ticket.get("resolved_at")),
+        )
+        status, confirmed_payload = http_call(
+            base,
+            token,
+            f"/api/tickets/{manual_id}/resolution-confirm",
+            method="POST",
+            payload={
+                "dispatcher_id": "smoke-dispatcher",
+                "dispatcher_name": "Smoke Dispatcher",
+            },
+            insecure=insecure,
+        )
+        confirmed = confirmed_payload.get("ticket", {})
+        check(
+            "admin confirms critical resolution -> resolved",
+            status == 200 and confirmed.get("status") == "resolved",
+            f"status={status} ticket={confirmed.get('status')}",
+        )
+        check("resolved_at set after admin check", bool(confirmed.get("resolved_at")))
+        check("summary note present", bool(confirmed.get("resolution_note")))
         resolved_event = await wait_for_type(events, "ticket.resolved", timeout=5)
         check("ticket.resolved broadcast on WSS", resolved_event is not None)
 

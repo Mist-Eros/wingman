@@ -289,6 +289,33 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     }
   }
 
+  Future<void> _confirmResolution(
+    Session session,
+    TicketBoard board,
+    String ticketId,
+  ) {
+    return _runLiveAction(
+      ticketId,
+      () => board.confirmResolution(
+        ticketId,
+        dispatcherId: session.userId,
+        dispatcherName: session.displayName,
+      ),
+    ).then((_) {
+      final t = board.find(ticketId);
+      if (t != null) {
+        _pushHistory(
+          DispatcherHistoryEntry(
+            at: DateTime.now().toUtc(),
+            kind: DispatcherHistoryKind.confirmed,
+            ticketId: ticketId,
+            summary: 'Rezolvare confirmată: ${shortTicketLabel(t)}',
+          ),
+        );
+      }
+    });
+  }
+
   Future<void> _confirm(Session session, TicketBoard board, String ticketId) {
     if (_usingDemo(board)) {
       _patchDemo(
@@ -815,6 +842,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                     onReclassifyChoice: (id, choice) =>
                         _reclassify(session, board, id, choice),
                     onDenyFlow: (id) => _denyFlow(session, board, id),
+                    onConfirmResolution: (id) =>
+                        _confirmResolution(session, board, id),
                     onReclassifyFlow: (id) =>
                         _reclassifyFlow(session, board, id),
                     onLoadDemoScene: _reloadDemo,
@@ -891,6 +920,7 @@ class _FeedPane extends StatelessWidget {
     required this.onDenyReason,
     required this.onReclassifyChoice,
     required this.onDenyFlow,
+    required this.onConfirmResolution,
     required this.onReclassifyFlow,
     required this.onLoadDemoScene,
   });
@@ -921,6 +951,7 @@ class _FeedPane extends StatelessWidget {
   final Future<void> Function(String id, ReclassifyChoice choice)
       onReclassifyChoice;
   final Future<void> Function(String id) onDenyFlow;
+  final Future<void> Function(String id) onConfirmResolution;
   final Future<void> Function(String id) onReclassifyFlow;
   final VoidCallback onLoadDemoScene;
 
@@ -1150,6 +1181,7 @@ class _FeedPane extends StatelessWidget {
                       busy: busyIds.contains(ticket.id),
                       onTap: () => onSelectTicket(ticket.id),
                       onDeny: () => onDenyFlow(ticket.id),
+                      onConfirmResolution: () => onConfirmResolution(ticket.id),
                       onReclassify: () => onReclassifyFlow(ticket.id),
                     ),
                   ),

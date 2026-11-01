@@ -361,6 +361,33 @@ class TicketStore:
         )
         return snapshot
 
+    async def confirm_resolution(
+        self,
+        ticket_id: str,
+        dispatcher_id: str | None = None,
+        dispatcher_name: str | None = None,
+    ) -> dict[str, Any]:
+        """Admin/dispatcher final confirmation for high/critical incidents."""
+        async with self._lock:
+            ticket = self._require_ticket(ticket_id)
+            if ticket["status"] != "pending_resolution":
+                raise Conflict("Ticket is not awaiting resolution confirmation")
+            ticket["status"] = "resolved"
+            ticket["resolved_at"] = utc_now()
+            ticket["resolution_note"] = (
+                ticket.get("resolution_note") or "Rezolvare confirmată de dispecer"
+            )
+            ticket["decided_by"] = self._dispatcher_label(
+                dispatcher_id, dispatcher_name
+            )
+            self._bump(ticket)
+            snapshot = copy.deepcopy(ticket)
+        await self._hub.broadcast(
+            "ticket.resolved",
+            {"ticket": snapshot, "action": "resolution_confirmed"},
+        )
+        return snapshot
+
     async def deny(
         self,
         ticket_id: str,
@@ -437,7 +464,12 @@ class TicketStore:
     ) -> dict[str, Any]:
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
-            if ticket["status"] in ("pending_override", "resolved", "denied"):
+            if ticket["status"] in (
+                "pending_override",
+                "pending_resolution",
+                "resolved",
+                "denied",
+            ):
                 raise Conflict("Only dispatched or in-progress tickets can be joined")
             primary = [str(value) for value in ticket.get("primary_departments") or []]
             if str(department) not in primary:
@@ -488,7 +520,12 @@ class TicketStore:
         """Undo an accidental join: remove the crew member and their vote."""
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
-            if ticket["status"] in ("pending_override", "resolved", "denied"):
+            if ticket["status"] in (
+                "pending_override",
+                "pending_resolution",
+                "resolved",
+                "denied",
+            ):
                 raise Conflict("Cannot leave a closed ticket")
             if crew_id not in ticket["joined_crew_ids"]:
                 return copy.deepcopy(ticket)
@@ -524,7 +561,12 @@ class TicketStore:
     ) -> dict[str, Any]:
         async with self._lock:
             ticket = self._require_ticket(ticket_id)
-            if ticket["status"] in ("pending_override", "resolved", "denied"):
+            if ticket["status"] in (
+                "pending_override",
+                "pending_resolution",
+                "resolved",
+                "denied",
+            ):
                 raise Conflict("Ticket is not open for voting")
             if crew_id not in ticket["joined_crew_ids"]:
                 raise Conflict("Join the ticket before voting")
@@ -535,13 +577,19 @@ class TicketStore:
                 ticket["resolve_votes"] = len(ticket["resolve_voter_ids"])
                 changed = True
                 if ticket["resolve_votes"] >= max(1, int(ticket["quorum"])):
-                    ticket["status"] = "resolved"
-                    ticket["resolved_at"] = utc_now()
-                    ticket["resolution_note"] = (
-                        ticket["resolution_note"]
-                        or f"Rezolvat prin vot ({ticket['resolve_votes']} aprobări)"
-                    )
-                    resolved_now = True
+                    if ticket["urgency"] in ("high", "critical"):
+                        # Orange/red incidents need a final dispatcher/admin
+                        # check after the crew quorum.
+                        ticket["status"] = "pending_resolution"
+                        ticket["resolution_note"] = "Așteaptă confirmarea dispecerului"
+                    else:
+                        ticket["status"] = "resolved"
+                        ticket["resolved_at"] = utc_now()
+                        ticket["resolution_note"] = (
+                            ticket["resolution_note"]
+                            or f"Rezolvat prin vot ({ticket['resolve_votes']} aprobări)"
+                        )
+                        resolved_now = True
             if changed:
                 self._bump(ticket)
             snapshot = copy.deepcopy(ticket)
@@ -554,6 +602,45 @@ class TicketStore:
                     "action": "voted",
                     "crew_id": crew_id,
                 },
+            )
+        return snapshot
+
+    async def edit_content(
+        self,
+        ticket_id: str,
+        reporter_id: str,
+        transcript: str | None = None,
+        photo_base64: str | None = None,
+    ) -> dict[str, Any]:
+        """Reporter edits after submission: transcript and/or photo.
+
+        Allowed while the ticket is still active (dispatched / in progress);
+        closed tickets are immutable. This deliberately does not re-run AI, so
+        the edited transcript cannot silently change the dispatch.
+        """
+        async with self._lock:
+            ticket = self._require_ticket(ticket_id)
+            if ticket["status"] in ("resolved", "denied"):
+                raise Conflict("Closed tickets cannot be edited")
+            if str(ticket.get("reporter_id") or "") != str(reporter_id):
+                raise Conflict("Only the reporter can edit this ticket")
+            changed = False
+            if transcript is not None:
+                clean = transcript.strip()
+                if clean and clean != ticket.get("transcript"):
+                    ticket["transcript"] = clean
+                    changed = True
+            if photo_base64 is not None and photo_base64 != ticket.get("photo_base64"):
+                ticket["photo_base64"] = photo_base64
+                changed = True
+            if changed:
+                ticket["edited_at"] = utc_now()
+                self._bump(ticket)
+            snapshot = copy.deepcopy(ticket)
+        if changed:
+            await self._hub.broadcast(
+                "ticket.updated",
+                {"ticket": snapshot, "action": "edited"},
             )
         return snapshot
 
