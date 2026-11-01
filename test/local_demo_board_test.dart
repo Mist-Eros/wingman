@@ -101,6 +101,21 @@ void main() {
     expect(board.find(ticket.id)?.status, TicketStatus.resolved);
   });
 
+  test('resetToSeed restores the five dispatched cases', () async {
+    final ticket = ticketWithCode('SC-BAG');
+    await board.join(ticket.id, crewId: 'security-1', department: 'security');
+    await board.vote(ticket.id, crewId: 'security-1');
+    expect(board.find(ticket.id)?.status, TicketStatus.pendingResolution);
+
+    expect(board.resetToSeed(), 5);
+    expect(board.tickets.length, 5);
+    final reset = ticketWithCode('SC-BAG');
+    expect(reset.status, TicketStatus.dispatched);
+    expect(reset.joinedCrewIds, isEmpty);
+    expect(reset.resolveVotes, 0);
+    expect(ticketWithCode('SF-FIRE').quorum, 2);
+  });
+
   test('a second responder from the same department is rejected', () async {
     final ticket = ticketWithCode('SC-ITEM');
     expect(

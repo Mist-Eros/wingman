@@ -37,12 +37,14 @@ from . import schemas
 from . import occurrences as occurrence_catalog
 from .ai import (
     KEYWORD_RULES,
+    Classification,
     OllamaClient,
     analyze_conversation,
     analyze_report,
     extract_location,
 )
 from .config import BASE_DIR, settings
+from .demo_data import DEMO_CASES
 from .domain import load_domain_config
 from .stats import PERIODS as STATS_PERIODS, build_stats
 from .stt import (
@@ -673,6 +675,37 @@ async def vote_ticket(ticket_id: str, body: schemas.VoteIn) -> dict:
     except (NotFound, Conflict) as exc:
         raise _to_http(exc) from exc
     return {"ticket": ticket}
+
+
+@api.post("/demo/reset")
+async def demo_reset() -> dict:
+    """Restore the prepared five-case demo state (clear history + seed)."""
+    if not settings.allow_dev_reset:
+        raise HTTPException(
+            status_code=404, detail="Demo reset disabled (ENABLE_DEV_RESET=0)"
+        )
+    removed = await store.reset()
+    created = 0
+    for case in DEMO_CASES:
+        incident_type = taxonomy.require(case["code"])
+        await store.create(
+            source="menu",
+            transcript=case["transcript"],
+            reporter_id=case["reporter_id"],
+            reporter_name=case["reporter_name"],
+            location=case["location"],
+            classification=Classification(
+                incident_code=incident_type.code,
+                urgency=incident_type.urgency,
+                confidence=1.0,
+                rationale="seed demo pregătit",
+                ai_source="manual",
+            ),
+            quorum_override=case.get("quorum_override"),
+        )
+        created += 1
+    logger.info("Demo reset: cleared %s, created %s tickets", removed, created)
+    return {"ok": True, "tickets_cleared": removed, "tickets_created": created}
 
 
 @api.post("/dev/reset")

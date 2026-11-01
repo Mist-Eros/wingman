@@ -57,6 +57,27 @@ class LoginScreen extends StatelessWidget {
                     connected: board.connected,
                     localDemo: board.isLocalDemo,
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _resetPreparedDemo(context),
+                      icon: const Icon(
+                        Icons.restart_alt_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      label: const Text(
+                        'Resetează demo · 5 cazuri',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor:
+                            WingmanColors.navy.withValues(alpha: 0.88),
+                        side: const BorderSide(color: Colors.white38),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: WingmanSpacing.lg),
                   if (restored != null) ...<Widget>[
                     _ResumeCard(
@@ -94,6 +115,52 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _resetPreparedDemo(BuildContext context) async {
+    final scope = CoreScope.of(context);
+    final mode = scope.board.isLocalDemo ? 'local' : 'live';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Resetezi demo-ul?'),
+        content: Text(
+          'Readuce cele 5 cazuri pregătite, golește istoricul și '
+          'resetează punctele. Mod activ: $mode.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Anulează'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Resetează'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      final result = await scope.demoReset.resetPrepared();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Demo resetat · ${result.tickets} tichete (${result.local ? 'local' : 'live'}).',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on Object catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reset eșuat: $error'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _openLoginSheet(

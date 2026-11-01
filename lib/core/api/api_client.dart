@@ -358,6 +358,13 @@ class ApiClient {
     return value is num ? value.toInt() : 0;
   }
 
+  /// Clear history and restore the prepared five-case demo state.
+  Future<int> resetPreparedDemo() async {
+    final json = await _send('POST', '/api/demo/reset');
+    final value = json['tickets_created'];
+    return value is num ? value.toInt() : 0;
+  }
+
   /// Clears the in-memory store (demo rehearsals). Server may 404 if disabled.
   Future<void> devReset() async {
     await _send('POST', '/api/dev/reset');

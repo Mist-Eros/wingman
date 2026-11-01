@@ -38,6 +38,7 @@ An airport employee reports an incident by **voice** or through a deterministic 
 | **Department-aware dispatch** | Notifications go only to the departments the incident actually needs. **One responder per primary department** is enforced server-side; standby teams are never woken. |
 | **Admin sign-off** | Orange/red incidents cannot be closed by the crew alone: after quorum they wait for a dispatcher/admin **resolution confirmation**. |
 | **Editable after send** | The reporter can fix the transcript or add a photo after submission while the ticket is active. |
+| **One-tap demo reset** | The prepared five-case state (1 low, 1 medium, 2 high, 1 critical) can be restored from login, DevTools or the dispatcher menu; local and live are both supported. |
 | **Every word editable** | White/high-confidence transcript words are editable too; yellow still indicates uncertainty. |
 | **One ticket, many reporters** | Duplicate reports merge into one ticket, increment the report count and keep the distinct reporters visible with a 👥 counter. |
 | **Real persistence** | Tickets, photos, votes and history live in SQLite and survive backend restarts. |

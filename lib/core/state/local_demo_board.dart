@@ -18,9 +18,14 @@ class LocalDemoBoard extends TicketBoard {
   LocalDemoBoard({
     required ApiClient api,
     required List<Ticket> seedTickets,
-  })  : _tickets = List<Ticket>.of(seedTickets),
+    List<Ticket> Function()? seedFactory,
+  })  : _seedTickets = List<Ticket>.of(seedTickets),
+        _seedFactory = seedFactory,
+        _tickets = List<Ticket>.of(seedTickets),
         super(api: api);
 
+  final List<Ticket> _seedTickets;
+  final List<Ticket> Function()? _seedFactory;
   final List<Ticket> _tickets;
 
   bool _started = false;
@@ -79,6 +84,17 @@ class LocalDemoBoard extends TicketBoard {
             ticket.standbyDepartments.contains(department),
       )
       .toList(growable: false);
+
+  /// Restore the prepared demo cases in memory (history is dropped).
+  int resetToSeed() {
+    _tickets
+      ..clear()
+      ..addAll(_seedFactory?.call() ?? _seedTickets);
+    _lastActionError = null;
+    _lastError = null;
+    notifyListeners();
+    return _tickets.length;
+  }
 
   @override
   Future<void> start() async {

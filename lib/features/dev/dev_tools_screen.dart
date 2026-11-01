@@ -63,10 +63,10 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Resetezi datele locale?'),
+        title: const Text('Resetezi demo-ul?'),
         content: const Text(
-          'Șterge toate tichetele, istoricul și punctele tuturor conturilor. '
-          'Acțiunea este definitivă.',
+          'Readuce cele 5 cazuri pregătite, golește istoricul și '
+          'resetează punctele tuturor conturilor. Acțiunea este definitivă.',
         ),
         actions: <Widget>[
           TextButton(
@@ -89,11 +89,12 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     final reset = CoreScope.of(context).demoReset;
     setState(() => _busy = true);
     try {
-      await reset.reset();
+      final result = await reset.resetPrepared();
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _lastAction = 'Store resetat (0 tichete).';
+        _lastAction =
+            'Demo resetat: ${result.tickets} tichete (${result.local ? 'local' : 'live'}).';
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -341,7 +342,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _busy ? null : _resetDemo,
                           icon: const Icon(Icons.restart_alt_rounded),
-                          label: const Text('Reset date locale'),
+                          label: const Text('Reset demo · 5 cazuri'),
                         ),
                       ),
                   ],

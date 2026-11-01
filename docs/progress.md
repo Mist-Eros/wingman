@@ -414,3 +414,10 @@ to REST/WSS.
   `scaun rupt`→OP-OTHER.
 - Benchmarked 3.9 s sample audio: Whisper **~1.2–1.4 s**, total endpoint
   **~1.4–1.8 s** after warm-up. 12/12 ambiguous phrases route correctly.
+
+## 2026-11-01 — prepared demo reset
+
+- Added `POST /api/demo/reset`: clears tickets/history and recreates exactly the five prepared cases (1 low, 1 medium, 2 high, 1 critical; `SF-FIRE` quorum 2, medium pinned to 1).
+- Added **Resetează demo · 5 cazuri** on login, in DevTools and in the dispatcher overflow menu.
+- Local mode resets its in-memory seed instantly (fresh timers); live mode resets through the backend so phone and dashboard stay in sync.
+- Backend 25 tests, Flutter 199 tests; verified reset twice in a row with history zero.

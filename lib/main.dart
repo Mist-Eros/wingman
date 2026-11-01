@@ -131,7 +131,11 @@ Future<void> main() async {
   final initialSession =
       savedSession == null ? null : restoreSession(savedSession);
   final TicketBoard board = kLocalMock
-      ? LocalDemoBoard(api: api, seedTickets: buildDemoTickets())
+      ? LocalDemoBoard(
+          api: api,
+          seedTickets: buildDemoTickets(),
+          seedFactory: buildDemoTickets,
+        )
       : TicketBoard(api: api);
 
   runApp(
@@ -230,7 +234,11 @@ class _AirportAppState extends State<AirportApp> {
     final previous = _board;
     previous.removeListener(_onBoardChanged);
     final next = local
-        ? LocalDemoBoard(api: widget.api, seedTickets: buildDemoTickets())
+        ? LocalDemoBoard(
+            api: widget.api,
+            seedTickets: buildDemoTickets(),
+            seedFactory: buildDemoTickets,
+          )
         : TicketBoard(api: widget.api);
     setState(() {
       _board = next;

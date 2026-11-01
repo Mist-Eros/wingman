@@ -151,6 +151,46 @@ class _DispatcherScreenState extends State<DispatcherScreen>
     });
   }
 
+  Future<void> _resetDemoFlow() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Resetezi demo-ul?'),
+        content: const Text(
+          'Readuce cele 5 cazuri pregătite, golește istoricul și '
+          'resetează punctele. Dashboardul și telefonul vor reveni la '
+          'aceeași stare.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Anulează'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Resetează'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final result = await CoreScope.of(context).demoReset.resetPrepared();
+    if (!mounted) return;
+    setState(() {
+      _forceDemo = false;
+      _selectedTicketId = null;
+      _knownPendingIds = <String>{};
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Demo resetat · ${result.tickets} tichete (${result.local ? 'local' : 'live'}).',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _reloadDemo() {
     setState(() {
       _demoTickets = buildDemoTickets();
@@ -702,6 +742,8 @@ class _DispatcherScreenState extends State<DispatcherScreen>
                 onSelected: (value) {
                   if (value == 'refresh') {
                     board.refresh();
+                  } else if (value == 'reset') {
+                    _resetDemoFlow();
                   } else if (value == 'demo') {
                     _reloadDemo();
                   } else {
