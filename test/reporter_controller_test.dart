@@ -587,8 +587,7 @@ void main() {
       expect(c.isWordEditable(0), isTrue);
       expect(c.isWordEditable(2), isTrue);
       c.editWord(0, 'nu-se-poate');
-      expect(c.words.first, 'nu-se-poate',
-          reason: 'all words are editable');
+      expect(c.words.first, 'nu-se-poate', reason: 'all words are editable');
       await h.settle();
       c.editWord(2, 'Poarta');
       expect(c.words[2], 'Poarta');

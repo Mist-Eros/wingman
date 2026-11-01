@@ -53,6 +53,9 @@ class TicketBoard extends ChangeNotifier {
   /// WSS link status — show a red "reconectare..." banner when false.
   bool get connected => _connected;
 
+  /// True only when this board is the in-memory local demo board.
+  bool get isLocalDemo => false;
+
   /// Last error from a background refresh (read/connection), if any.
   String? get lastError => _lastError;
 

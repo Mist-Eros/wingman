@@ -2,15 +2,26 @@ import 'package:flutter/material.dart';
 
 /// Compact WSS link status strip for the crew phone UI.
 class WssBanner extends StatelessWidget {
-  const WssBanner({super.key, required this.connected});
+  const WssBanner({
+    super.key,
+    required this.connected,
+    this.localDemo = false,
+  });
 
   final bool connected;
+  final bool localDemo;
 
   @override
   Widget build(BuildContext context) {
-    final color = connected ? const Color(0xFF0F7A4F) : const Color(0xFFB3261E);
-    final bg = connected ? const Color(0xFFE6F4EE) : const Color(0xFFFCE8E6);
-    final label = connected ? 'WSS: conectat' : 'WSS: deconectat';
+    final color = localDemo || connected
+        ? const Color(0xFF0F7A4F)
+        : const Color(0xFFB3261E);
+    final bg = localDemo || connected
+        ? const Color(0xFFE6F4EE)
+        : const Color(0xFFFCE8E6);
+    final label = localDemo
+        ? 'Demo local · instant'
+        : (connected ? 'WSS: conectat' : 'WSS: deconectat');
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 280),

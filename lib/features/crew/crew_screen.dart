@@ -187,7 +187,10 @@ class _CrewScreenState extends State<CrewScreen> {
 
             return Column(
               children: <Widget>[
-                WssBanner(connected: board.connected),
+                WssBanner(
+                  connected: board.connected,
+                  localDemo: board.isLocalDemo,
+                ),
                 if (board.lastError != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),

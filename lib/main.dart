@@ -37,11 +37,13 @@ import 'core/incidents/taxonomy.dart';
 import 'core/location/location_gate.dart';
 import 'core/models/session.dart';
 import 'core/notifications/ticket_notifier.dart';
+import 'core/state/local_demo_board.dart';
 import 'core/state/ticket_board.dart';
 import 'core/theme/wingman_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'core/rewards/reward_service.dart';
 import 'features/crew/crew_screen.dart';
+import 'features/dispatcher/demo_tickets.dart';
 import 'features/dispatcher/dispatcher_screen.dart';
 import 'features/reporter/reporter_screen.dart';
 
@@ -89,6 +91,13 @@ const bool kDevInsecure = bool.fromEnvironment(
   defaultValue: false,
 );
 
+/// Demo fallback: no REST/WSS, no USB reverse, no laptop dependency.
+/// Build with `--dart-define=LOCAL_MOCK=true` for instant local actions.
+const bool kLocalMock = bool.fromEnvironment(
+  'LOCAL_MOCK',
+  defaultValue: false,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -100,7 +109,7 @@ Future<void> main() async {
   }());
   debugPrint(
     '[boot] taxonomy v${IncidentTaxonomy.schemaVersion}: '
-    '${IncidentTaxonomy.all.length} types, API=$kApiBase, insecure=$kDevInsecure',
+    '${IncidentTaxonomy.all.length} types, API=$kApiBase, insecure=$kDevInsecure, localMock=$kLocalMock',
   );
 
   final domain = await DomainConfig.load();
@@ -121,7 +130,9 @@ Future<void> main() async {
   // Upgrade old saved sessions with the current account scope/admin flags.
   final initialSession =
       savedSession == null ? null : restoreSession(savedSession);
-  final board = TicketBoard(api: api);
+  final TicketBoard board = kLocalMock
+      ? LocalDemoBoard(api: api, seedTickets: buildDemoTickets())
+      : TicketBoard(api: api);
 
   runApp(
     AirportApp(

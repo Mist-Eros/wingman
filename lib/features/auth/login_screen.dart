@@ -53,7 +53,10 @@ class LoginScreen extends StatelessWidget {
                   WingmanSpacing.lg,
                 ),
                 children: <Widget>[
-                  _Header(connected: board.connected),
+                  _Header(
+                    connected: board.connected,
+                    localDemo: board.isLocalDemo,
+                  ),
                   const SizedBox(height: WingmanSpacing.lg),
                   if (restored != null) ...<Widget>[
                     _ResumeCard(
@@ -108,9 +111,10 @@ class LoginScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.connected});
+  const _Header({required this.connected, this.localDemo = false});
 
   final bool connected;
+  final bool localDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -208,17 +212,23 @@ class _Header extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
-                connected ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+                localDemo
+                    ? Icons.bolt_rounded
+                    : (connected ? Icons.wifi_rounded : Icons.wifi_off_rounded),
                 size: 16,
-                color: connected
+                color: localDemo
                     ? const Color(0xFF7CE8B4)
-                    : const Color(0xFFFFB4AB),
+                    : (connected
+                        ? const Color(0xFF7CE8B4)
+                        : const Color(0xFFFFB4AB)),
               ),
               const SizedBox(width: WingmanSpacing.sm),
               Text(
-                connected ? 'Server conectat · live' : 'Server offline',
+                localDemo
+                    ? 'Demo local · instant'
+                    : (connected ? 'Server conectat · live' : 'Server offline'),
                 style: TextStyle(
-                  color: connected
+                  color: localDemo || connected
                       ? const Color(0xFFB7F3D2)
                       : const Color(0xFFFFDAD6),
                   fontSize: 12,

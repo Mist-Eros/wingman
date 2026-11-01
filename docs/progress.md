@@ -389,3 +389,10 @@ Updated `RewardRules`, `RewardConfig`, airport/events JSON profiles, Dart/backen
 | Every transcript word is editable; yellow still means low confidence; chips are smaller/tighter. | reporter controller/widgets |
 | Rewards/account now show only **Raportare** and **Rezolvare**. | account UI |
 | Reporter flow is consistently RO or EN on the language toggle: server questions map to local translations, photo prompt and menu labels localize, status labels localize. | reporter flow/menu |
+
+## 2026-11-01 — local mock build
+
+Added `LocalDemoBoard` and `--dart-define=LOCAL_MOCK=true`. The phone demo can
+run the five cases fully in memory (no REST/WSS, no USB reverse): instant
+join/vote/confirm, same ticket model and same screens, while the backend
+SQLite/dashboard builds remain untouched for the live demo.
