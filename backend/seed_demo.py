@@ -2,7 +2,7 @@
 
 Run AFTER the backend is up (from the repo root):
 
-    python backend/seed_demo.py                      # 6 reports
+    python backend/seed_demo.py                      # 5 reports
     python backend/seed_demo.py --reset              # clear store first
     python backend/seed_demo.py --base https://192.168.1.50:8443
 
@@ -22,90 +22,63 @@ from typing import Any
 
 SCENARIOS: tuple[dict[str, Any], ...] = (
     {
-        "name": "voice · fire/smoke",
-        "body": {
-            "source": "voice",
-            "transcript": (
-                "Este fum dens lângă poarta 12, în terminalul 1, pare să iasă "
-                "de sub un scaun din zona de așteptare. Nu se vede flacără, "
-                "dar miroase înțepător."
-            ),
-            "reporter_id": "seed-reporter-1",
-            "reporter_name": "Andrei P.",
-            "location": {
-                "terminal": "T1",
-                "zone": "Poarta 12",
-                "note": "zona de așteptare",
-            },
-            "use_ai": True,
-        },
-    },
-    {
-        "name": "voice · unattended bag",
-        "body": {
-            "source": "voice",
-            "transcript": (
-                "Am găsit un bagaj fără proprietar lângă banda de bagaje 3, "
-                "nimeni nu știe al cui este. A stat acolo mai mult de 20 de minute."
-            ),
-            "reporter_id": "seed-reporter-2",
-            "reporter_name": "Ioana M.",
-            "location": {"terminal": "T2", "zone": "Banda bagaje 3"},
-            "use_ai": True,
-        },
-    },
-    {
-        "name": "menu · belt fault (manual)",
+        "name": "green · low · queue/operations",
         "body": {
             "source": "menu",
-            "transcript": "Defecțiune bandă transportoare bagaje",
+            "transcript": "Coada de la control este lungă, dar nu e nimic periculos.",
+            "reporter_id": "seed-reporter-1",
+            "reporter_name": "Andrei P.",
+            "location": {"terminal": "T1", "zone": "Control securitate"},
+            "hint_code": "OP-OTHER",
+            "use_ai": False,
+        },
+    },
+    {
+        "name": "yellow · medium · spill",
+        "body": {
+            "source": "menu",
+            "transcript": "S-a vărsat un lichid pe jos lângă poarta 3.",
+            "reporter_id": "seed-reporter-2",
+            "reporter_name": "Ioana M.",
+            "location": {"terminal": "T1", "zone": "Poarta 3"},
+            "hint_code": "SF-SPILL",
+            "use_ai": False,
+        },
+    },
+    {
+        "name": "orange · high · unattended bag",
+        "body": {
+            "source": "menu",
+            "transcript": "Bagaj fără proprietar lângă banda de bagaje 3.",
             "reporter_id": "seed-reporter-3",
             "reporter_name": "Mihai D.",
+            "location": {"terminal": "T2", "zone": "Banda bagaje 3"},
+            "hint_code": "SC-BAG",
+            "use_ai": False,
+        },
+    },
+    {
+        "name": "orange · high · belt fault",
+        "body": {
+            "source": "menu",
+            "transcript": "Defecțiune la banda transportoare de bagaje.",
+            "reporter_id": "seed-reporter-4",
+            "reporter_name": "Elena V.",
             "location": {"terminal": "T2", "zone": "Check-in zona B"},
             "hint_code": "MT-BELT",
             "use_ai": False,
         },
     },
     {
-        "name": "voice · spill in terminal (janitor)",
-        "body": {
-            "source": "voice",
-            "transcript": (
-                "S-a vărsat un lichid pe jos lângă poarta 3, în terminalul 1, "
-                "e alunecos și lumea trece pe lângă."
-            ),
-            "reporter_id": "seed-reporter-5",
-            "reporter_name": "Andrei P.",
-            "location": {"terminal": "T1", "zone": "Poarta 3"},
-            "use_ai": True,
-        },
-    },
-    {
-        "name": "menu · medical emergency (Mandy)",
+        "name": "red · critical · fire/smoke",
         "body": {
             "source": "menu",
-            "transcript": "Urgență medicală — persoană inconștientă la poarta 6",
-            "reporter_id": "seed-reporter-6",
+            "transcript": "Fum dens lângă poarta 12, în terminalul 1.",
+            "reporter_id": "seed-reporter-5",
             "reporter_name": "Furtuna-Cola Andrei-Alexandru",
-            "location": {"terminal": "T1", "zone": "Poarta 6"},
-            "hint_code": "OP-MED",
+            "location": {"terminal": "T1", "zone": "Poarta 12"},
+            "hint_code": "SF-FIRE",
             "use_ai": False,
-        },
-    },
-    {
-        "name": "voice · low-confidence (demo)",
-        "body": {
-            "source": "voice",
-            "transcript": (
-                "Ceva nu este în regulă pe holul de lângă poarta 7, nu îmi dau "
-                "seama exact ce, dar pare o problemă de securitate."
-            ),
-            "reporter_id": "seed-reporter-4",
-            "reporter_name": "Elena V.",
-            "location": {"terminal": "T1", "zone": "Poarta 7"},
-            "use_ai": True,
-            # Forces the 5-second dispatcher override path deterministically,
-            # so the demo never depends on the model's confidence.
         },
     },
 )
