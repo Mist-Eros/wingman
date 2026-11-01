@@ -48,6 +48,10 @@ class ReportIn(BaseModel):
     # during the judged demo. The mobile app never sends this field.
     force_override: bool = False
 
+    # DEMO-ONLY: pin the quorum for seeded/controlled cases. Normal app
+    # reports leave this unset and use the domain quorum policy.
+    quorum_override: int | None = Field(default=None, ge=1, le=8)
+
 
 class AnalyzeIn(BaseModel):
     """POST /api/analyze — one conversational turn (no ticket is created).

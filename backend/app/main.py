@@ -514,6 +514,7 @@ async def create_report(report: schemas.ReportIn) -> dict:
             location=location,
             classification=classification,
             photo_base64=report.photo_base64,
+            quorum_override=report.quorum_override,
         )
     except (ValueError, KeyError) as exc:
         raise _to_http(exc) from exc

@@ -24,6 +24,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
     DateTime? overrideDeadline,
     DateTime? createdAt,
     String? decidedBy,
+    int? quorumOverride,
   }) {
     final type = IncidentTaxonomy.all.firstWhere((t) => t.code == code);
     final created =
@@ -47,10 +48,11 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       standbyDepartments: type.standbyDepartments,
       joinedCrewIds: joined,
       resolveVotes: resolveVotes,
-      quorum: max(
-        1,
-        IncidentTaxonomy.byCode(code)?.primaryDepartments.length ?? 1,
-      ),
+      quorum: quorumOverride ??
+          max(
+            1,
+            IncidentTaxonomy.byCode(code)?.primaryDepartments.length ?? 1,
+          ),
       overrideDeadline: overrideDeadline,
       decidedBy: decidedBy,
       createdAt: created,
@@ -82,6 +84,7 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
       locationZone: 'Poarta 3',
       reporterName: 'Ioana M.',
       aiRationale: 'Scurgere in terminal, risc de alunecare.',
+      quorumOverride: 1,
       createdAt: n.subtract(const Duration(minutes: 7)),
     ),
     fromType(
@@ -99,15 +102,15 @@ List<Ticket> buildDemoTickets({DateTime? now}) {
     ),
     fromType(
       id: 'demo-high-04',
-      code: 'MT-BELT',
+      code: 'SC-ITEM',
       urgency: Urgency.high,
       status: TicketStatus.dispatched,
       confidence: 0.88,
-      transcript: 'Defecțiune la banda transportoare de bagaje.',
-      locationZone: 'Check-in zona B',
+      transcript: 'Obiect interzis găsit la controlul de securitate.',
+      locationZone: 'Control securitate',
       reporterName: 'Elena V.',
-      terminal: 'T2',
-      aiRationale: 'Banda de bagaje oprita, mentenanta necesara.',
+      terminal: 'T1',
+      aiRationale: 'Obiect interzis la control, securitate.',
       createdAt: n.subtract(const Duration(minutes: 15)),
     ),
     fromType(

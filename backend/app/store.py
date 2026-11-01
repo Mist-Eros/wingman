@@ -153,6 +153,7 @@ class TicketStore:
         location: dict[str, Any],
         classification: Classification,
         photo_base64: str | None = None,
+        quorum_override: int | None = None,
     ) -> dict[str, Any]:
         incident_type = self._taxonomy.require(classification.incident_code)
         confidence = round(float(classification.confidence), 3)
@@ -196,8 +197,12 @@ class TicketStore:
             "joined_departments": [],
             "resolve_votes": 0,
             "resolve_voter_ids": [],
-            "quorum": self._domain.quorum.required_for(
-                len(incident_type.primary_departments)
+            "quorum": (
+                int(quorum_override)
+                if quorum_override is not None
+                else self._domain.quorum.required_for(
+                    len(incident_type.primary_departments)
+                )
             ),
             "override_deadline": None,
             "dispatched_at": now,

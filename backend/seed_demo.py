@@ -43,6 +43,8 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
             "location": {"terminal": "T1", "zone": "Poarta 3"},
             "hint_code": "SF-SPILL",
             "use_ai": False,
+            # Demo case: one responder is enough for this yellow test.
+            "quorum_override": 1,
         },
     },
     {
@@ -58,14 +60,14 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         },
     },
     {
-        "name": "orange · high · belt fault",
+        "name": "orange · high · prohibited item",
         "body": {
             "source": "menu",
-            "transcript": "Defecțiune la banda transportoare de bagaje.",
+            "transcript": "Obiect interzis găsit la controlul de securitate.",
             "reporter_id": "seed-reporter-4",
             "reporter_name": "Elena V.",
-            "location": {"terminal": "T2", "zone": "Check-in zona B"},
-            "hint_code": "MT-BELT",
+            "location": {"terminal": "T1", "zone": "Control securitate"},
+            "hint_code": "SC-ITEM",
             "use_ai": False,
         },
     },
